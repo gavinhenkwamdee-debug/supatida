@@ -7,7 +7,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export default async function EditProductPage({ params }: Params) {
   const { id } = await params;
-  const product = getProductById(parseInt(id));
+  const product = await getProductById(parseInt(id));
   if (!product) notFound();
 
   return (

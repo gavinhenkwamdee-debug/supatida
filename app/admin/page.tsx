@@ -4,8 +4,8 @@ import AdminProductRow from "@/components/admin/AdminProductRow";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminDashboard() {
-  const products = getAllProducts();
+export default async function AdminDashboard() {
+  const products = await getAllProducts();
 
   return (
     <div>
