@@ -1,0 +1,99 @@
+{
+  "lastId": 5,
+  "products": [
+    {
+      "id": 1,
+      "name": "Radiant Cut Solitaire Ring",
+      "price": 125000,
+      "category": "Rings",
+      "description": "A timeless solitaire featuring a stunning radiant cut lab grown diamond set in 18K white gold. The clean lines and exceptional brilliance make this piece a perfect symbol of enduring love.",
+      "specifications": {
+        "Carat Weight": "1.5 ct",
+        "Cut": "Radiant",
+        "Color": "F",
+        "Clarity": "VS1",
+        "Metal": "18K White Gold",
+        "Setting": "4-Prong Solitaire",
+        "Band Width": "2.0 mm",
+        "Certification": "IGI Certified"
+      },
+      "images": [],
+      "createdAt": "2024-01-15T08:00:00.000Z",
+      "updatedAt": "2024-01-15T08:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Oval Halo Engagement Ring",
+      "price": 185000,
+      "category": "Rings",
+      "description": "An breathtaking oval lab grown diamond surrounded by a delicate halo of brilliant pavé diamonds. Set in platinum for maximum brilliance, this ring exudes elegance and sophistication.",
+      "specifications": {
+        "Carat Weight": "2.0 ct (center) + 0.35 ct (halo)",
+        "Cut": "Oval",
+        "Color": "G",
+        "Clarity": "VVS2",
+        "Metal": "Platinum 950",
+        "Setting": "Halo Pavé",
+        "Band Width": "1.8 mm",
+        "Certification": "IGI Certified"
+      },
+      "images": [],
+      "createdAt": "2024-01-16T08:00:00.000Z",
+      "updatedAt": "2024-01-16T08:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "Diamond Tennis Necklace",
+      "price": 315000,
+      "category": "Necklaces",
+      "description": "A classic diamond tennis necklace featuring 45 perfectly matched round brilliant lab grown diamonds set in 18K white gold. Each stone selected for superior cut, color, and clarity.",
+      "specifications": {
+        "Total Carat Weight": "5.0 ct",
+        "Number of Stones": "45",
+        "Cut": "Round Brilliant",
+        "Color": "H",
+        "Clarity": "VS2",
+        "Metal": "18K White Gold",
+        "Length": "16 inches",
+        "Clasp": "Box Clasp with Safety"
+      },
+      "images": [],
+      "createdAt": "2024-01-17T08:00:00.000Z",
+      "updatedAt": "2024-01-17T08:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "name": "Princess Cut Stud Earrings",
+      "price": 98000,
+      "category": "Earrings",
+      "description": "Elegant princess cut lab grown diamond studs set in 14K white gold with a secure screw-back closure. A versatile everyday luxury that transitions effortlessly from day to evening.",
+      "specifications": {
+        "Total Carat Weight": "1.0 ct (0.50 ct each)",
+        "Cut": "Princess",
+        "Color": "E",
+        "Clarity": "VS1",
+        "Metal": "14K White Gold",
+        "Setting": "4-Prong Martini",
+        "Closure": "Screw-Back",
+        "Certification": "IGI Certified"
+      },
+      "images": [],
+      "createdAt": "2024-01-18T08:00:00.000Z",
+      "updatedAt": "2024-01-18T08:00:00.000Z"
+    },
+    {
+      "name": "Test",
+      "price": 3500,
+      "category": "Rings",
+      "description": "test",
+      "specifications": {},
+      "images": [
+        "/uploads/product-5-slot0-1782795406142.png",
+        "/uploads/product-5-slot1-1782795410872.png"
+      ],
+      "id": 5,
+      "createdAt": "2026-06-30T04:56:34.045Z",
+      "updatedAt": "2026-06-30T04:56:52.854Z"
+    }
+  ]
+}

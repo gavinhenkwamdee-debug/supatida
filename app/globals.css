@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --gold: #C4A265;
+  --gold-light: #D4B580;
+  --gold-dark: #8B6F3E;
+  --ivory: #FAFAF7;
+  --charcoal: #1C1C1C;
+  --muted: #6B6B6B;
+  --border: #E8E3DB;
+}
+
+body {
+  background-color: var(--ivory);
+  color: var(--charcoal);
+  font-family: Georgia, "Times New Roman", serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-sans {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Thin gold scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--ivory); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
