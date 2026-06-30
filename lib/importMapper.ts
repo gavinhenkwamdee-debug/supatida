@@ -55,18 +55,19 @@ export interface ImportRow {
 
 // Column indices (0-based) from the sheet
 const COL = {
-  CODE: 0,       // รหัสสินค้า
-  CATEGORY: 1,   // ชนิด
-  STATUS: 2,     // สถานะ
-  ITEM_ID: 4,    // ตำแหน่งเพชร / Item ID
-  METAL_COLOR: 5, // สีตัวเรือน
-  SIZE: 7,       // ไซส์
-  DIAMOND_SIZE: 8, // ขนาดเพชร/ตัง
-  DIAMOND_FACE: 9, // ขนาดหน้าเพชร/มิล
+  CODE: 0,          // รหัสสินค้า (ready228 ฯลฯ)
+  CATEGORY: 1,      // ชนิด
+  STATUS: 2,        // สถานะ
+  DIAMOND_POS: 4,   // ตำแหน่งเพชร
+  METAL_COLOR: 5,   // สีตัวเรือน
+  ITEM_ID: 6,       // Item ID
+  SIZE: 7,          // ไซส์
+  DIAMOND_SIZE: 8,  // ขนาดเพชร/ตัง
+  DIAMOND_FACE: 9,  // ขนาดหน้าเพชร/มิล
   DIAMOND_COUNT: 10, // จำนวนเพชร
   DIAMOND_WEIGHT: 11, // น้ำหนักรวมเพชร
-  METAL_TYPE: 14, // ชนิดทอง
-  PRICE: 32,     // ราคาหน้าร้าน
+  METAL_TYPE: 14,   // ชนิดทอง
+  PRICE: 32,        // ราคาหน้าร้าน
 };
 
 export function parseExcelRows(
