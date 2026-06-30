@@ -35,6 +35,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             Dashboard
           </Link>
           <Link
+            href="/admin/import"
+            className="text-xs tracking-widest uppercase transition-opacity hover:opacity-100 opacity-70"
+          >
+            Bulk Import
+          </Link>
+          <Link
             href="/"
             target="_blank"
             className="text-xs tracking-widest uppercase transition-opacity hover:opacity-100 opacity-70"
