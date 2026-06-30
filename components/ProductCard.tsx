@@ -27,10 +27,10 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const specs = product.specifications;
   const displaySpecs = [
+    { key: "Type", val: product.category },
     specs["Metal"] ? { key: "Metal", val: specs["Metal"] } : null,
     specs["Metal Color"] ? { key: "Metal Color", val: specs["Metal Color"] } : null,
     specs["Total Carat Weight"] ? { key: "Diamond Size", val: specs["Total Carat Weight"] } : null,
-    specs["Item ID"] ? { key: "Item ID", val: specs["Item ID"] } : null,
   ].filter(Boolean) as { key: string; val: string }[];
 
   const priceFormatted = new Intl.NumberFormat("th-TH", {
