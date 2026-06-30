@@ -59,6 +59,14 @@ export default function AdminProductRow({ product }: { product: Product }) {
       <td className="px-5 py-4">
         <div className="flex gap-3">
           <Link
+            href={`/products/${product.id}`}
+            target="_blank"
+            className="text-xs tracking-wider uppercase underline"
+            style={{ color: "var(--muted)" }}
+          >
+            View ↗
+          </Link>
+          <Link
             href={`/admin/products/${product.id}/edit`}
             className="text-xs tracking-wider uppercase underline"
             style={{ color: "var(--gold-dark)" }}
