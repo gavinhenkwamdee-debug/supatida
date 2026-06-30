@@ -25,11 +25,16 @@ export default function AdminProductRow({ product }: { product: Product }) {
         <p className="font-medium text-sm" style={{ color: "var(--charcoal)" }}>
           {product.name}
         </p>
-        <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+        <p className="text-xs mt-0.5 font-mono" style={{ color: "var(--muted)" }}>
           DB #{product.id}
+          {product.specifications["Product Code"] && (
+            <span className="ml-2" style={{ color: "var(--gold-dark)" }}>
+              · {product.specifications["Product Code"]}
+            </span>
+          )}
           {product.specifications["Item ID"] && (
-            <span className="ml-2 font-mono" style={{ color: "var(--gold-dark)" }}>
-              · {product.specifications["Item ID"]}
+            <span className="ml-1" style={{ color: "var(--muted)" }}>
+              ({product.specifications["Item ID"]})
             </span>
           )}
         </p>

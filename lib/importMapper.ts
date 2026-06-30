@@ -101,6 +101,7 @@ export function parseExcelRows(
     const name = buildName(code, categoryTh, metalColorTh, metalTypeTh);
 
     const specifications: Record<string, string> = {};
+    if (code) specifications["Product Code"] = code;
     if (metalColor) specifications["Metal Color"] = metalColor;
     if (metalType) specifications["Metal"] = metalType;
 
