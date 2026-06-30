@@ -25,7 +25,13 @@ export default function ProductCard({ product }: { product: Product }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
 
-  const topSpecs = Object.entries(product.specifications).slice(0, 4);
+  const specs = product.specifications;
+  const displaySpecs = [
+    specs["Metal"] ? { key: "Metal", val: specs["Metal"] } : null,
+    specs["Metal Color"] ? { key: "Metal Color", val: specs["Metal Color"] } : null,
+    specs["Total Carat Weight"] ? { key: "Diamond Size", val: specs["Total Carat Weight"] } : null,
+    specs["Item ID"] ? { key: "Item ID", val: specs["Item ID"] } : null,
+  ].filter(Boolean) as { key: string; val: string }[];
 
   const priceFormatted = new Intl.NumberFormat("th-TH", {
     style: "currency",
@@ -110,12 +116,12 @@ export default function ProductCard({ product }: { product: Product }) {
           {priceFormatted}
         </p>
 
-        {topSpecs.length > 0 && (
+        {displaySpecs.length > 0 && (
           <dl
             className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-4 pt-3 font-sans"
             style={{ borderTop: "1px solid var(--border)" }}
           >
-            {topSpecs.map(([key, val]) => (
+            {displaySpecs.map(({ key, val }) => (
               <div key={key}>
                 <dt className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{key}</dt>
                 <dd className="text-xs mt-0.5" style={{ color: "var(--charcoal)" }}>{val}</dd>

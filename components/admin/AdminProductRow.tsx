@@ -26,7 +26,12 @@ export default function AdminProductRow({ product }: { product: Product }) {
           {product.name}
         </p>
         <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-          ID #{product.id}
+          DB #{product.id}
+          {product.specifications["Item ID"] && (
+            <span className="ml-2 font-mono" style={{ color: "var(--gold-dark)" }}>
+              · {product.specifications["Item ID"]}
+            </span>
+          )}
         </p>
       </td>
       <td className="px-5 py-4">
