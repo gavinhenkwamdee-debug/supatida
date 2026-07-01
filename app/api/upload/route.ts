@@ -51,6 +51,22 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PATCH(request: Request) {
+  try {
+    const { productId, slot, url } = await request.json();
+    const product = await getProductById(parseInt(productId));
+    if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+
+    const images = [...(product.images || [])];
+    while (images.length <= slot) images.push("");
+    images[slot] = url;
+    await updateProduct(parseInt(productId), { images });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Failed to save image URL" }, { status: 500 });
+  }
+}
+
 export async function DELETE(request: Request) {
   try {
     const { productId, slot } = await request.json();
