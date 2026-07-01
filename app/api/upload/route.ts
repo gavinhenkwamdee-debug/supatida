@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { put, del } from "@vercel/blob";
 import { getProductById, updateProduct } from "@/lib/db";
 
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 
