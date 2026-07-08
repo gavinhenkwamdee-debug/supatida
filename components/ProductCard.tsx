@@ -40,7 +40,7 @@ export default function ProductCard({ product }: { product: Product }) {
   }).format(product.price);
 
   const lineMessage = `สวัสดีครับ สนใจสินค้า: ${product.name}\nราคา: ${priceFormatted}\nดูรายละเอียด: ${typeof window !== "undefined" ? window.location.origin : ""}/products/${product.id}`;
-  const lineUrl = `https://line.me/ti/p/~supatida`;
+  const lineUrl = `https://lin.ee/U9D2iyG`;
 
   return (
     <article

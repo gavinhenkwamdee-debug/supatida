@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/db";
 
-const LINE_URL = "https://line.me/ti/p/~supatida";
+const LINE_URL = "https://lin.ee/U9D2iyG";
 
 const DIAMOND_SVG = (
   <svg viewBox="0 0 80 80" className="w-20 h-20 opacity-20" fill="none">
