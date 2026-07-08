@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/db";
 
-const LINE_URL = "https://lin.ee/U9D2iyG";
+const LINE_URL = "https://line.me/ti/p/~supatida";
 
 const DIAMOND_SVG = (
   <svg viewBox="0 0 80 80" className="w-20 h-20 opacity-20" fill="none">
@@ -20,7 +20,7 @@ const DIAMOND_SVG = (
 function LineButton({ product }: { product: Product }) {
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
   const message = `สวัสดีครับ สนใจสินค้า: ${product.name}\nราคา: ${new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(product.price)}\nดูรายละเอียด: ${siteUrl}/products/${product.id}`;
-  const lineUrl = `https://line.me/R/oaMessage/U9D2iyG/?${encodeURIComponent(message)}`;
+  const lineUrl = LINE_URL;
 
   return (
     <a
