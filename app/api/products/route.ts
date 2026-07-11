@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       description: String(description || "").trim(),
       specifications: specifications || {},
       images: [],
+      soldOut: false,
     });
 
     return NextResponse.json(product, { status: 201 });

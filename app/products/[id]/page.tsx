@@ -164,9 +164,17 @@ export default function ProductPage() {
             </h1>
 
             {/* Price */}
-            <p className="text-3xl font-sans font-light mb-6" style={{ color: "var(--gold)" }}>
+            <p className="text-3xl font-sans font-light mb-4" style={{ color: "var(--gold)" }}>
               {new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(product.price)}
             </p>
+
+            {/* Sold Out banner */}
+            {product.soldOut && (
+              <div className="mb-6 py-3 text-center tracking-[0.3em] text-lg font-sans font-bold"
+                style={{ backgroundColor: "#C0392B", color: "white" }}>
+                SOLD OUT
+              </div>
+            )}
 
             {/* Divider */}
             <div className="w-12 h-px mb-6" style={{ backgroundColor: "var(--gold)" }} />

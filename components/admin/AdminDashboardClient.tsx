@@ -36,18 +36,30 @@ function Thumbnail({ src }: { src: string }) {
   );
 }
 
-function AdminRow({ product, onDeleted }: { product: Product; onDeleted: () => void }) {
+function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDeleted: () => void; onUpdated: (p: Product) => void }) {
   const router = useRouter();
   const firstImage = product.images.find(Boolean) || "";
   const imageCount = product.images.filter(Boolean).length;
   const code = product.specifications["Product Code"] || "";
   const itemId = product.specifications["Item ID"] || "";
+  const [toggling, setToggling] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`ลบ "${product.name}"? ไม่สามารถกู้คืนได้`)) return;
     const res = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
     if (res.ok) { onDeleted(); router.refresh(); }
     else alert("ลบไม่สำเร็จ");
+  }
+
+  async function toggleSoldOut() {
+    setToggling(true);
+    const res = await fetch(`/api/products/${product.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ soldOut: !product.soldOut }),
+    });
+    if (res.ok) { const updated = await res.json(); onUpdated(updated); }
+    setToggling(false);
   }
 
   return (
@@ -90,6 +102,23 @@ function AdminRow({ product, onDeleted }: { product: Product; onDeleted: () => v
         </span>
       </td>
 
+      {/* Sold Out toggle */}
+      <td className="px-4 py-3">
+        <button
+          onClick={toggleSoldOut}
+          disabled={toggling}
+          className="text-xs px-2 py-1 rounded font-sans transition-all disabled:opacity-50"
+          style={{
+            backgroundColor: product.soldOut ? "#C0392B" : "#F5F0E8",
+            color: product.soldOut ? "white" : "var(--muted)",
+            border: "1px solid",
+            borderColor: product.soldOut ? "#C0392B" : "var(--border)",
+          }}
+        >
+          {product.soldOut ? "SOLD OUT" : "In Stock"}
+        </button>
+      </td>
+
       {/* Actions */}
       <td className="px-4 py-3">
         <div className="flex gap-3">
@@ -113,6 +142,10 @@ function AdminRow({ product, onDeleted }: { product: Product; onDeleted: () => v
 
 export default function AdminDashboardClient({ products: initial }: { products: Product[] }) {
   const [products, setProducts] = useState(initial);
+
+  function handleUpdated(updated: Product) {
+    setProducts((prev) => prev.map((p) => p.id === updated.id ? updated : p));
+  }
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("id-desc");
@@ -241,7 +274,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#FAF8F4" }}>
-                  {["Product", "Category", "Price", "Images", "Actions"].map((h) => (
+                  {["Product", "Category", "Price", "Images", "Status", "Actions"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs tracking-widest uppercase"
                       style={{ color: "var(--muted)" }}>
                       {h}
@@ -255,6 +288,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
                     key={product.id}
                     product={product}
                     onDeleted={() => setProducts((prev) => prev.filter((p) => p.id !== product.id))}
+                    onUpdated={handleUpdated}
                   />
                 ))}
               </tbody>

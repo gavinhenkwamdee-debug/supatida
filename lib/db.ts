@@ -14,6 +14,7 @@ export interface Product {
   description: string;
   specifications: Specifications;
   images: string[];
+  soldOut: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,9 +30,14 @@ export async function initDB() {
       description TEXT NOT NULL DEFAULT '',
       specifications JSONB NOT NULL DEFAULT '{}',
       images      JSONB NOT NULL DEFAULT '[]',
+      sold_out    BOOLEAN NOT NULL DEFAULT FALSE,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
+  `;
+  // Migration: add sold_out to existing tables
+  await sql`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS sold_out BOOLEAN NOT NULL DEFAULT FALSE
   `;
 }
 
@@ -46,6 +52,7 @@ function toProduct(row: any): Product {
     description: row.description,
     specifications: row.specifications ?? {},
     images: row.images ?? [],
+    soldOut: row.sold_out ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -66,14 +73,15 @@ export async function createProduct(
   data: Omit<Product, "id" | "createdAt" | "updatedAt">
 ): Promise<Product> {
   const rows = await sql`
-    INSERT INTO products (name, price, category, description, specifications, images)
+    INSERT INTO products (name, price, category, description, specifications, images, sold_out)
     VALUES (
       ${data.name},
       ${data.price},
       ${data.category},
       ${data.description},
       ${JSON.stringify(data.specifications)},
-      ${JSON.stringify(data.images)}
+      ${JSON.stringify(data.images)},
+      ${data.soldOut ?? false}
     )
     RETURNING *
   `;
@@ -92,6 +100,7 @@ export async function updateProduct(
       description   = COALESCE(${data.description ?? null}, description),
       specifications = COALESCE(${data.specifications ? JSON.stringify(data.specifications) : null}::jsonb, specifications),
       images        = COALESCE(${data.images ? JSON.stringify(data.images) : null}::jsonb, images),
+      sold_out      = ${data.soldOut !== undefined ? data.soldOut : sql`sold_out`},
       updated_at    = NOW()
     WHERE id = ${id}
     RETURNING *

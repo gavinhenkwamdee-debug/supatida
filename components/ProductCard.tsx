@@ -90,16 +90,29 @@ export default function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
+          {/* Sold Out overlay */}
+          {product.soldOut && (
+            <div className="absolute inset-0 flex items-center justify-center"
+              style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+              <span className="text-2xl tracking-[0.2em] font-sans font-bold"
+                style={{ color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                SOLD OUT
+              </span>
+            </div>
+          )}
+
           {/* View detail overlay */}
-          <div
-            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ backgroundColor: "rgba(28,28,28,0.35)" }}
-          >
-            <span className="text-xs tracking-widest uppercase font-sans px-4 py-2"
-              style={{ backgroundColor: "white", color: "var(--charcoal)" }}>
-              ดูรายละเอียด
-            </span>
-          </div>
+          {!product.soldOut && (
+            <div
+              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ backgroundColor: "rgba(28,28,28,0.35)" }}
+            >
+              <span className="text-xs tracking-widest uppercase font-sans px-4 py-2"
+                style={{ backgroundColor: "white", color: "var(--charcoal)" }}>
+                ดูรายละเอียด
+              </span>
+            </div>
+          )}
         </div>
       </Link>
 
