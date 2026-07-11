@@ -74,36 +74,37 @@ export default function Header() {
         </Link>
       </div>
 
-      {/* Category nav */}
+      {/* Category nav — horizontal scroll on mobile */}
       <nav
         style={{ borderTop: "1px solid var(--border)" }}
-        className="flex justify-center gap-1 px-4 py-2"
+        className="flex gap-1 px-4 py-2 overflow-x-auto scrollbar-hide"
       >
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setParam({ category: cat === "All" ? "" : cat })}
-            className="px-4 py-2 text-xs tracking-widest uppercase transition-all font-sans"
-            style={{
-              color: activeCategory === cat ? "var(--gold)" : "var(--muted)",
-              borderBottom:
-                activeCategory === cat ? "2px solid var(--gold)" : "2px solid transparent",
-              background: "none",
-              cursor: "pointer",
-            }}
-          >
-            {cat}
-          </button>
-        ))}
+        <div className="flex gap-1 mx-auto">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setParam({ category: cat === "All" ? "" : cat })}
+              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
+              style={{
+                color: activeCategory === cat ? "var(--gold)" : "var(--muted)",
+                borderBottom: activeCategory === cat ? "2px solid var(--gold)" : "2px solid transparent",
+                background: "none",
+                cursor: "pointer",
+              }}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </nav>
 
-      {/* Price filter */}
+      {/* Price filter — horizontal scroll on mobile */}
       <div
         style={{ borderTop: "1px solid var(--border)", backgroundColor: "#F9F7F3" }}
-        className="flex justify-center gap-2 px-4 py-2 flex-wrap"
+        className="flex gap-2 px-4 py-2 overflow-x-auto scrollbar-hide"
       >
         <span
-          className="text-xs uppercase tracking-widest self-center font-sans"
+          className="text-xs uppercase tracking-widest self-center font-sans flex-shrink-0"
           style={{ color: "var(--muted)" }}
         >
           Price:
@@ -114,7 +115,7 @@ export default function Header() {
             <button
               key={r.label}
               onClick={() => setParam({ minPrice: r.min, maxPrice: r.max })}
-              className="px-3 py-1 text-xs rounded-full transition-all font-sans"
+              className="px-3 py-1 text-xs rounded-full transition-all font-sans whitespace-nowrap flex-shrink-0"
               style={{
                 background: isActive ? "var(--charcoal)" : "white",
                 color: isActive ? "var(--gold-light)" : "var(--muted)",

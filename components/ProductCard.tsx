@@ -104,21 +104,21 @@ export default function ProductCard({ product }: { product: Product }) {
       </Link>
 
       {/* Info */}
-      <div className="flex flex-col flex-1 p-5">
+      <div className="flex flex-col flex-1 p-3 sm:p-5">
         <Link href={`/products/${product.id}`}>
-          <h2 className="text-base tracking-wide mb-1 leading-snug hover:underline"
+          <h2 className="text-xs sm:text-base tracking-wide mb-1 leading-snug hover:underline"
             style={{ color: "var(--charcoal)" }}>
             {product.name}
           </h2>
         </Link>
 
-        <p className="text-xl font-sans font-light tracking-wide mb-3" style={{ color: "var(--gold)" }}>
+        <p className="text-sm sm:text-xl font-sans font-light tracking-wide mb-2 sm:mb-3" style={{ color: "var(--gold)" }}>
           {priceFormatted}
         </p>
 
         {displaySpecs.length > 0 && (
           <dl
-            className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-4 pt-3 font-sans"
+            className="grid grid-cols-2 gap-x-2 gap-y-1 mb-3 pt-2 sm:pt-3 font-sans"
             style={{ borderTop: "1px solid var(--border)" }}
           >
             {displaySpecs.map(({ key, val }) => (
