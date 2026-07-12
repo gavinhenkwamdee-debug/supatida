@@ -40,7 +40,7 @@ export default function ProductCard({ product }: { product: Product }) {
   }).format(product.price);
 
   const productUrl = `https://supatida.vercel.app/products/${product.id}`;
-  const lineMessage = `สวัสดีครับ สนใจสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
+  const lineMessage = `สวัสดีครับ สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
   const lineUrl = `https://line.me/R/oaMessage/@supatida/?text=${encodeURIComponent(lineMessage)}`;
 
   return (
@@ -155,7 +155,7 @@ export default function ProductCard({ product }: { product: Product }) {
           style={{ backgroundColor: "#06C755", color: "white" }}
         >
           {LINE_ICON}
-          สนใจทักไลน์
+          สอบถามข้อมูล
         </a>
       </div>
     </article>
