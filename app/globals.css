@@ -1,6 +1,17 @@
 @import "tailwindcss";
 
 :root {
+  /* === THEME: Champagne (Option A) — switch back with "Classic" block below === */
+  --gold: #B8922A;
+  --gold-light: #D4AF6A;
+  --gold-dark: #8B6F1E;
+  --ivory: #FDFCF8;
+  --charcoal: #1C1C1C;
+  --muted: #6B6055;
+  --border: #E8E4DC;
+  --img-bg: #F5F1E8;
+
+  /* === THEME: Classic (original) — uncomment to revert ===
   --gold: #C4A265;
   --gold-light: #D4B580;
   --gold-dark: #8B6F3E;
@@ -8,6 +19,8 @@
   --charcoal: #1C1C1C;
   --muted: #6B6B6B;
   --border: #E8E3DB;
+  --img-bg: #F5F2ED;
+  === end Classic === */
 }
 
 body {

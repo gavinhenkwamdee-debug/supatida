@@ -51,7 +51,7 @@ export default function ProductCard({ product }: { product: Product }) {
       <Link href={`/products/${product.id}`} className="block">
         <div
           className="relative w-full aspect-square overflow-hidden"
-          style={{ backgroundColor: "#F5F2ED" }}
+          style={{ backgroundColor: "var(--img-bg)" }}
         >
           {images.length > 0 && !imgError ? (
             <Image

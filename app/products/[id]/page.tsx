@@ -114,7 +114,7 @@ export default function ProductPage() {
           <div>
             {/* Main image */}
             <div className="relative w-full aspect-square overflow-hidden mb-3"
-              style={{ backgroundColor: "#F5F2ED", border: "1px solid var(--border)" }}>
+              style={{ backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
               {images.length > 0 ? (
                 <Image
                   src={images[activeImg]}
@@ -141,7 +141,7 @@ export default function ProductPage() {
                     className="relative aspect-square overflow-hidden transition-all"
                     style={{
                       border: i === activeImg ? "2px solid var(--gold)" : "1px solid var(--border)",
-                      backgroundColor: "#F5F2ED",
+                      backgroundColor: "var(--img-bg)",
                     }}
                   >
                     <Image src={src} alt={`${i + 1}`} fill className="object-cover" sizes="100px" />

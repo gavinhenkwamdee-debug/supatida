@@ -23,7 +23,7 @@ function Thumbnail({ src }: { src: string }) {
   if (!src) {
     return (
       <div className="w-12 h-12 flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: "#F5F2ED", border: "1px solid var(--border)" }}>
+        style={{ backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
         <span className="text-xs" style={{ color: "var(--border)" }}>—</span>
       </div>
     );
