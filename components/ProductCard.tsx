@@ -39,8 +39,9 @@ export default function ProductCard({ product }: { product: Product }) {
     maximumFractionDigits: 0,
   }).format(product.price);
 
-  const lineMessage = `สวัสดีครับ สนใจสินค้า: ${product.name}\nราคา: ${priceFormatted}\nดูรายละเอียด: ${typeof window !== "undefined" ? window.location.origin : ""}/products/${product.id}`;
-  const lineUrl = `https://lin.ee/U9D2iyG`;
+  const productUrl = `https://supatida.vercel.app/products/${product.id}`;
+  const lineMessage = `สวัสดีครับ สนใจสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
+  const lineUrl = `https://lin.ee/U9D2iyG?text=${encodeURIComponent(lineMessage)}`;
 
   return (
     <article
