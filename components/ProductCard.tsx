@@ -41,7 +41,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const productUrl = `https://supatida.vercel.app/products/${product.id}`;
   const lineMessage = `สวัสดีครับ สนใจสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
-  const lineUrl = `https://lin.ee/U9D2iyG?text=${encodeURIComponent(lineMessage)}`;
+  const lineUrl = `https://line.me/R/oaMessage/@supatida/?text=${encodeURIComponent(lineMessage)}`;
 
   return (
     <article

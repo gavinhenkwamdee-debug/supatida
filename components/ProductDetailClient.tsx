@@ -5,8 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/db";
 
-const LINE_OA_ID = "U9D2iyG"; // LINE short link ID — ไม่ต้องเปลี่ยน
-const LINE_BASE = "https://lin.ee/" + LINE_OA_ID;
+const LINE_BASE = "https://line.me/R/oaMessage/@supatida";
 
 const DIAMOND_SVG = (
   <svg viewBox="0 0 80 80" className="w-20 h-20 opacity-20" fill="none">
