@@ -83,7 +83,7 @@ export default function ProductPage() {
       <header style={{ borderBottom: "1px solid var(--border)" }} className="bg-white sticky top-0 z-40">
         <div style={{ backgroundColor: "#14274E", color: "var(--gold-light)" }}
           className="text-center py-2 text-xs tracking-widest uppercase font-sans">
-          Since 2022 · 100% Lab Grown · IGI Certified
+          Since 2022 · 100% Lab Grown · IGI Certified Option
         </div>
         <div className="text-center py-4">
           <Link href="/">

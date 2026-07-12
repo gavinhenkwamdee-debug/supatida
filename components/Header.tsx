@@ -47,18 +47,12 @@ export default function Header() {
         style={{ backgroundColor: "#14274E", color: "var(--gold-light)" }}
         className="text-center py-2 text-xs tracking-widest uppercase font-sans"
       >
-        Since 2022 · 100% Lab Grown · IGI Certified
+        Since 2022 · 100% Lab Grown · IGI Certified Option
       </div>
 
       {/* Brand */}
       <div className="text-center py-5">
         <Link href="/" className="block">
-          <p
-            className="text-xs tracking-[0.4em] uppercase mb-1 font-sans"
-            style={{ color: "var(--gold)" }}
-          >
-            Est. 2024
-          </p>
           <h1
             className="text-3xl tracking-[0.15em]"
             style={{ color: "var(--charcoal)", letterSpacing: "0.2em" }}
