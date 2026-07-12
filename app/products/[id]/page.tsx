@@ -81,9 +81,9 @@ export default function ProductPage() {
     <div style={{ backgroundColor: "var(--ivory)" }} className="min-h-screen">
       {/* Header */}
       <header style={{ borderBottom: "1px solid var(--border)" }} className="bg-white sticky top-0 z-40">
-        <div style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
+        <div style={{ backgroundColor: "#14274E", color: "var(--gold-light)" }}
           className="text-center py-2 text-xs tracking-widest uppercase font-sans">
-          Ethically Created · IGI Certified · Free Shipping
+          Since 2022 · 100% Lab Grown · IGI Certified
         </div>
         <div className="text-center py-4">
           <Link href="/">
@@ -164,9 +164,11 @@ export default function ProductPage() {
             </h1>
 
             {/* Price */}
-            <p className="text-3xl font-sans font-light mb-4" style={{ color: "var(--gold)" }}>
-              {new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(product.price)}
-            </p>
+            {!product.soldOut && (
+              <p className="text-3xl font-sans font-light mb-4" style={{ color: "var(--gold)" }}>
+                {new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(product.price)}
+              </p>
+            )}
 
             {/* Sold Out banner */}
             {product.soldOut && (
@@ -193,7 +195,9 @@ export default function ProductPage() {
                   Specifications
                 </h2>
                 <dl className="space-y-2">
-                  {Object.entries(product.specifications).map(([key, val]) => (
+                  {Object.entries(product.specifications).filter(([key]) =>
+                    !["Product Code", "Diamond Size", "Ring Size"].includes(key)
+                  ).map(([key, val]) => (
                     <div key={key} className="flex justify-between py-2 font-sans"
                       style={{ borderBottom: "1px solid var(--border)" }}>
                       <dt className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{key}</dt>

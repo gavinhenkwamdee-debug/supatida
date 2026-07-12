@@ -44,10 +44,10 @@ export default function Header() {
     <header style={{ borderBottom: "1px solid var(--border)" }} className="bg-white sticky top-0 z-40">
       {/* Top bar */}
       <div
-        style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
+        style={{ backgroundColor: "#14274E", color: "var(--gold-light)" }}
         className="text-center py-2 text-xs tracking-widest uppercase font-sans"
       >
-        Ethically Created · IGI Certified · Free Shipping
+        Since 2022 · 100% Lab Grown · IGI Certified
       </div>
 
       {/* Brand */}

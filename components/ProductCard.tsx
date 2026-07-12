@@ -125,9 +125,11 @@ export default function ProductCard({ product }: { product: Product }) {
           </h2>
         </Link>
 
-        <p className="text-sm sm:text-xl font-sans font-light tracking-wide mb-2 sm:mb-3" style={{ color: "var(--gold)" }}>
-          {priceFormatted}
-        </p>
+        {!product.soldOut && (
+          <p className="text-sm sm:text-xl font-sans font-light tracking-wide mb-2 sm:mb-3" style={{ color: "var(--gold)" }}>
+            {priceFormatted}
+          </p>
+        )}
 
         {displaySpecs.length > 0 && (
           <dl
