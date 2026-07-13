@@ -7,7 +7,10 @@ export async function GET(request: Request) {
   const minPrice = searchParams.get("minPrice");
   const maxPrice = searchParams.get("maxPrice");
 
+  const isAdmin = request.headers.get("x-admin") === "1";
   let products = await getAllProducts();
+
+  if (!isAdmin) products = products.filter((p) => !p.hidden);
 
   if (category && category !== "All")
     products = products.filter((p) => p.category === category);
@@ -37,6 +40,7 @@ export async function POST(request: Request) {
       specifications: specifications || {},
       images: [],
       soldOut: false,
+      hidden: false,
     });
 
     return NextResponse.json(product, { status: 201 });

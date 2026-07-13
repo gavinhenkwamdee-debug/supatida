@@ -17,6 +17,7 @@ export async function POST(request: Request) {
         specifications: p.specifications || {},
         images: [],
         soldOut: false,
+        hidden: false,
       });
       created.push(product);
     }

@@ -43,6 +43,7 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
   const code = product.specifications["Product Code"] || "";
   const itemId = product.specifications["Item ID"] || "";
   const [toggling, setToggling] = useState(false);
+  const [togglingHide, setTogglingHide] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`ลบ "${product.name}"? ไม่สามารถกู้คืนได้`)) return;
@@ -60,6 +61,17 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
     });
     if (res.ok) { const updated = await res.json(); onUpdated(updated); }
     setToggling(false);
+  }
+
+  async function toggleHidden() {
+    setTogglingHide(true);
+    const res = await fetch(`/api/products/${product.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hidden: !product.hidden }),
+    });
+    if (res.ok) { const updated = await res.json(); onUpdated(updated); }
+    setTogglingHide(false);
   }
 
   return (
@@ -119,6 +131,23 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
         </button>
       </td>
 
+      {/* Hide toggle */}
+      <td className="px-4 py-3">
+        <button
+          onClick={toggleHidden}
+          disabled={togglingHide}
+          className="text-xs px-2 py-1 rounded font-sans transition-all disabled:opacity-50"
+          style={{
+            backgroundColor: product.hidden ? "#374151" : "#F5F0E8",
+            color: product.hidden ? "white" : "var(--muted)",
+            border: "1px solid",
+            borderColor: product.hidden ? "#374151" : "var(--border)",
+          }}
+        >
+          {product.hidden ? "Hidden" : "Visible"}
+        </button>
+      </td>
+
       {/* Actions */}
       <td className="px-4 py-3">
         <div className="flex gap-3">
@@ -150,6 +179,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("id-desc");
   const [imageFilter, setImageFilter] = useState<"all" | "with" | "without">("all");
+  const [visFilter, setVisFilter] = useState<"all" | "visible" | "hidden">("all");
 
   const filtered = useMemo(() => {
     let list = [...products];
@@ -170,6 +200,8 @@ export default function AdminDashboardClient({ products: initial }: { products: 
     // Image filter
     if (imageFilter === "with") list = list.filter((p) => p.images.some(Boolean));
     if (imageFilter === "without") list = list.filter((p) => !p.images.some(Boolean));
+    if (visFilter === "visible") list = list.filter((p) => !p.hidden);
+    if (visFilter === "hidden") list = list.filter((p) => p.hidden);
 
     // Sort
     switch (sort) {
@@ -186,7 +218,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
     }
 
     return list;
-  }, [products, search, category, sort, imageFilter]);
+  }, [products, search, category, sort, imageFilter, visFilter]);
 
   const withImages = products.filter((p) => p.images.some(Boolean)).length;
 
@@ -247,6 +279,15 @@ export default function AdminDashboardClient({ products: initial }: { products: 
           <option value="without">ยังไม่มีรูป</option>
         </select>
 
+        {/* Visibility filter */}
+        <select value={visFilter} onChange={(e) => setVisFilter(e.target.value as "all" | "visible" | "hidden")}
+          className="px-3 py-2 text-xs font-sans outline-none"
+          style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}>
+          <option value="all">All Visibility</option>
+          <option value="visible">Visible</option>
+          <option value="hidden">Hidden</option>
+        </select>
+
         {/* Sort */}
         <select value={sort} onChange={(e) => setSort(e.target.value)}
           className="px-3 py-2 text-xs font-sans outline-none"
@@ -255,8 +296,8 @@ export default function AdminDashboardClient({ products: initial }: { products: 
         </select>
 
         {/* Clear */}
-        {(search || category !== "All" || imageFilter !== "all" || sort !== "id-desc") && (
-          <button onClick={() => { setSearch(""); setCategory("All"); setImageFilter("all"); setSort("id-desc"); }}
+        {(search || category !== "All" || imageFilter !== "all" || visFilter !== "all" || sort !== "id-desc") && (
+          <button onClick={() => { setSearch(""); setCategory("All"); setImageFilter("all"); setVisFilter("all"); setSort("id-desc"); }}
             className="text-xs underline font-sans" style={{ color: "var(--muted)" }}>
             Clear
           </button>
@@ -274,7 +315,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#FAF8F4" }}>
-                  {["Product", "Category", "Price", "Images", "Status", "Actions"].map((h) => (
+                  {["Product", "Category", "Price", "Images", "Status", "Visibility", "Actions"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs tracking-widest uppercase"
                       style={{ color: "var(--muted)" }}>
                       {h}
