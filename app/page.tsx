@@ -18,7 +18,11 @@ function filterProducts(
   minPrice: string | undefined,
   maxPrice: string | undefined
 ): Product[] {
-  return products.filter((p) => {
+  const sorted = [...products].sort((a, b) => {
+    if (a.soldOut === b.soldOut) return 0;
+    return a.soldOut ? 1 : -1;
+  });
+  return sorted.filter((p) => {
     if (category && category !== "All" && p.category !== category) return false;
     if (minPrice && p.price < parseFloat(minPrice)) return false;
     if (maxPrice && p.price > parseFloat(maxPrice)) return false;
