@@ -4,5 +4,7 @@ import { neon } from "@neondatabase/serverless";
 export async function POST() {
   const sql = neon(process.env.DATABASE_URL!);
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS sold_out BOOLEAN NOT NULL DEFAULT FALSE`;
-  return NextResponse.json({ ok: true });
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE`;
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS best_seller BOOLEAN NOT NULL DEFAULT FALSE`;
+  return NextResponse.json({ ok: true, message: "Migration complete" });
 }
