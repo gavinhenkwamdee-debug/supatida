@@ -18,6 +18,7 @@ export async function POST(request: Request) {
         images: [],
         soldOut: false,
         hidden: false,
+        bestSeller: false,
       });
       created.push(product);
     }

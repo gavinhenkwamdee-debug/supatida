@@ -44,6 +44,7 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
   const itemId = product.specifications["Item ID"] || "";
   const [toggling, setToggling] = useState(false);
   const [togglingHide, setTogglingHide] = useState(false);
+  const [togglingBest, setTogglingBest] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`ลบ "${product.name}"? ไม่สามารถกู้คืนได้`)) return;
@@ -61,6 +62,17 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
     });
     if (res.ok) { const updated = await res.json(); onUpdated(updated); }
     setToggling(false);
+  }
+
+  async function toggleBestSeller() {
+    setTogglingBest(true);
+    const res = await fetch(`/api/products/${product.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bestSeller: !product.bestSeller }),
+    });
+    if (res.ok) { const updated = await res.json(); onUpdated(updated); }
+    setTogglingBest(false);
   }
 
   async function toggleHidden() {
@@ -112,6 +124,23 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
         <span className="text-xs font-sans" style={{ color: imageCount > 0 ? "#2E7D32" : "var(--muted)" }}>
           {imageCount} / 5
         </span>
+      </td>
+
+      {/* Best Seller toggle */}
+      <td className="px-4 py-3">
+        <button
+          onClick={toggleBestSeller}
+          disabled={togglingBest}
+          className="text-xs px-2 py-1 rounded font-sans transition-all disabled:opacity-50"
+          style={{
+            backgroundColor: product.bestSeller ? "var(--gold)" : "#F5F0E8",
+            color: product.bestSeller ? "white" : "var(--muted)",
+            border: "1px solid",
+            borderColor: product.bestSeller ? "var(--gold)" : "var(--border)",
+          }}
+        >
+          {product.bestSeller ? "★ Best Seller" : "Best Seller"}
+        </button>
       </td>
 
       {/* Sold Out toggle */}
@@ -315,7 +344,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#FAF8F4" }}>
-                  {["Product", "Category", "Price", "Images", "Status", "Visibility", "Actions"].map((h) => (
+                  {["Product", "Category", "Price", "Images", "Best Seller", "Status", "Visibility", "Actions"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs tracking-widest uppercase"
                       style={{ color: "var(--muted)" }}>
                       {h}

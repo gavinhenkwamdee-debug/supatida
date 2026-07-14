@@ -19,8 +19,8 @@ function filterProducts(
   maxPrice: string | undefined
 ): Product[] {
   const sorted = [...products].sort((a, b) => {
-    if (a.soldOut === b.soldOut) return 0;
-    return a.soldOut ? 1 : -1;
+    const rank = (p: typeof a) => p.soldOut ? 2 : p.bestSeller ? 0 : 1;
+    return rank(a) - rank(b);
   });
   return sorted.filter((p) => {
     if (category && category !== "All" && p.category !== category) return false;

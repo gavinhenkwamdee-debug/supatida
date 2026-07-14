@@ -77,6 +77,14 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.category}
           </span>
 
+          {/* Best Seller badge */}
+          {product.bestSeller && (
+            <span className="absolute top-3 right-3 text-xs px-2 py-1 tracking-widest uppercase font-sans"
+              style={{ backgroundColor: "var(--gold)", color: "white" }}>
+              Best Seller
+            </span>
+          )}
+
           {/* Image dots */}
           {images.length > 1 && (
             <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1">

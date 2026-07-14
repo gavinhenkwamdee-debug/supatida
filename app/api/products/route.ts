@@ -41,6 +41,7 @@ export async function POST(request: Request) {
       images: [],
       soldOut: false,
       hidden: false,
+      bestSeller: false,
     });
 
     return NextResponse.json(product, { status: 201 });

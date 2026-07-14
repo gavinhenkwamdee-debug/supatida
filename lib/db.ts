@@ -16,6 +16,7 @@ export interface Product {
   images: string[];
   soldOut: boolean;
   hidden: boolean;
+  bestSeller: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -33,6 +34,7 @@ export async function initDB() {
       images      JSONB NOT NULL DEFAULT '[]',
       sold_out    BOOLEAN NOT NULL DEFAULT FALSE,
       hidden      BOOLEAN NOT NULL DEFAULT FALSE,
+      best_seller BOOLEAN NOT NULL DEFAULT FALSE,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -43,6 +45,9 @@ export async function initDB() {
   `;
   await sql`
     ALTER TABLE products ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE
+  `;
+  await sql`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS best_seller BOOLEAN NOT NULL DEFAULT FALSE
   `;
 }
 
@@ -59,6 +64,7 @@ function toProduct(row: any): Product {
     images: row.images ?? [],
     soldOut: row.sold_out ?? false,
     hidden: row.hidden ?? false,
+    bestSeller: row.best_seller ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -79,7 +85,7 @@ export async function createProduct(
   data: Omit<Product, "id" | "createdAt" | "updatedAt">
 ): Promise<Product> {
   const rows = await sql`
-    INSERT INTO products (name, price, category, description, specifications, images, sold_out, hidden)
+    INSERT INTO products (name, price, category, description, specifications, images, sold_out, hidden, best_seller)
     VALUES (
       ${data.name},
       ${data.price},
@@ -88,7 +94,8 @@ export async function createProduct(
       ${JSON.stringify(data.specifications)},
       ${JSON.stringify(data.images)},
       ${data.soldOut ?? false},
-      ${data.hidden ?? false}
+      ${data.hidden ?? false},
+      ${data.bestSeller ?? false}
     )
     RETURNING *
   `;
@@ -109,6 +116,7 @@ export async function updateProduct(
       images        = COALESCE(${data.images ? JSON.stringify(data.images) : null}::jsonb, images),
       sold_out      = ${data.soldOut !== undefined ? data.soldOut : sql`sold_out`},
       hidden        = ${data.hidden !== undefined ? data.hidden : sql`hidden`},
+      best_seller   = ${data.bestSeller !== undefined ? data.bestSeller : sql`best_seller`},
       updated_at    = NOW()
     WHERE id = ${id}
     RETURNING *
