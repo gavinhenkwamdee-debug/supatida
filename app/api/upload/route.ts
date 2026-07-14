@@ -62,8 +62,9 @@ export async function PATCH(request: Request) {
     images[slot] = url;
     await updateProduct(parseInt(productId), { images });
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Failed to save image URL" }, { status: 500 });
+  } catch (err) {
+    console.error("PATCH /api/upload error:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
 

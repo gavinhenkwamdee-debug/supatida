@@ -114,9 +114,9 @@ export async function updateProduct(
       description   = COALESCE(${data.description ?? null}, description),
       specifications = COALESCE(${data.specifications ? JSON.stringify(data.specifications) : null}::jsonb, specifications),
       images        = COALESCE(${data.images ? JSON.stringify(data.images) : null}::jsonb, images),
-      sold_out      = ${data.soldOut !== undefined ? data.soldOut : sql`sold_out`},
-      hidden        = ${data.hidden !== undefined ? data.hidden : sql`hidden`},
-      best_seller   = ${data.bestSeller !== undefined ? data.bestSeller : sql`best_seller`},
+      sold_out      = COALESCE(${data.soldOut ?? null}, sold_out),
+      hidden        = COALESCE(${data.hidden ?? null}, hidden),
+      best_seller   = COALESCE(${data.bestSeller ?? null}, best_seller),
       updated_at    = NOW()
     WHERE id = ${id}
     RETURNING *
