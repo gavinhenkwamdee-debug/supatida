@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SlidingBanner from "./SlidingBanner";
 import type { Product } from "@/lib/db";
 
 const LINE_OA = "@supatida";
@@ -53,6 +54,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           className="text-center py-2 text-xs tracking-widest uppercase font-sans">
           Since 2022 · 100% Lab Grown · IGI Certified Option
         </div>
+        <SlidingBanner />
         <div className="text-center py-4">
           <Link href="/">
             <h1 className="text-2xl tracking-[0.2em]" style={{ color: "var(--charcoal)" }}>SUPATIDA</h1>

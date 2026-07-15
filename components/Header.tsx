@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
 import Link from "next/link";
+import SlidingBanner from "./SlidingBanner";
 
 const CATEGORIES = ["All", "Rings", "Necklaces", "Earrings", "Bracelets", "Pendants"];
 
@@ -49,6 +50,8 @@ export default function Header() {
       >
         Since 2022 · 100% Lab Grown · IGI Certified Option
       </div>
+
+      <SlidingBanner />
 
       {/* Brand */}
       <div className="text-center py-5">
