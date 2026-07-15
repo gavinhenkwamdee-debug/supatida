@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { upload } from "@vercel/blob/client";
 import type { Product } from "@/lib/db";
 
 const CATEGORIES = ["Rings", "Necklaces", "Earrings", "Bracelets", "Pendants"];
@@ -102,22 +101,15 @@ function ImageSlot({
     setUploading(true);
     setError("");
     try {
-      const filename = `product-${productId}-slot${slot}-${Date.now()}.${file.name.split(".").pop()}`;
-      const blob = await upload(filename, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload-token",
-        clientPayload: JSON.stringify({ productId, slot }),
-      });
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("productId", String(productId));
+      formData.append("slot", String(slot));
 
-      // Save URL to product in DB
-      const res = await fetch("/api/upload", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, slot, url: blob.url }),
-      });
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
-      onUploaded(slot, blob.url);
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      onUploaded(slot, data.url);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Upload failed");
     } finally {
