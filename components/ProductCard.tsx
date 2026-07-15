@@ -32,10 +32,9 @@ export default function ProductCard({ product, priority = false }: { product: Pr
     maximumFractionDigits: 0,
   }).format(product.price);
 
-  const productUrl = `https://supatida.vercel.app/products/${product.id}`;
-
   function openLine(e: React.MouseEvent) {
     e.preventDefault();
+    const productUrl = `${window.location.origin}/products/${product.id}`;
     if ((window as any).fbq) {
       (window as any).fbq("track", "Contact", {
         content_ids: [String(product.id)],
