@@ -35,12 +35,6 @@ export default function ProductCard({ product, priority = false }: { product: Pr
   function openLine(e: React.MouseEvent) {
     e.preventDefault();
     const productUrl = `https://www.supatidajewelry.com/products/${product.id}`;
-    if ((window as any).fbq) {
-      (window as any).fbq("track", "Contact", {
-        content_ids: [String(product.id)],
-        content_name: product.name,
-      });
-    }
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isAndroid = /Android/i.test(navigator.userAgent);
     const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;

@@ -24,12 +24,6 @@ function LineButton({ product }: { product: Product }) {
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
-    if ((window as any).fbq) {
-      (window as any).fbq("track", "Contact", {
-        content_ids: [String(product.id)],
-        content_name: product.name,
-      });
-    }
     const productUrl = `https://www.supatidajewelry.com/products/${product.id}`;
     const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
