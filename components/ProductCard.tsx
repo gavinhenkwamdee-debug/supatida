@@ -41,9 +41,9 @@ export default function ProductCard({ product, priority = false }: { product: Pr
         content_name: product.name,
       });
     }
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
     const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
-    const url = isMobile
+    const url = isAndroid
       ? `https://line.me/R/oaMessage/@supatida?text=${encodeURIComponent(message)}`
       : `https://lin.ee/U9D2iyG`;
     window.open(url, "_blank", "noopener,noreferrer");

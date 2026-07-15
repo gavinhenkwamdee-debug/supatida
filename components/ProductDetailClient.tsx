@@ -32,8 +32,8 @@ function LineButton({ product }: { product: Product }) {
     }
     const productUrl = `https://www.supatidajewelry.com/products/${product.id}`;
     const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const url = isMobile
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const url = isAndroid
       ? `https://line.me/R/oaMessage/${LINE_OA}?text=${encodeURIComponent(message)}`
       : `https://lin.ee/U9D2iyG`;
     window.open(url, "_blank", "noopener,noreferrer");
