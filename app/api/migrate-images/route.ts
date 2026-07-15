@@ -50,8 +50,7 @@ export async function POST() {
         console.error(`Failed ${url}:`, e);
         failed++;
         if (failed === 1) {
-          // Return early with first error for debugging
-          return NextResponse.json({ debug: true, url, error: String(e), product_id: product.id });
+          return NextResponse.json({ debug: true, url, error: JSON.stringify(e), product_id: product.id });
         }
       }
     }
