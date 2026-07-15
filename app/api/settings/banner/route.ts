@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSetting, setSetting, DEFAULT_BANNER, type BannerConfig } from "@/lib/settings";
+import { getSetting, setSetting } from "@/lib/settings";
+import { DEFAULT_BANNER, type BannerConfig } from "@/lib/banner-config";
 
 export async function GET() {
   const banner = await getSetting<BannerConfig>("banner", DEFAULT_BANNER);

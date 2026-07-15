@@ -26,14 +26,5 @@ export async function setSetting<T>(key: string, value: T): Promise<void> {
   `;
 }
 
-export interface BannerConfig {
-  enabled: boolean;
-  messages: string[];
-  speed: number; // seconds per cycle
-}
-
-export const DEFAULT_BANNER: BannerConfig = {
-  enabled: false,
-  messages: ["Free Shipping on All Orders", "100% Lab Grown Diamonds", "IGI Certified Option"],
-  speed: 4,
-};
+export type { BannerConfig } from "./banner-config";
+export { DEFAULT_BANNER } from "./banner-config";

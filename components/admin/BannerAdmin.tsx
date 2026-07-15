@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { BannerConfig } from "@/lib/settings";
-import { DEFAULT_BANNER } from "@/lib/settings";
+import type { BannerConfig } from "@/lib/banner-config";
+import { DEFAULT_BANNER } from "@/lib/banner-config";
 
 export default function BannerAdmin() {
   const [config, setConfig] = useState<BannerConfig>(DEFAULT_BANNER);

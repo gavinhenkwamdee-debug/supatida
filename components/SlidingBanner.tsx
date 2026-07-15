@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import type { BannerConfig } from "@/lib/settings";
+import type { BannerConfig } from "@/lib/banner-config";
 
 export default function SlidingBanner() {
   const [config, setConfig] = useState<BannerConfig | null>(null);
