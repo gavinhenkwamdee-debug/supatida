@@ -39,24 +39,18 @@ export default function HeroBanner({ slides }: { slides: BannerSlide[] }) {
 
   return (
     <div
-      className="relative w-full overflow-hidden select-none"
+      className="relative w-full overflow-hidden select-none aspect-[4/3] md:aspect-[3/1]"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Mobile: natural ratio / Desktop: capped height with cover */}
+      {/* Image fills box — object-cover, no squish */}
       {slide.link ? (
-        <a href={slide.link} className="block">
+        <a href={slide.link} className="absolute inset-0 block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={slide.imageUrl}
             alt="Banner"
-            className="w-full block"
-            style={{
-              height: "auto",
-              maxHeight: "clamp(260px, 55vw, 580px)",
-              objectFit: "cover",
-              objectPosition: "center",
-            }}
+            className="w-full h-full object-cover object-center"
           />
         </a>
       ) : (
@@ -64,13 +58,7 @@ export default function HeroBanner({ slides }: { slides: BannerSlide[] }) {
         <img
           src={slide.imageUrl}
           alt="Banner"
-          className="w-full block"
-          style={{
-            height: "auto",
-            maxHeight: "clamp(260px, 55vw, 580px)",
-            objectFit: "cover",
-            objectPosition: "center",
-          }}
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
       )}
 
