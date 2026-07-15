@@ -23,13 +23,16 @@ function LineButton({ product }: { product: Product }) {
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
+    const go = () => { window.location.href = "https://lin.ee/U9D2iyG"; };
     if ((window as any).fbq) {
       (window as any).fbq("trackCustom", "LineContact", {
         content_ids: [String(product.id)],
         content_name: product.name,
       });
+      setTimeout(go, 300);
+    } else {
+      go();
     }
-    window.location.href = "https://lin.ee/U9D2iyG";
   }
 
   return (
