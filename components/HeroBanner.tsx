@@ -37,30 +37,41 @@ export default function HeroBanner({ slides }: { slides: BannerSlide[] }) {
     touchStartX.current = null;
   }
 
+  const imgDesktop = slide.link ? (
+    <a href={slide.link} className="block w-full h-full">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={slide.imageUrl} alt="Banner" className="w-full h-full object-cover object-center" />
+    </a>
+  ) : (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={slide.imageUrl} alt="Banner" className="w-full h-full object-cover object-center" />
+  );
+
+  const imgMobile = slide.link ? (
+    <a href={slide.link} className="block">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={slide.imageUrl} alt="Banner" className="w-full h-auto block" />
+    </a>
+  ) : (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={slide.imageUrl} alt="Banner" className="w-full h-auto block" />
+  );
+
   return (
     <div
-      className="relative w-full overflow-hidden select-none aspect-[4/3] md:aspect-[3/1]"
+      className="relative w-full overflow-hidden select-none"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Image fills box — object-cover, no squish */}
-      {slide.link ? (
-        <a href={slide.link} className="absolute inset-0 block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={slide.imageUrl}
-            alt="Banner"
-            className="w-full h-full object-cover object-center"
-          />
-        </a>
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={slide.imageUrl}
-          alt="Banner"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-      )}
+      {/* Desktop: fixed 3:1 ratio */}
+      <div className="hidden md:block" style={{ aspectRatio: "3/1" }}>
+        {imgDesktop}
+      </div>
+
+      {/* Mobile: natural ratio, no crop */}
+      <div className="block md:hidden">
+        {imgMobile}
+      </div>
 
       {/* Dots */}
       {slides.length > 1 && (
