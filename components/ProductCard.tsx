@@ -34,7 +34,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
 
   function openLine(e: React.MouseEvent) {
     e.preventDefault();
-    const productUrl = `${window.location.origin}/products/${product.id}`;
+    const productUrl = `https://www.supatidajewelry.com/products/${product.id}`;
     if ((window as any).fbq) {
       (window as any).fbq("track", "Contact", {
         content_ids: [String(product.id)],
