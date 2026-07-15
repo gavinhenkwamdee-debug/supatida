@@ -18,22 +18,31 @@ const DIAMOND_SVG = (
 );
 
 function LineButton({ product }: { product: Product }) {
-  const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://supatida.vercel.app";
-  const productUrl = `${siteUrl}/products/${product.id}`;
   const priceFormatted = new Intl.NumberFormat("th-TH", {
     style: "currency", currency: "THB", maximumFractionDigits: 0,
   }).format(product.price);
-  const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
-  const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const lineUrl = isMobile
-    ? `https://line.me/R/oaMessage/${LINE_OA}?text=${encodeURIComponent(message)}`
-    : `https://lin.ee/U9D2iyG`;
+
+  function handleClick(e: React.MouseEvent) {
+    e.preventDefault();
+    if ((window as any).fbq) {
+      (window as any).fbq("track", "Contact", {
+        content_ids: [String(product.id)],
+        content_name: product.name,
+      });
+    }
+    const productUrl = `${window.location.origin}/products/${product.id}`;
+    const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const url = isMobile
+      ? `https://line.me/R/oaMessage/${LINE_OA}?text=${encodeURIComponent(message)}`
+      : `https://lin.ee/U9D2iyG`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <a
-      href={lineUrl}
-      target="_blank"
-      rel="noopener noreferrer"
+      href="#"
+      onClick={handleClick}
       className="flex items-center justify-center gap-3 py-4 text-sm tracking-widest uppercase font-sans transition-opacity hover:opacity-80 w-full"
       style={{ backgroundColor: "#06C755", color: "white" }}
     >
@@ -48,6 +57,19 @@ function LineButton({ product }: { product: Product }) {
 export default function ProductDetailClient({ product }: { product: Product }) {
   const [activeImg, setActiveImg] = useState(0);
   const images = product.images.filter(Boolean);
+
+  // Fire ViewContent once per product page
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "ViewContent", {
+        content_ids: [String(product.id)],
+        content_name: product.name,
+        content_type: "product",
+        value: product.price,
+        currency: "THB",
+      });
+    }
+  }, [product.id]);
 
   return (
     <div style={{ backgroundColor: "var(--ivory)" }} className="min-h-screen">

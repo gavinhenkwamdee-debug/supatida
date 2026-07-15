@@ -40,11 +40,22 @@ export default function ProductCard({ product }: { product: Product }) {
   }).format(product.price);
 
   const productUrl = `https://supatida.vercel.app/products/${product.id}`;
-  const lineMessage = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
-  const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const lineUrl = isMobile
-    ? `https://line.me/R/oaMessage/@supatida?text=${encodeURIComponent(lineMessage)}`
-    : `https://lin.ee/U9D2iyG`;
+
+  function openLine(e: React.MouseEvent) {
+    e.preventDefault();
+    if ((window as any).fbq) {
+      (window as any).fbq("track", "Contact", {
+        content_ids: [String(product.id)],
+        content_name: product.name,
+      });
+    }
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
+    const url = isMobile
+      ? `https://line.me/R/oaMessage/@supatida?text=${encodeURIComponent(message)}`
+      : `https://lin.ee/U9D2iyG`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <article
@@ -183,9 +194,8 @@ export default function ProductCard({ product }: { product: Product }) {
 
         {/* LINE Button */}
         <a
-          href={lineUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          href="#"
+          onClick={openLine}
           className="mt-auto flex items-center justify-center gap-2 py-2.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
           style={{ backgroundColor: "#06C755", color: "white" }}
         >
