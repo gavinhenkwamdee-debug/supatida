@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       badge: null,
     });
 
-    revalidateTag("products");
+    revalidateTag("products", "default");
     return NextResponse.json(product, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });

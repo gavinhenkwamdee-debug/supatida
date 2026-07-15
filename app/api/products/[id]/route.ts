@@ -17,7 +17,7 @@ export async function PUT(request: Request, { params }: Params) {
     const body = await request.json();
     const product = await updateProduct(parseInt(id), body);
     if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    revalidateTag("products");
+    revalidateTag("products", "default");
     return NextResponse.json(product);
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
@@ -28,6 +28,6 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
   const ok = await deleteProduct(parseInt(id));
   if (!ok) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  revalidateTag("products");
+  revalidateTag("products", "default");
   return NextResponse.json({ success: true });
 }
