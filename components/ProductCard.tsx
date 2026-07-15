@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/db";
@@ -24,27 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const images = product.images.filter(Boolean);
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
-  const cardRef = useRef<HTMLElement>(null);
-
-  // Auto-slide when card is visible
-  useEffect(() => {
-    if (images.length <= 1) return;
-    let interval: ReturnType<typeof setInterval> | null = null;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          interval = setInterval(() => {
-            setImgIndex((i) => (i + 1) % images.length);
-          }, 2500);
-        } else {
-          if (interval) clearInterval(interval);
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (cardRef.current) observer.observe(cardRef.current);
-    return () => { observer.disconnect(); if (interval) clearInterval(interval); };
-  }, [images.length]);
+  const touchStartX = useRef<number | null>(null);
 
   const priceFormatted = new Intl.NumberFormat("th-TH", {
     style: "currency",
@@ -70,24 +50,47 @@ export default function ProductCard({ product }: { product: Product }) {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
+  function handleMouseEnter() {
+    if (images.length > 1) setImgIndex(1);
+  }
+  function handleMouseLeave() {
+    setImgIndex(0);
+  }
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null || images.length <= 1) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      setImgIndex((i) =>
+        diff > 0 ? (i + 1) % images.length : (i - 1 + images.length) % images.length
+      );
+    }
+    touchStartX.current = null;
+  }
+
   return (
     <article
-      ref={cardRef}
       className="group flex flex-col bg-white overflow-hidden transition-shadow duration-300 hover:shadow-xl"
       style={{ border: "1px solid var(--border)" }}
     >
-      {/* Image — คลิกไปหน้าสินค้า */}
+      {/* Image */}
       <Link href={`/products/${product.id}`} className="block">
         <div
           className="relative w-full aspect-square overflow-hidden"
           style={{ backgroundColor: "var(--img-bg)" }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           {images.length > 0 && !imgError ? (
             <Image
               src={images[imgIndex]}
               alt={product.name}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-cover transition-opacity duration-300"
               onError={() => setImgError(true)}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
@@ -97,7 +100,7 @@ export default function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
-          {/* Category badge — bottom right */}
+          {/* Category badge */}
           <span
             className="absolute bottom-2 right-2 px-1.5 py-0.5 tracking-wider uppercase font-sans"
             style={{ fontSize: "9px", backgroundColor: "rgba(28,28,28,0.65)", color: "var(--gold-light)" }}
@@ -105,7 +108,7 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.category}
           </span>
 
-          {/* Badge ribbon — diagonal top-left */}
+          {/* Badge ribbon */}
           {product.badge && (() => {
             const cfg: Record<string, { label: string; bg: string }> = {
               "hot-item":   { label: "Hot Item",   bg: "#B8922A" },

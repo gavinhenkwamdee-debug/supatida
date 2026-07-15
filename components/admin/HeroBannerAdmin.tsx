@@ -169,9 +169,12 @@ export default function HeroBannerAdmin() {
         >
           {uploading ? "กำลัง upload…" : "+ คลิกเพื่อเลือกรูปภาพ (รองรับหลายรูปพร้อมกัน)"}
         </button>
-        <p className="text-xs font-sans mt-2" style={{ color: "var(--muted)" }}>
-          แนะนำขนาด 1920×700px ขึ้นไป · รองรับ JPG, PNG, WebP
-        </p>
+        <div className="mt-3 p-3 text-xs font-sans space-y-1" style={{ backgroundColor: "#FAF8F4", border: "1px solid var(--border)", color: "var(--muted)" }}>
+          <p className="font-medium" style={{ color: "var(--charcoal)" }}>แนะนำขนาด upload:</p>
+          <p>• <strong>Desktop banner</strong> — 1920×640px (ratio 3:1) หรือ 1920×800px (ratio 12:5)</p>
+          <p>• <strong>Square/Portrait</strong> — 1200×1200px ก็ได้ รูปจะโชว์เต็มๆ ไม่ถูก crop</p>
+          <p>• รูปจะแสดงตาม ratio จริงของไฟล์ — ไม่บี้ ไม่ crop · รองรับ JPG, PNG, WebP</p>
+        </div>
       </div>
 
       {/* Slides list */}

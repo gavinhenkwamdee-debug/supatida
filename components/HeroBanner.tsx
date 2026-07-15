@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect, useState, useRef } from "react";
 
 interface BannerSlide {
   imageUrl: string;
@@ -10,16 +9,12 @@ interface BannerSlide {
 
 export default function HeroBanner({ slides }: { slides: BannerSlide[] }) {
   const [current, setCurrent] = useState(0);
-  const [animating, setAnimating] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     if (slides.length <= 1) return;
     const interval = setInterval(() => {
-      setAnimating(true);
-      setTimeout(() => {
-        setCurrent((c) => (c + 1) % slides.length);
-        setAnimating(false);
-      }, 500);
+      setCurrent((c) => (c + 1) % slides.length);
     }, 4000);
     return () => clearInterval(interval);
   }, [slides.length]);
@@ -28,23 +23,46 @@ export default function HeroBanner({ slides }: { slides: BannerSlide[] }) {
 
   const slide = slides[current];
 
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      setCurrent((c) =>
+        diff > 0 ? (c + 1) % slides.length : (c - 1 + slides.length) % slides.length
+      );
+    }
+    touchStartX.current = null;
+  }
+
   return (
-    <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/7", maxHeight: "520px" }}>
-      <div
-        style={{
-          transition: "opacity 0.5s ease",
-          opacity: animating ? 0 : 1,
-          position: "absolute", inset: 0,
-        }}
-      >
-        {slide.link ? (
-          <a href={slide.link}>
-            <Image src={slide.imageUrl} alt="Banner" fill className="object-cover" priority sizes="100vw" />
-          </a>
-        ) : (
-          <Image src={slide.imageUrl} alt="Banner" fill className="object-cover" priority sizes="100vw" />
-        )}
-      </div>
+    <div
+      className="relative w-full overflow-hidden select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Natural aspect ratio image — no cropping */}
+      {slide.link ? (
+        <a href={slide.link}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={slide.imageUrl}
+            alt="Banner"
+            className="w-full h-auto block"
+            style={{ transition: "opacity 0.4s ease" }}
+          />
+        </a>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={slide.imageUrl}
+          alt="Banner"
+          className="w-full h-auto block"
+          style={{ transition: "opacity 0.4s ease" }}
+        />
+      )}
 
       {/* Dots */}
       {slides.length > 1 && (
@@ -52,7 +70,7 @@ export default function HeroBanner({ slides }: { slides: BannerSlide[] }) {
           {slides.map((_, i) => (
             <button
               key={i}
-              onClick={() => { setCurrent(i); setAnimating(false); }}
+              onClick={() => setCurrent(i)}
               className="w-2 h-2 rounded-full transition-all"
               style={{ background: i === current ? "white" : "rgba(255,255,255,0.45)" }}
             />
@@ -65,12 +83,12 @@ export default function HeroBanner({ slides }: { slides: BannerSlide[] }) {
         <>
           <button
             onClick={() => setCurrent((c) => (c - 1 + slides.length) % slides.length)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full text-lg"
             style={{ background: "rgba(0,0,0,0.3)", color: "white" }}
           >‹</button>
           <button
             onClick={() => setCurrent((c) => (c + 1) % slides.length)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full text-lg"
             style={{ background: "rgba(0,0,0,0.3)", color: "white" }}
           >›</button>
         </>
