@@ -35,10 +35,15 @@ function LineButton({ product }: { product: Product }) {
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isAndroid = /Android/i.test(navigator.userAgent);
     const encoded = encodeURIComponent(message);
-    const url = (isIOS || isAndroid)
-      ? `https://line.me/ti/p/${LINE_OA}?text=${encoded}`
-      : `https://lin.ee/U9D2iyG`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    const url = isAndroid
+      ? `https://line.me/R/oaMessage/${LINE_OA}?text=${encoded}`
+      : (isIOS ? `https://line.me/ti/p/${LINE_OA}?text=${encoded}` : `https://lin.ee/U9D2iyG`);
+    const a = document.createElement("a");
+    a.href = url;
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   return (

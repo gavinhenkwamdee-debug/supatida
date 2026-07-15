@@ -45,10 +45,15 @@ export default function ProductCard({ product, priority = false }: { product: Pr
     const isAndroid = /Android/i.test(navigator.userAgent);
     const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
     const encoded = encodeURIComponent(message);
-    const url = (isIOS || isAndroid)
-      ? `https://line.me/ti/p/@supatida?text=${encoded}`
-      : `https://lin.ee/U9D2iyG`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    const url = isAndroid
+      ? `https://line.me/R/oaMessage/@supatida?text=${encoded}`
+      : (isIOS ? `https://line.me/ti/p/@supatida?text=${encoded}` : `https://lin.ee/U9D2iyG`);
+    const a = document.createElement("a");
+    a.href = url;
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   function handleMouseEnter() {
