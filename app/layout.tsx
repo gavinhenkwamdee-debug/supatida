@@ -1,10 +1,41 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const SITE_URL = "https://www.supatidajewelry.com";
+
 export const metadata: Metadata = {
-  title: "Supatida | Lab Grown Diamond Jewelry",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Supatida | Lab Grown Diamond Jewelry Thailand",
+    template: "%s | Supatida",
+  },
   description:
-    "Discover Supatida's exquisite collection of certified lab grown diamond jewelry — ethically created, brilliantly beautiful.",
+    "Supatida จำหน่ายเครื่องประดับเพชรแล็บกรอน (Lab Grown Diamond) คุณภาพสูง แหวน สร้อยคอ ต่างหู กำไล รับรองมาตรฐาน IGI ราคาสมเหตุสมผล",
+  keywords: ["lab grown diamond", "เพชรแล็บกรอน", "เครื่องประดับเพชร", "แหวนเพชร", "สร้อยคอเพชร", "supatida", "IGI certified"],
+  authors: [{ name: "Supatida Jewelry" }],
+  creator: "Supatida Jewelry",
+  openGraph: {
+    type: "website",
+    locale: "th_TH",
+    url: SITE_URL,
+    siteName: "Supatida Lab Grown Diamond Jewelry",
+    title: "Supatida | Lab Grown Diamond Jewelry Thailand",
+    description: "เครื่องประดับเพชรแล็บกรอนคุณภาพสูง แหวน สร้อยคอ ต่างหู กำไล รับรอง IGI",
+    images: [{ url: "/og-default.jpg", width: 1200, height: 630, alt: "Supatida Lab Grown Diamond Jewelry" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Supatida | Lab Grown Diamond Jewelry Thailand",
+    description: "เครื่องประดับเพชรแล็บกรอนคุณภาพสูง แหวน สร้อยคอ ต่างหู กำไล รับรอง IGI",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
 };
 
 export default function RootLayout({
@@ -37,7 +68,28 @@ export default function RootLayout({
             src="https://www.facebook.com/tr?id=4616564218619932&ev=PageView&noscript=1" alt="" />
         </noscript>
       </head>
-      <body className="min-h-screen flex flex-col">{children}</body>
+      <body className="min-h-screen flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "JewelryStore",
+              name: "Supatida Lab Grown Diamond Jewelry",
+              url: "https://www.supatidajewelry.com",
+              logo: "https://www.supatidajewelry.com/og-default.jpg",
+              description: "จำหน่ายเครื่องประดับเพชรแล็บกรอนคุณภาพสูง แหวน สร้อยคอ ต่างหู กำไล รับรองมาตรฐาน IGI",
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer service",
+                availableLanguage: ["Thai", "English"],
+              },
+              sameAs: ["https://lin.ee/U9D2iyG"],
+            }),
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
