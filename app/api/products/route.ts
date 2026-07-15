@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getAllProducts, createProduct, CATEGORIES } from "@/lib/db";
 
 export async function GET(request: Request) {
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
       badge: null,
     });
 
+    revalidateTag("products");
     return NextResponse.json(product, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });

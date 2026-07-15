@@ -20,7 +20,7 @@ const LINE_ICON = (
   </svg>
 );
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
   const images = product.images.filter(Boolean);
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
@@ -91,6 +91,7 @@ export default function ProductCard({ product }: { product: Product }) {
               alt={product.name}
               fill
               className="object-cover transition-opacity duration-300"
+              priority={priority}
               onError={() => setImgError(true)}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />

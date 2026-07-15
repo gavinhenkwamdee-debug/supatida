@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { unstable_cache } from "next/cache";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -77,10 +78,15 @@ function toProduct(row: any): Product {
 }
 
 // ── CRUD ─────────────────────────────────────────────────
-export async function getAllProducts(): Promise<Product[]> {
+const _getAllProducts = async (): Promise<Product[]> => {
   const rows = await sql`SELECT * FROM products ORDER BY created_at DESC`;
   return rows.map(toProduct);
-}
+};
+
+export const getAllProducts = unstable_cache(_getAllProducts, ["all-products"], {
+  revalidate: 60,
+  tags: ["products"],
+});
 
 export async function getProductById(id: number): Promise<Product | undefined> {
   const rows = await sql`SELECT * FROM products WHERE id = ${id}`;
