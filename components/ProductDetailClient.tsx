@@ -38,12 +38,7 @@ function LineButton({ product }: { product: Product }) {
     const url = isAndroid
       ? `https://line.me/R/oaMessage/${LINE_OA}?text=${encoded}`
       : (isIOS ? `https://line.me/ti/p/${LINE_OA}?text=${encoded}` : `https://lin.ee/U9D2iyG`);
-    const a = document.createElement("a");
-    a.href = url;
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    window.location.href = url;
   }
 
   return (

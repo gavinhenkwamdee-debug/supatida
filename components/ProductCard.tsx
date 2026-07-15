@@ -48,12 +48,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
     const url = isAndroid
       ? `https://line.me/R/oaMessage/@supatida?text=${encoded}`
       : (isIOS ? `https://line.me/ti/p/@supatida?text=${encoded}` : `https://lin.ee/U9D2iyG`);
-    const a = document.createElement("a");
-    a.href = url;
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    window.location.href = url;
   }
 
   function handleMouseEnter() {
