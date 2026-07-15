@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/db";
@@ -24,14 +24,27 @@ export default function ProductCard({ product }: { product: Product }) {
   const images = product.images.filter(Boolean);
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
+  const cardRef = useRef<HTMLElement>(null);
 
-  const specs = product.specifications;
-  const displaySpecs = [
-    { key: "Type", val: product.category },
-    specs["Metal"] ? { key: "Metal", val: specs["Metal"] } : null,
-    specs["Metal Color"] ? { key: "Metal Color", val: specs["Metal Color"] } : null,
-    specs["Total Carat Weight"] ? { key: "Total Carat", val: specs["Total Carat Weight"] } : null,
-  ].filter(Boolean) as { key: string; val: string }[];
+  // Auto-slide when card is visible
+  useEffect(() => {
+    if (images.length <= 1) return;
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          interval = setInterval(() => {
+            setImgIndex((i) => (i + 1) % images.length);
+          }, 2500);
+        } else {
+          if (interval) clearInterval(interval);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => { observer.disconnect(); if (interval) clearInterval(interval); };
+  }, [images.length]);
 
   const priceFormatted = new Intl.NumberFormat("th-TH", {
     style: "currency",
@@ -59,6 +72,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return (
     <article
+      ref={cardRef}
       className="group flex flex-col bg-white overflow-hidden transition-shadow duration-300 hover:shadow-xl"
       style={{ border: "1px solid var(--border)" }}
     >
@@ -176,20 +190,6 @@ export default function ProductCard({ product }: { product: Product }) {
           <p className="text-sm sm:text-xl font-sans font-light tracking-wide mb-2 sm:mb-3" style={{ color: "var(--gold)" }}>
             {priceFormatted}
           </p>
-        )}
-
-        {displaySpecs.length > 0 && (
-          <dl
-            className="grid grid-cols-2 gap-x-2 gap-y-1 mb-3 pt-2 sm:pt-3 font-sans"
-            style={{ borderTop: "1px solid var(--border)" }}
-          >
-            {displaySpecs.map(({ key, val }) => (
-              <div key={key}>
-                <dt className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{key}</dt>
-                <dd className="text-xs mt-0.5" style={{ color: "var(--charcoal)" }}>{val}</dd>
-              </div>
-            ))}
-          </dl>
         )}
 
         {/* LINE Button */}

@@ -281,6 +281,11 @@ export default function AdminDashboardClient({ products: initial }: { products: 
           Products <span className="text-sm font-sans font-normal" style={{ color: "var(--muted)" }}>({filtered.length})</span>
         </h2>
         <div className="flex gap-2">
+          <Link href="/admin/hero-banner"
+            className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
+            style={{ backgroundColor: "#6B5E4E", color: "white" }}>
+            🖼 Hero
+          </Link>
           <Link href="/admin/banner"
             className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
             style={{ backgroundColor: "var(--gold)", color: "white" }}>
