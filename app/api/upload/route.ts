@@ -1,12 +1,39 @@
 import { NextResponse } from "next/server";
-import { put, del } from "@vercel/blob";
+import { v2 as cloudinary } from "cloudinary";
 import { getProductById, updateProduct } from "@/lib/db";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+
+async function uploadToCloudinary(file: File, publicId: string): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      { public_id: publicId, folder: "supatida", overwrite: true, resource_type: "image" },
+      (error, result) => {
+        if (error || !result) return reject(error);
+        resolve(result.secure_url);
+      }
+    ).end(buffer);
+  });
+}
+
+async function deleteFromCloudinary(url: string) {
+  try {
+    const match = url.match(/supatida\/([^.]+)/);
+    if (match) await cloudinary.uploader.destroy(`supatida/${match[1]}`);
+  } catch {}
+}
 
 export async function POST(request: Request) {
   try {
@@ -25,26 +52,21 @@ export async function POST(request: Request) {
     const product = await getProductById(parseInt(productId));
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = `product-${productId}-slot${slot}-${Date.now()}.${ext}`;
-
-    const blob = await put(filename, file, {
-      access: "public",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
+    const publicId = `product-${productId}-slot${slot}-${Date.now()}`;
+    const url = await uploadToCloudinary(file, publicId);
 
     const images = [...(product.images || [])];
     while (images.length <= slot) images.push("");
 
-    // Delete old blob if exists
-    if (images[slot] && images[slot].startsWith("https://")) {
-      try { await del(images[slot], { token: process.env.BLOB_READ_WRITE_TOKEN }); } catch {}
+    // Delete old Cloudinary image if exists
+    if (images[slot] && images[slot].includes("cloudinary.com")) {
+      await deleteFromCloudinary(images[slot]);
     }
 
-    images[slot] = blob.url;
+    images[slot] = url;
     await updateProduct(parseInt(productId), { images });
 
-    return NextResponse.json({ url: blob.url, slot });
+    return NextResponse.json({ url, slot });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
@@ -76,7 +98,9 @@ export async function DELETE(request: Request) {
 
     const images = [...(product.images || [])];
     if (slot >= 0 && slot < images.length && images[slot]) {
-      try { await del(images[slot], { token: process.env.BLOB_READ_WRITE_TOKEN }); } catch {}
+      if (images[slot].includes("cloudinary.com")) {
+        await deleteFromCloudinary(images[slot]);
+      }
       images[slot] = "";
     }
 
