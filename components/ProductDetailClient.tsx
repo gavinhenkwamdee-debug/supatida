@@ -32,9 +32,13 @@ function LineButton({ product }: { product: Product }) {
     }
     const productUrl = `https://www.supatidajewelry.com/products/${product.id}`;
     const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isAndroid = /Android/i.test(navigator.userAgent);
-    const url = isAndroid
-      ? `https://line.me/R/oaMessage/${LINE_OA}?text=${encodeURIComponent(message)}`
+    const encoded = encodeURIComponent(message);
+    const url = isIOS
+      ? `https://line.me/ti/p/${LINE_OA}?text=${encoded}`
+      : isAndroid
+      ? `https://line.me/R/oaMessage/${LINE_OA}?text=${encoded}`
       : `https://lin.ee/U9D2iyG`;
     window.open(url, "_blank", "noopener,noreferrer");
   }
