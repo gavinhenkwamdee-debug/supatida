@@ -6,7 +6,6 @@ import Link from "next/link";
 import SlidingBanner from "./SlidingBanner";
 import type { Product } from "@/lib/db";
 
-const LINE_OA = "@supatida";
 
 const DIAMOND_SVG = (
   <svg viewBox="0 0 80 80" className="w-20 h-20 opacity-20" fill="none">
@@ -24,15 +23,13 @@ function LineButton({ product }: { product: Product }) {
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
-    const productUrl = `https://www.supatidajewelry.com/products/${product.id}`;
-    const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const encoded = encodeURIComponent(message);
-    const url = isAndroid
-      ? `https://line.me/R/oaMessage/${LINE_OA}?text=${encoded}`
-      : (isIOS ? `https://line.me/ti/p/${LINE_OA}?text=${encoded}` : `https://lin.ee/U9D2iyG`);
-    window.location.href = url;
+    if ((window as any).fbq) {
+      (window as any).fbq("trackCustom", "LineContact", {
+        content_ids: [String(product.id)],
+        content_name: product.name,
+      });
+    }
+    window.location.href = "https://lin.ee/U9D2iyG";
   }
 
   return (

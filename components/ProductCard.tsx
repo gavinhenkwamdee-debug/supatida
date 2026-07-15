@@ -34,15 +34,13 @@ export default function ProductCard({ product, priority = false }: { product: Pr
 
   function openLine(e: React.MouseEvent) {
     e.preventDefault();
-    const productUrl = `https://www.supatidajewelry.com/products/${product.id}`;
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const message = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
-    const encoded = encodeURIComponent(message);
-    const url = isAndroid
-      ? `https://line.me/R/oaMessage/@supatida?text=${encoded}`
-      : (isIOS ? `https://line.me/ti/p/@supatida?text=${encoded}` : `https://lin.ee/U9D2iyG`);
-    window.location.href = url;
+    if ((window as any).fbq) {
+      (window as any).fbq("trackCustom", "LineContact", {
+        content_ids: [String(product.id)],
+        content_name: product.name,
+      });
+    }
+    window.location.href = "https://lin.ee/U9D2iyG";
   }
 
   function handleMouseEnter() {
