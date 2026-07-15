@@ -99,7 +99,7 @@ function ImageSlot({
 
   async function compressImage(file: File): Promise<File> {
     return new Promise((resolve) => {
-      const img = new Image();
+      const img = new window.Image();
       const url = URL.createObjectURL(file);
       img.onload = () => {
         const canvas = document.createElement("canvas");
