@@ -40,10 +40,10 @@ export default function ProductCard({ product }: { product: Product }) {
   }).format(product.price);
 
   const productUrl = `https://supatida.vercel.app/products/${product.id}`;
-  const lineMessage = `สวัสดีครับ สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
+  const lineMessage = `สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
   const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const lineUrl = isMobile
-    ? `https://line.me/R/oaMessage/@supatida/?text=${encodeURIComponent(lineMessage)}`
+    ? `https://line.me/R/oaMessage/@supatida?text=${encodeURIComponent(lineMessage)}`
     : `https://lin.ee/U9D2iyG`;
 
   return (
