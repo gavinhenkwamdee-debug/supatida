@@ -74,8 +74,8 @@ export default function ProductCard({ product }: { product: Product }) {
 
           {/* Category badge — bottom right */}
           <span
-            className="absolute bottom-3 right-3 text-xs px-2 py-1 tracking-widest uppercase font-sans"
-            style={{ backgroundColor: "rgba(28,28,28,0.75)", color: "var(--gold-light)" }}
+            className="absolute bottom-2 right-2 px-1.5 py-0.5 tracking-wider uppercase font-sans"
+            style={{ fontSize: "9px", backgroundColor: "rgba(28,28,28,0.65)", color: "var(--gold-light)" }}
           >
             {product.category}
           </span>
