@@ -32,6 +32,7 @@ async function compressImage(file: File): Promise<File> {
 
 export default function HeroBannerAdmin() {
   const [slides, setSlides] = useState<HeroBannerSlide[]>([]);
+  const [enabled, setEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -41,19 +42,23 @@ export default function HeroBannerAdmin() {
   useEffect(() => {
     fetch("/api/settings/hero-banner")
       .then((r) => r.json())
-      .then((d) => { setSlides(d.slides || []); setLoading(false); });
+      .then((d) => { setSlides(d.slides || []); setEnabled(d.enabled !== false); setLoading(false); });
   }, []);
 
-  async function saveSlides(newSlides: HeroBannerSlide[]) {
+  async function saveConfig(newSlides: HeroBannerSlide[], newEnabled: boolean) {
     setSaving(true);
     await fetch("/api/settings/hero-banner", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slides: newSlides }),
+      body: JSON.stringify({ slides: newSlides, enabled: newEnabled }),
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
     setSaving(false);
+  }
+
+  function saveSlides(newSlides: HeroBannerSlide[]) {
+    return saveConfig(newSlides, enabled);
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -114,6 +119,29 @@ export default function HeroBannerAdmin() {
         <a href="/admin" className="text-xs tracking-widest uppercase underline font-sans" style={{ color: "var(--muted)" }}>
           ← Back
         </a>
+      </div>
+
+      {/* Toggle */}
+      <div className="bg-white p-6 mb-4" style={{ border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>แสดง Hero Banner</p>
+            <p className="text-xs font-sans mt-0.5" style={{ color: "var(--muted)" }}>
+              เปิด/ปิดการแสดง Banner บน Homepage โดยไม่ต้องลบรูป
+            </p>
+          </div>
+          <button
+            onClick={() => { const next = !enabled; setEnabled(next); saveConfig(slides, next); }}
+            disabled={saving}
+            className="relative w-14 h-7 rounded-full transition-colors duration-200 disabled:opacity-50"
+            style={{ backgroundColor: enabled ? "var(--gold)" : "#D1D5DB" }}
+          >
+            <span
+              className="absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+              style={{ left: enabled ? "30px" : "4px" }}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Upload */}
@@ -211,7 +239,7 @@ export default function HeroBannerAdmin() {
           ))}
 
           <button
-            onClick={() => saveSlides(slides)}
+            onClick={() => saveConfig(slides, enabled)}
             disabled={saving}
             className="w-full py-3 text-xs tracking-widest uppercase font-sans mt-4 transition-opacity hover:opacity-80 disabled:opacity-50"
             style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}

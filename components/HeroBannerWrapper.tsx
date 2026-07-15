@@ -13,6 +13,6 @@ export default function HeroBannerWrapper() {
       .then(setConfig);
   }, []);
 
-  if (!config || config.slides.length === 0) return null;
+  if (!config || !config.enabled || config.slides.length === 0) return null;
   return <HeroBanner slides={config.slides} />;
 }
