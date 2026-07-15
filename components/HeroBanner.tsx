@@ -43,15 +43,20 @@ export default function HeroBanner({ slides }: { slides: BannerSlide[] }) {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Natural aspect ratio image — no cropping */}
+      {/* Mobile: natural ratio / Desktop: capped height with cover */}
       {slide.link ? (
-        <a href={slide.link}>
+        <a href={slide.link} className="block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={slide.imageUrl}
             alt="Banner"
-            className="w-full h-auto block"
-            style={{ transition: "opacity 0.4s ease" }}
+            className="w-full block"
+            style={{
+              height: "auto",
+              maxHeight: "clamp(260px, 55vw, 580px)",
+              objectFit: "cover",
+              objectPosition: "center",
+            }}
           />
         </a>
       ) : (
@@ -59,8 +64,13 @@ export default function HeroBanner({ slides }: { slides: BannerSlide[] }) {
         <img
           src={slide.imageUrl}
           alt="Banner"
-          className="w-full h-auto block"
-          style={{ transition: "opacity 0.4s ease" }}
+          className="w-full block"
+          style={{
+            height: "auto",
+            maxHeight: "clamp(260px, 55vw, 580px)",
+            objectFit: "cover",
+            objectPosition: "center",
+          }}
         />
       )}
 
