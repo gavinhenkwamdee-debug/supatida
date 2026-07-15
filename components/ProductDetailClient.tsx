@@ -24,7 +24,10 @@ function LineButton({ product }: { product: Product }) {
     style: "currency", currency: "THB", maximumFractionDigits: 0,
   }).format(product.price);
   const message = `สวัสดีครับ สอบถามข้อมูลสินค้าชิ้นนี้\n${product.name}\nราคา: ${priceFormatted}\n${productUrl}`;
-  const lineUrl = `https://line.me/R/oaMessage/${LINE_OA}/?text=${encodeURIComponent(message)}`;
+  const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const lineUrl = isMobile
+    ? `https://line.me/R/oaMessage/${LINE_OA}/?text=${encodeURIComponent(message)}`
+    : `https://lin.ee/U9D2iyG`;
 
   return (
     <a
