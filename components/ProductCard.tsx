@@ -77,13 +77,37 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.category}
           </span>
 
-          {/* Best Seller badge */}
-          {product.bestSeller && (
-            <span className="absolute top-3 right-3 text-xs px-2 py-1 tracking-widest uppercase font-sans"
-              style={{ backgroundColor: "var(--gold)", color: "white" }}>
-              Best Seller
-            </span>
-          )}
+          {/* Badge ribbon — diagonal top-left */}
+          {product.badge && (() => {
+            const cfg: Record<string, { label: string; bg: string }> = {
+              "hot-item":   { label: "Hot Item",   bg: "#B8922A" },
+              "best-deal":  { label: "Best Deal",  bg: "#2E7D32" },
+              "super-sale": { label: "Super Sale", bg: "#C0392B" },
+            };
+            const c = cfg[product.badge];
+            if (!c) return null;
+            return (
+              <div className="absolute top-0 left-0 overflow-hidden w-24 h-24 pointer-events-none">
+                <div
+                  className="absolute font-sans font-bold text-white text-center"
+                  style={{
+                    fontSize: "9px",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    backgroundColor: c.bg,
+                    width: "110px",
+                    padding: "5px 0",
+                    top: "18px",
+                    left: "-28px",
+                    transform: "rotate(-45deg)",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.25)",
+                  }}
+                >
+                  {c.label}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Image dots */}
           {images.length > 1 && (

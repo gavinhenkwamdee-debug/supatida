@@ -68,7 +68,9 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         <nav className="flex items-center gap-2 text-xs font-sans" style={{ color: "var(--muted)" }}>
           <Link href="/" className="hover:underline" style={{ color: "var(--gold)" }}>Collections</Link>
           <span>›</span>
-          <span>{product.category}</span>
+          <Link href={`/?category=${product.category}`} className="hover:underline" style={{ color: "var(--gold)" }}>
+            {product.category}
+          </Link>
           <span>›</span>
           <span style={{ color: "var(--charcoal)" }}>{product.name}</span>
         </nav>

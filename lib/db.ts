@@ -17,6 +17,7 @@ export interface Product {
   soldOut: boolean;
   hidden: boolean;
   bestSeller: boolean;
+  badge: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +36,7 @@ export async function initDB() {
       sold_out    BOOLEAN NOT NULL DEFAULT FALSE,
       hidden      BOOLEAN NOT NULL DEFAULT FALSE,
       best_seller BOOLEAN NOT NULL DEFAULT FALSE,
+      badge       TEXT,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -48,6 +50,9 @@ export async function initDB() {
   `;
   await sql`
     ALTER TABLE products ADD COLUMN IF NOT EXISTS best_seller BOOLEAN NOT NULL DEFAULT FALSE
+  `;
+  await sql`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS badge TEXT
   `;
 }
 
@@ -65,6 +70,7 @@ function toProduct(row: any): Product {
     soldOut: row.sold_out ?? false,
     hidden: row.hidden ?? false,
     bestSeller: row.best_seller ?? false,
+    badge: row.badge ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -85,7 +91,7 @@ export async function createProduct(
   data: Omit<Product, "id" | "createdAt" | "updatedAt">
 ): Promise<Product> {
   const rows = await sql`
-    INSERT INTO products (name, price, category, description, specifications, images, sold_out, hidden, best_seller)
+    INSERT INTO products (name, price, category, description, specifications, images, sold_out, hidden, best_seller, badge)
     VALUES (
       ${data.name},
       ${data.price},
@@ -95,7 +101,8 @@ export async function createProduct(
       ${JSON.stringify(data.images)},
       ${data.soldOut ?? false},
       ${data.hidden ?? false},
-      ${data.bestSeller ?? false}
+      ${data.bestSeller ?? false},
+      ${data.badge ?? null}
     )
     RETURNING *
   `;
@@ -121,6 +128,10 @@ export async function updateProduct(
     WHERE id = ${id}
     RETURNING *
   `;
+  // badge can be null so handle separately to distinguish "don't update" vs "set null"
+  if ("badge" in data) {
+    await sql`UPDATE products SET badge = ${data.badge} WHERE id = ${id}`;
+  }
   return rows[0] ? toProduct(rows[0]) : null;
 }
 

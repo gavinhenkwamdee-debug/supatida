@@ -6,5 +6,6 @@ export async function POST() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS sold_out BOOLEAN NOT NULL DEFAULT FALSE`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS best_seller BOOLEAN NOT NULL DEFAULT FALSE`;
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS badge TEXT`;
   return NextResponse.json({ ok: true, message: "Migration complete" });
 }

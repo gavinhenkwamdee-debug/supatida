@@ -19,7 +19,7 @@ function filterProducts(
   maxPrice: string | undefined
 ): Product[] {
   const sorted = [...products].sort((a, b) => {
-    const rank = (p: typeof a) => p.soldOut ? 2 : p.bestSeller ? 0 : 1;
+    const rank = (p: typeof a) => p.soldOut ? 2 : p.badge ? 0 : 1;
     return rank(a) - rank(b);
   });
   return sorted.filter((p) => {

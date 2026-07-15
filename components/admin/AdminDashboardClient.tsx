@@ -44,7 +44,7 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
   const itemId = product.specifications["Item ID"] || "";
   const [toggling, setToggling] = useState(false);
   const [togglingHide, setTogglingHide] = useState(false);
-  const [togglingBest, setTogglingBest] = useState(false);
+  const [savingBadge, setSavingBadge] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`ลบ "${product.name}"? ไม่สามารถกู้คืนได้`)) return;
@@ -64,15 +64,15 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
     setToggling(false);
   }
 
-  async function toggleBestSeller() {
-    setTogglingBest(true);
+  async function setBadge(badge: string | null) {
+    setSavingBadge(true);
     const res = await fetch(`/api/products/${product.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bestSeller: !product.bestSeller }),
+      body: JSON.stringify({ badge }),
     });
     if (res.ok) { const updated = await res.json(); onUpdated(updated); }
-    setTogglingBest(false);
+    setSavingBadge(false);
   }
 
   async function toggleHidden() {
@@ -126,21 +126,28 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
         </span>
       </td>
 
-      {/* Best Seller toggle */}
+      {/* Badge selector */}
       <td className="px-4 py-3">
-        <button
-          onClick={toggleBestSeller}
-          disabled={togglingBest}
-          className="text-xs px-2 py-1 rounded font-sans transition-all disabled:opacity-50"
+        <select
+          value={product.badge ?? ""}
+          disabled={savingBadge}
+          onChange={(e) => setBadge(e.target.value || null)}
+          className="text-xs px-2 py-1 font-sans outline-none disabled:opacity-50"
           style={{
-            backgroundColor: product.bestSeller ? "var(--gold)" : "#F5F0E8",
-            color: product.bestSeller ? "white" : "var(--muted)",
-            border: "1px solid",
-            borderColor: product.bestSeller ? "var(--gold)" : "var(--border)",
+            border: "1px solid var(--border)",
+            backgroundColor: product.badge === "hot-item" ? "#B8922A"
+              : product.badge === "best-deal" ? "#2E7D32"
+              : product.badge === "super-sale" ? "#C0392B"
+              : "white",
+            color: product.badge ? "white" : "var(--muted)",
+            borderRadius: "3px",
           }}
         >
-          {product.bestSeller ? "★ Best Seller" : "Best Seller"}
-        </button>
+          <option value="" style={{ background: "white", color: "#666" }}>— None —</option>
+          <option value="hot-item" style={{ background: "white", color: "#B8922A" }}>🔥 Hot Item</option>
+          <option value="best-deal" style={{ background: "white", color: "#2E7D32" }}>💚 Best Deal</option>
+          <option value="super-sale" style={{ background: "white", color: "#C0392B" }}>🔴 Super Sale</option>
+        </select>
       </td>
 
       {/* Sold Out toggle */}
