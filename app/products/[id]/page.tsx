@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getProductById } from "@/lib/db";
 import ProductDetailClient from "@/components/ProductDetailClient";
 
+export const dynamic = "force-dynamic";
+
 const SITE_URL = "https://www.supatidajewelry.com";
 
 interface Props {
