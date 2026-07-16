@@ -8,18 +8,10 @@ import type { Product } from "@/lib/db";
 const CATEGORIES = ["Rings", "Necklaces", "Earrings", "Bracelets", "Pendants"];
 
 const SPEC_KEYS = [
-  "Carat Weight",
-  "Shape",
-  "Cut",
-  "Color",
-  "Clarity",
-  "Certificate",
   "Metal Type",
-  "Ring Size",
-  "Band Width",
-  "Setting Style",
-  "Total Diamond Weight",
+  "Metal Color",
   "Product Code",
+  "Total Carat Weight",
   "Other",
 ];
 const MAX_SLOTS = 5;
