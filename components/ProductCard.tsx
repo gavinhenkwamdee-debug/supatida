@@ -134,7 +134,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
 
           {/* IGI badge */}
           {product.igi && (
-            <div className="absolute top-2 right-2 pointer-events-none">
+            <div className="absolute bottom-2 left-2 pointer-events-none">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/igi-logo.png" alt="IGI" style={{ width: "36px", opacity: 0.9 }} />
             </div>
