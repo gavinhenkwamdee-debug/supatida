@@ -1,4 +1,4 @@
-const DISCOUNTS = [0.05, 0.10, 0.15];
+const DISCOUNTS = [0.25, 0.30, 0.35];
 
 function roundNice(price: number): number {
   if (price >= 100000) return Math.round(price / 10000) * 10000;
