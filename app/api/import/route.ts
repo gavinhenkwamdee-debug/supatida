@@ -20,6 +20,7 @@ export async function POST(request: Request) {
         hidden: false,
         bestSeller: false,
         badge: null,
+        igi: false,
       });
       created.push(product);
     }
