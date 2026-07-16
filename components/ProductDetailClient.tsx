@@ -202,7 +202,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         className="text-center py-8 mt-16 text-xs tracking-widest uppercase font-sans">
         © {new Date().getFullYear()} Supatida · Lab Grown Diamond Jewelry
       </footer>
-      <IgiLogo />
+      {product.igi && <IgiLogo />}
     </div>
   );
 }

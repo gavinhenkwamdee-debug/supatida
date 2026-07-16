@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 import Header from "./Header";
 import HeroBannerWrapper from "./HeroBannerWrapper";
-import IgiLogo from "./IgiLogo";
 
 export default function CatalogClient({
   children,
@@ -17,7 +16,6 @@ export default function CatalogClient({
       </Suspense>
       <HeroBannerWrapper />
       {children}
-      <IgiLogo />
     </>
   );
 }

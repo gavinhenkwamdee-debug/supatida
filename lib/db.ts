@@ -19,6 +19,7 @@ export interface Product {
   hidden: boolean;
   bestSeller: boolean;
   badge: string | null;
+  igi: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +56,9 @@ export async function initDB() {
   await sql`
     ALTER TABLE products ADD COLUMN IF NOT EXISTS badge TEXT
   `;
+  await sql`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS igi BOOLEAN NOT NULL DEFAULT FALSE
+  `;
 }
 
 // ── Row mapper ────────────────────────────────────────────
@@ -72,6 +76,7 @@ function toProduct(row: any): Product {
     hidden: row.hidden ?? false,
     bestSeller: row.best_seller ?? false,
     badge: row.badge ?? null,
+    igi: row.igi ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -130,6 +135,7 @@ export async function updateProduct(
       sold_out      = COALESCE(${data.soldOut ?? null}, sold_out),
       hidden        = COALESCE(${data.hidden ?? null}, hidden),
       best_seller   = COALESCE(${data.bestSeller ?? null}, best_seller),
+      igi           = COALESCE(${data.igi ?? null}, igi),
       updated_at    = NOW()
     WHERE id = ${id}
     RETURNING *

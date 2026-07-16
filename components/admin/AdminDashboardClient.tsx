@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -45,6 +45,7 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
   const [toggling, setToggling] = useState(false);
   const [togglingHide, setTogglingHide] = useState(false);
   const [savingBadge, setSavingBadge] = useState(false);
+  const [togglingIgi, setTogglingIgi] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`ลบ "${product.name}"? ไม่สามารถกู้คืนได้`)) return;
@@ -84,6 +85,17 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
     });
     if (res.ok) { const updated = await res.json(); onUpdated(updated); }
     setTogglingHide(false);
+  }
+
+  async function toggleIgi() {
+    setTogglingIgi(true);
+    const res = await fetch(`/api/products/${product.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ igi: !product.igi }),
+    });
+    if (res.ok) { const updated = await res.json(); onUpdated(updated); }
+    setTogglingIgi(false);
   }
 
   return (
@@ -184,6 +196,23 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
         </button>
       </td>
 
+      {/* IGI toggle */}
+      <td className="px-4 py-3">
+        <button
+          onClick={toggleIgi}
+          disabled={togglingIgi}
+          className="text-xs px-2 py-1 rounded font-sans transition-all disabled:opacity-50"
+          style={{
+            backgroundColor: product.igi ? "#1B4332" : "#F5F0E8",
+            color: product.igi ? "white" : "var(--muted)",
+            border: "1px solid",
+            borderColor: product.igi ? "#1B4332" : "var(--border)",
+          }}
+        >
+          {product.igi ? "💎 IGI" : "—"}
+        </button>
+      </td>
+
       {/* Actions */}
       <td className="px-4 py-3">
         <div className="flex gap-3">
@@ -207,24 +236,6 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
 
 export default function AdminDashboardClient({ products: initial }: { products: Product[] }) {
   const [products, setProducts] = useState(initial);
-  const [igiEnabled, setIgiEnabled] = useState(false);
-  const [igiSaving, setIgiSaving] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/settings/igi").then((r) => r.json()).then((d) => setIgiEnabled(d.enabled)).catch(() => {});
-  }, []);
-
-  async function toggleIgi() {
-    setIgiSaving(true);
-    const next = !igiEnabled;
-    await fetch("/api/settings/igi", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ enabled: next }),
-    });
-    setIgiEnabled(next);
-    setIgiSaving(false);
-  }
 
   function handleUpdated(updated: Product) {
     setProducts((prev) => prev.map((p) => p.id === updated.id ? updated : p));
@@ -299,14 +310,6 @@ export default function AdminDashboardClient({ products: initial }: { products: 
           Products <span className="text-sm font-sans font-normal" style={{ color: "var(--muted)" }}>({filtered.length})</span>
         </h2>
         <div className="flex gap-2">
-          <button
-            onClick={toggleIgi}
-            disabled={igiSaving}
-            className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans disabled:opacity-50"
-            style={{ backgroundColor: igiEnabled ? "#1B4332" : "#6B7280", color: "white" }}
-          >
-            💎 IGI {igiEnabled ? "ON" : "OFF"}
-          </button>
           <Link href="/admin/hero-banner"
             className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
             style={{ backgroundColor: "#6B5E4E", color: "white" }}>
@@ -389,7 +392,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#FAF8F4" }}>
-                  {["Product", "Category", "Price", "Images", "Best Seller", "Status", "Visibility", "Actions"].map((h) => (
+                  {["Product", "Category", "Price", "Images", "Best Seller", "Status", "Visibility", "IGI", "Actions"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs tracking-widest uppercase"
                       style={{ color: "var(--muted)" }}>
                       {h}
