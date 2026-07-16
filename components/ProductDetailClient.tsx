@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SlidingBanner from "./SlidingBanner";
 import IgiLogo from "./IgiLogo";
+import { getOriginalPrice, getDiscountPercent } from "@/lib/pricing";
 import type { Product } from "@/lib/db";
 
 
@@ -148,11 +149,20 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               {product.name}
             </h1>
 
-            {!product.soldOut && (
-              <p className="text-3xl font-sans font-light mb-4" style={{ color: "var(--gold)" }}>
-                {new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(product.price)}
-              </p>
-            )}
+            {!product.soldOut && (() => {
+              const fmt = (n: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
+              const originalPrice = getOriginalPrice(product.id, product.price);
+              const discountPct = getDiscountPercent(product.id);
+              return (
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(originalPrice)}</span>
+                    <span className="text-xs font-sans font-bold px-2 py-0.5" style={{ backgroundColor: "#C0392B", color: "white" }}>-{discountPct}%</span>
+                  </div>
+                  <p className="text-3xl font-sans font-light" style={{ color: "var(--gold)" }}>{fmt(product.price)}</p>
+                </div>
+              );
+            })()}
 
             {product.soldOut && (
               <div className="mb-6 py-3 text-center tracking-[0.3em] text-lg font-sans font-bold"

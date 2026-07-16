@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/db";
+import { getOriginalPrice, getDiscountPercent } from "@/lib/pricing";
 
 const DIAMOND_SVG = (
   <svg viewBox="0 0 80 80" className="w-24 h-24 opacity-20" fill="none">
@@ -26,11 +27,10 @@ export default function ProductCard({ product, priority = false }: { product: Pr
   const [imgError, setImgError] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
-  const priceFormatted = new Intl.NumberFormat("th-TH", {
-    style: "currency",
-    currency: "THB",
-    maximumFractionDigits: 0,
-  }).format(product.price);
+  const fmt = (n: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
+  const priceFormatted = fmt(product.price);
+  const originalPrice = getOriginalPrice(product.id, product.price);
+  const discountPct = getDiscountPercent(product.id);
 
   function openLine(e: React.MouseEvent) {
     if ((window as any).fbq) {
@@ -190,9 +190,19 @@ export default function ProductCard({ product, priority = false }: { product: Pr
         </Link>
 
         {!product.soldOut && (
-          <p className="text-sm sm:text-xl font-sans font-light tracking-wide mb-2 sm:mb-3" style={{ color: "var(--gold)" }}>
-            {priceFormatted}
-          </p>
+          <div className="mb-2 sm:mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>
+                {fmt(originalPrice)}
+              </span>
+              <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#C0392B", color: "white", fontSize: "9px" }}>
+                -{discountPct}%
+              </span>
+            </div>
+            <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "var(--gold)" }}>
+              {priceFormatted}
+            </p>
+          </div>
         )}
 
         {/* LINE Button */}
