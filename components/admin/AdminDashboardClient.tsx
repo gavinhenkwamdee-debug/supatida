@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -207,6 +207,24 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
 
 export default function AdminDashboardClient({ products: initial }: { products: Product[] }) {
   const [products, setProducts] = useState(initial);
+  const [igiEnabled, setIgiEnabled] = useState(false);
+  const [igiSaving, setIgiSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings/igi").then((r) => r.json()).then((d) => setIgiEnabled(d.enabled)).catch(() => {});
+  }, []);
+
+  async function toggleIgi() {
+    setIgiSaving(true);
+    const next = !igiEnabled;
+    await fetch("/api/settings/igi", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: next }),
+    });
+    setIgiEnabled(next);
+    setIgiSaving(false);
+  }
 
   function handleUpdated(updated: Product) {
     setProducts((prev) => prev.map((p) => p.id === updated.id ? updated : p));
@@ -281,6 +299,14 @@ export default function AdminDashboardClient({ products: initial }: { products: 
           Products <span className="text-sm font-sans font-normal" style={{ color: "var(--muted)" }}>({filtered.length})</span>
         </h2>
         <div className="flex gap-2">
+          <button
+            onClick={toggleIgi}
+            disabled={igiSaving}
+            className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans disabled:opacity-50"
+            style={{ backgroundColor: igiEnabled ? "#1B4332" : "#6B7280", color: "white" }}
+          >
+            💎 IGI {igiEnabled ? "ON" : "OFF"}
+          </button>
           <Link href="/admin/hero-banner"
             className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
             style={{ backgroundColor: "#6B5E4E", color: "white" }}>
