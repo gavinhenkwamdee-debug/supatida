@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { Product } from "@/lib/db";
@@ -253,6 +253,29 @@ export default function ProductForm({ product }: Props) {
   const [images, setImages] = useState<string[]>(product?.images || []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  // draft product ID for new products — created on mount so images can be uploaded immediately
+  const [draftId, setDraftId] = useState<number | null>(product?.id ?? null);
+  const draftCreating = useRef(false);
+
+  useEffect(() => {
+    if (isEdit || draftCreating.current) return;
+    draftCreating.current = true;
+    fetch("/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "__draft__",
+        price: 0,
+        category: CATEGORIES[0],
+        description: "",
+        specifications: {},
+        images: [],
+      }),
+    })
+      .then((r) => r.json())
+      .then((p) => setDraftId(p.id))
+      .catch(() => {});
+  }, [isEdit]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -269,9 +292,11 @@ export default function ProductForm({ product }: Props) {
     };
 
     try {
+      // always PUT — either editing existing product or saving the draft
+      const id = isEdit ? product!.id : draftId;
       let res: Response;
-      if (isEdit && product) {
-        res = await fetch(`/api/products/${product.id}`, {
+      if (id) {
+        res = await fetch(`/api/products/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -370,44 +395,42 @@ export default function ProductForm({ product }: Props) {
           <SpecsEditor value={specifications} onChange={setSpecifications} />
         </div>
 
-        {/* Images — only show slots when editing (product must exist first) */}
-        {isEdit && product && (
-          <div>
-            <label className={labelClass} style={labelStyle}>
-              Images ({images.filter(Boolean).length}/{MAX_SLOTS} slots)
-            </label>
-            <div className="grid grid-cols-5 gap-3">
-              {Array.from({ length: MAX_SLOTS }).map((_, i) => (
-                <ImageSlot
-                  key={i}
-                  slot={i}
-                  src={images[i] || ""}
-                  productId={product.id}
-                  onUploaded={(slot, url) => {
-                    const next = [...images];
-                    while (next.length <= slot) next.push("");
-                    next[slot] = url;
-                    setImages(next);
-                  }}
-                  onRemoved={(slot) => {
-                    const next = [...images];
-                    next[slot] = "";
-                    setImages(next);
-                  }}
-                />
-              ))}
-            </div>
-            <p className="text-xs mt-2 font-sans" style={{ color: "var(--muted)" }}>
-              JPEG, PNG, WebP or AVIF · Max 8 MB per image
-            </p>
-          </div>
-        )}
-
-        {!isEdit && (
-          <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>
-            You can upload images after saving the product.
-          </p>
-        )}
+        {/* Images */}
+        <div>
+          <label className={labelClass} style={labelStyle}>
+            Images ({images.filter(Boolean).length}/{MAX_SLOTS} slots)
+          </label>
+          {draftId ? (
+            <>
+              <div className="grid grid-cols-5 gap-3">
+                {Array.from({ length: MAX_SLOTS }).map((_, i) => (
+                  <ImageSlot
+                    key={i}
+                    slot={i}
+                    src={images[i] || ""}
+                    productId={draftId}
+                    onUploaded={(slot, url) => {
+                      const next = [...images];
+                      while (next.length <= slot) next.push("");
+                      next[slot] = url;
+                      setImages(next);
+                    }}
+                    onRemoved={(slot) => {
+                      const next = [...images];
+                      next[slot] = "";
+                      setImages(next);
+                    }}
+                  />
+                ))}
+              </div>
+              <p className="text-xs mt-2 font-sans" style={{ color: "var(--muted)" }}>
+                JPEG, PNG, WebP or AVIF · Max 8 MB per image
+              </p>
+            </>
+          ) : (
+            <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>กำลังเตรียม…</p>
+          )}
+        </div>
 
         {error && (
           <p className="text-sm font-sans" style={{ color: "#C0392B" }}>
