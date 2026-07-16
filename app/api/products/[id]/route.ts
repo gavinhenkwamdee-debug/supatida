@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { getProductById, updateProduct, deleteProduct } from "@/lib/db";
 
 type Params = { params: Promise<{ id: string }> };
@@ -18,6 +18,7 @@ export async function PUT(request: Request, { params }: Params) {
     const product = await updateProduct(parseInt(id), body);
     if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
     revalidateTag("products", "default");
+    revalidatePath(`/products/${id}`);
     return NextResponse.json(product);
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
