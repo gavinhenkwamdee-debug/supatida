@@ -33,16 +33,11 @@ export default function ProductCard({ product, priority = false }: { product: Pr
   }).format(product.price);
 
   function openLine(e: React.MouseEvent) {
-    e.preventDefault();
-    const go = () => { window.location.href = "https://lin.ee/U9D2iyG"; };
     if ((window as any).fbq) {
       (window as any).fbq("trackCustom", "LineContact", {
         content_ids: [String(product.id)],
         content_name: product.name,
       });
-      setTimeout(go, 300);
-    } else {
-      go();
     }
   }
 
@@ -194,7 +189,9 @@ export default function ProductCard({ product, priority = false }: { product: Pr
 
         {/* LINE Button */}
         <a
-          href="#"
+          href="https://lin.ee/U9D2iyG"
+          target="_blank"
+          rel="noopener noreferrer"
           onClick={openLine}
           className="mt-auto flex items-center justify-center gap-2 py-2.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
           style={{ backgroundColor: "#06C755", color: "white" }}

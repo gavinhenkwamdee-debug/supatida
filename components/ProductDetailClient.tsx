@@ -21,23 +21,20 @@ function LineButton({ product }: { product: Product }) {
     style: "currency", currency: "THB", maximumFractionDigits: 0,
   }).format(product.price);
 
-  function handleClick(e: React.MouseEvent) {
-    e.preventDefault();
-    const go = () => { window.location.href = "https://lin.ee/U9D2iyG"; };
+  function handleClick() {
     if ((window as any).fbq) {
       (window as any).fbq("trackCustom", "LineContact", {
         content_ids: [String(product.id)],
         content_name: product.name,
       });
-      setTimeout(go, 300);
-    } else {
-      go();
     }
   }
 
   return (
     <a
-      href="#"
+      href="https://lin.ee/U9D2iyG"
+      target="_blank"
+      rel="noopener noreferrer"
       onClick={handleClick}
       className="flex items-center justify-center gap-3 py-4 text-sm tracking-widest uppercase font-sans transition-opacity hover:opacity-80 w-full"
       style={{ backgroundColor: "#06C755", color: "white" }}

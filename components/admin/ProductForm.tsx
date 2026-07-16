@@ -6,6 +6,22 @@ import Image from "next/image";
 import type { Product } from "@/lib/db";
 
 const CATEGORIES = ["Rings", "Necklaces", "Earrings", "Bracelets", "Pendants"];
+
+const SPEC_KEYS = [
+  "Carat Weight",
+  "Shape",
+  "Cut",
+  "Color",
+  "Clarity",
+  "Certificate",
+  "Metal Type",
+  "Ring Size",
+  "Band Width",
+  "Setting Style",
+  "Total Diamond Weight",
+  "Product Code",
+  "Other",
+];
 const MAX_SLOTS = 5;
 
 interface Props {
@@ -42,32 +58,51 @@ function SpecsEditor({
 
   return (
     <div className="space-y-2">
-      {entries.map(([key, val], i) => (
-        <div key={i} className="flex gap-2">
-          <input
-            className="flex-1 px-3 py-2 text-xs font-sans outline-none"
-            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-            placeholder="e.g. Carat Weight"
-            value={key}
-            onChange={(e) => updateKey(key, e.target.value)}
-          />
-          <input
-            className="flex-1 px-3 py-2 text-xs font-sans outline-none"
-            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-            placeholder="e.g. 1.5 ct"
-            value={val}
-            onChange={(e) => updateVal(key, e.target.value)}
-          />
-          <button
-            type="button"
-            onClick={() => removeRow(key)}
-            className="px-3 text-xs"
-            style={{ color: "#C0392B" }}
-          >
-            ✕
-          </button>
-        </div>
-      ))}
+      {entries.map(([key, val], i) => {
+        const isCustom = key !== "" && !SPEC_KEYS.slice(0, -1).includes(key);
+        const selectVal = isCustom ? "Other" : key;
+        return (
+          <div key={i} className="flex gap-2">
+            <div className="flex-1 flex flex-col gap-1">
+              <select
+                className="w-full px-3 py-2 text-xs font-sans outline-none"
+                style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
+                value={selectVal}
+                onChange={(e) => updateKey(key, e.target.value === "Other" ? "" : e.target.value)}
+              >
+                <option value="">— เลือก —</option>
+                {SPEC_KEYS.map((k) => (
+                  <option key={k} value={k}>{k}</option>
+                ))}
+              </select>
+              {(selectVal === "Other" || isCustom) && (
+                <input
+                  className="w-full px-3 py-2 text-xs font-sans outline-none"
+                  style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+                  placeholder="ชื่อ spec (custom)"
+                  value={key}
+                  onChange={(e) => updateKey(key, e.target.value)}
+                />
+              )}
+            </div>
+            <input
+              className="flex-1 px-3 py-2 text-xs font-sans outline-none"
+              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+              placeholder="e.g. 1.5 ct"
+              value={val}
+              onChange={(e) => updateVal(key, e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => removeRow(key)}
+              className="px-3 text-xs"
+              style={{ color: "#C0392B" }}
+            >
+              ✕
+            </button>
+          </div>
+        );
+      })}
       <button
         type="button"
         onClick={addRow}
