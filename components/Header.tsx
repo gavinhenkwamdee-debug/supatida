@@ -77,6 +77,25 @@ export default function Header() {
         className="flex gap-1 px-4 py-2 overflow-x-auto scrollbar-hide"
       >
         <div className="flex gap-1 mx-auto">
+          {/* Super Sale tab — special styling */}
+          <button
+            onClick={() => setParam({ category: "Super Sale" })}
+            className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0 font-bold"
+            style={activeCategory === "Super Sale" ? {
+              color: "white",
+              background: "#C0392B",
+              borderBottom: "2px solid #C0392B",
+              cursor: "pointer",
+            } : {
+              color: "#C0392B",
+              background: "rgba(192,57,43,0.08)",
+              borderBottom: "2px solid transparent",
+              cursor: "pointer",
+            }}
+          >
+            🔴 Super Sale
+          </button>
+
           {CATEGORIES.map((cat) => (
             <button
               key={cat}

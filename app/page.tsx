@@ -26,6 +26,7 @@ function filterProducts(
   });
   return sorted.filter((p) => {
     if (p.hidden) return false;
+    if (category === "Super Sale") return p.badge === "super-sale";
     if (category && category !== "All" && p.category !== category) return false;
     if (minPrice && p.price < parseFloat(minPrice)) return false;
     if (maxPrice && p.price > parseFloat(maxPrice)) return false;
