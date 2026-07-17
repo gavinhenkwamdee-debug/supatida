@@ -283,8 +283,8 @@ export default function ProductForm({ product }: Props) {
     setError("");
 
     const payload = {
-      name: name.trim(),
-      price: parseFloat(price),
+      name: name.trim() || "Draft",
+      price: parseFloat(price) || 0,
       category,
       description: description.trim(),
       specifications,
@@ -333,21 +333,20 @@ export default function ProductForm({ product }: Props) {
       <div className="grid grid-cols-1 gap-6">
         {/* Name */}
         <div>
-          <label className={labelClass} style={labelStyle}>Product Name *</label>
+          <label className={labelClass} style={labelStyle}>Product Name</label>
           <input
             className={fieldClass}
             style={fieldStyle}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Radiant Cut Solitaire Ring"
-            required
           />
         </div>
 
         {/* Price + Category */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={labelClass} style={labelStyle}>Price (THB) *</label>
+            <label className={labelClass} style={labelStyle}>Price (THB)</label>
             <input
               type="number"
               min="0"
@@ -357,17 +356,15 @@ export default function ProductForm({ product }: Props) {
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="e.g. 3500"
-              required
             />
           </div>
           <div>
-            <label className={labelClass} style={labelStyle}>Category *</label>
+            <label className={labelClass} style={labelStyle}>Category</label>
             <select
               className={fieldClass}
               style={fieldStyle}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              required
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
