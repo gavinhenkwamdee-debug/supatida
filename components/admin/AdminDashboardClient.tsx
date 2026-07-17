@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -236,6 +236,20 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
 
 export default function AdminDashboardClient({ products: initial }: { products: Product[] }) {
   const [products, setProducts] = useState(initial);
+  const [tryOnEnabled, setTryOnEnabled] = useState(false);
+  const [tryOnSaving, setTryOnSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings/tryon").then(r => r.json()).then(d => setTryOnEnabled(d.enabled)).catch(() => {});
+  }, []);
+
+  async function toggleTryOn() {
+    setTryOnSaving(true);
+    const next = !tryOnEnabled;
+    await fetch("/api/settings/tryon", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled: next }) });
+    setTryOnEnabled(next);
+    setTryOnSaving(false);
+  }
 
   function handleUpdated(updated: Product) {
     setProducts((prev) => prev.map((p) => p.id === updated.id ? updated : p));
@@ -310,6 +324,14 @@ export default function AdminDashboardClient({ products: initial }: { products: 
           Products <span className="text-sm font-sans font-normal" style={{ color: "var(--muted)" }}>({filtered.length})</span>
         </h2>
         <div className="flex gap-2">
+          <button
+            onClick={toggleTryOn}
+            disabled={tryOnSaving}
+            className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans disabled:opacity-50"
+            style={{ backgroundColor: tryOnEnabled ? "#14532D" : "#6B7280", color: "white" }}
+          >
+            💍 Try-On {tryOnEnabled ? "ON" : "OFF"}
+          </button>
           <Link href="/admin/hero-banner"
             className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
             style={{ backgroundColor: "#6B5E4E", color: "white" }}>

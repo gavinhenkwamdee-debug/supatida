@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
+const TryOnModal = lazy(() => import("./TryOnModal"));
 import Image from "next/image";
 import Link from "next/link";
 import SlidingBanner from "./SlidingBanner";
@@ -51,7 +52,16 @@ function LineButton({ product }: { product: Product }) {
 
 export default function ProductDetailClient({ product }: { product: Product }) {
   const [activeImg, setActiveImg] = useState(0);
+  const [tryOnOpen, setTryOnOpen] = useState(false);
+  const [tryOnEnabled, setTryOnEnabled] = useState(false);
   const images = product.images.filter(Boolean);
+
+  useEffect(() => {
+    fetch("/api/settings/tryon")
+      .then((r) => r.json())
+      .then((d) => setTryOnEnabled(d.enabled))
+      .catch(() => {});
+  }, []);
 
   // Fire ViewContent once per product page
   useEffect(() => {
@@ -199,6 +209,15 @@ export default function ProductDetailClient({ product }: { product: Product }) {
             )}
 
             <div className="mt-auto">
+              {tryOnEnabled && product.category === "Rings" && images.length > 0 && (
+                <button
+                  onClick={() => setTryOnOpen(true)}
+                  className="w-full py-3 text-sm tracking-widest uppercase font-sans mb-3 transition-opacity hover:opacity-80"
+                  style={{ border: "1px solid var(--charcoal)", color: "var(--charcoal)" }}
+                >
+                  💍 ลองสวมแหวน (Virtual Try-On)
+                </button>
+              )}
               <LineButton product={product} />
               <p className="text-center text-xs mt-3 font-sans" style={{ color: "var(--muted)" }}>
                 ทีมงานพร้อมให้คำปรึกษาทุกวัน 9:00 – 21:00 น.
@@ -213,6 +232,15 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         © {new Date().getFullYear()} Supatida · Lab Grown Diamond Jewelry
       </footer>
       {product.igi && <IgiLogo />}
+      {tryOnOpen && (
+        <Suspense fallback={null}>
+          <TryOnModal
+            ringImageUrl={images[0]}
+            productName={product.name}
+            onClose={() => setTryOnOpen(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
