@@ -342,6 +342,11 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             style={{ backgroundColor: "var(--gold)", color: "white" }}>
             🎯 Banner
           </Link>
+          <Link href="/admin/popup"
+            className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
+            style={{ backgroundColor: "#7C3AED", color: "white" }}>
+            🔔 Popup
+          </Link>
           <Link href="/admin/products/new"
             className="px-5 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80"
             style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}>

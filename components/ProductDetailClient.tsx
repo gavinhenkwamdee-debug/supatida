@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SlidingBanner from "./SlidingBanner";
 import IgiLogo from "./IgiLogo";
+import PopupBanner from "./PopupBanner";
 import { getOriginalPrice, getDiscountPercent } from "@/lib/pricing";
 import type { Product } from "@/lib/db";
 
@@ -232,6 +233,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         © {new Date().getFullYear()} Supatida · Lab Grown Diamond Jewelry
       </footer>
       {product.igi && <IgiLogo />}
+      <PopupBanner page="product" />
       {tryOnOpen && (
         <Suspense fallback={null}>
           <TryOnModal
