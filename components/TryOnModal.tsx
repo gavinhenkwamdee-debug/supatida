@@ -18,10 +18,10 @@ export default function TryOnModal({ ringImageUrl, productName, onClose }: Props
   const [blend, setBlend] = useState<GlobalCompositeOperation>("multiply");
 
   useEffect(() => {
+    if (!ringImageUrl) return;
     const img = new window.Image();
-    img.crossOrigin = "anonymous";
     img.onload = () => setRingImg(img);
-    img.src = ringImageUrl;
+    img.src = `/api/proxy-image?url=${encodeURIComponent(ringImageUrl)}`;
   }, [ringImageUrl]);
 
   useEffect(() => {

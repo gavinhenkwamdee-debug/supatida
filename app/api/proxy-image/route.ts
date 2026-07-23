@@ -1,0 +1,22 @@
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const url = searchParams.get("url");
+  if (!url) return NextResponse.json({ error: "url required" }, { status: 400 });
+
+  const res = await fetch(url);
+  if (!res.ok) return NextResponse.json({ error: "fetch failed" }, { status: 502 });
+
+  const buffer = await res.arrayBuffer();
+  const contentType = res.headers.get("content-type") || "image/jpeg";
+
+  return new NextResponse(buffer, {
+    headers: {
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+}
