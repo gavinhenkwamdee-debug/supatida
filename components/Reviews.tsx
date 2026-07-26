@@ -90,7 +90,7 @@ export default function Reviews() {
   if (!loaded || !enabled) return null;
 
   return (
-    <section className="max-w-6xl mx-auto px-4 py-16">
+    <section id="reviews" className="max-w-6xl mx-auto px-4 py-16" style={{ scrollMarginTop: "180px" }}>
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl tracking-wider" style={{ color: "var(--charcoal)" }}>
           รีวิวจากลูกค้า

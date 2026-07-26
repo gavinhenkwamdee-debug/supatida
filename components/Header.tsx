@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import SlidingBanner from "./SlidingBanner";
 
@@ -20,10 +20,23 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [reviewsEnabled, setReviewsEnabled] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings/reviews")
+      .then((r) => r.json())
+      .then((d) => setReviewsEnabled(!!d.enabled))
+      .catch(() => {});
+  }, []);
 
   const activeCategory = searchParams.get("category") || "All";
   const activeMin = searchParams.get("minPrice") || "";
   const activeMax = searchParams.get("maxPrice") || "";
+
+  function scrollToReviews(e: React.MouseEvent) {
+    e.preventDefault();
+    document.getElementById("reviews")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   const setParam = useCallback(
     (updates: Record<string, string>) => {
@@ -111,6 +124,22 @@ export default function Header() {
               {cat}
             </button>
           ))}
+
+          {reviewsEnabled && (
+            <a
+              href="#reviews"
+              onClick={scrollToReviews}
+              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
+              style={{
+                color: "var(--muted)",
+                borderBottom: "2px solid transparent",
+                background: "none",
+                cursor: "pointer",
+              }}
+            >
+              ⭐ รีวิว
+            </a>
+          )}
         </div>
       </nav>
 
