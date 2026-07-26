@@ -171,14 +171,58 @@ export default function ReviewForm({ type }: { type: ReviewType }) {
 
   if (done) {
     return (
-      <div className="bg-white p-10 text-center" style={{ border: "1px solid var(--border)" }}>
-        <p className="text-lg mb-2" style={{ color: "var(--charcoal)" }}>ขอบคุณสำหรับรีวิว!</p>
-        <p className="text-sm font-sans mb-6" style={{ color: "var(--muted)" }}>
-          ส่งรีวิวสำเร็จ รอการตรวจสอบก่อนขึ้นหน้าเว็บ
-        </p>
-        <Link href="/" className="text-xs tracking-widest uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
-          กลับหน้าแรก
-        </Link>
+      <div>
+        <div className="bg-white p-8 text-center" style={{ border: "1px solid var(--border)" }}>
+          <p className="text-lg mb-2" style={{ color: "var(--charcoal)" }}>ขอบคุณสำหรับรีวิว!</p>
+          <p className="text-sm font-sans" style={{ color: "var(--muted)" }}>
+            ส่งรีวิวสำเร็จ รอการตรวจสอบก่อนขึ้นหน้าเว็บ
+          </p>
+        </div>
+
+        {/* Summary card */}
+        <div className="bg-white p-6 mt-4" style={{ border: "1px solid var(--border)" }}>
+          <p className="text-xs tracking-widest uppercase mb-3 font-sans" style={{ color: "var(--gold-dark)" }}>
+            สรุปรีวิวที่ส่ง
+          </p>
+
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>{name.trim()}</span>
+            <span className="text-lg">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <span key={i} style={{ color: i <= rating ? "var(--gold)" : "var(--border)" }}>
+                  {i <= rating ? "★" : "☆"}
+                </span>
+              ))}
+            </span>
+          </div>
+
+          {type === "product" && category && (
+            <p className="text-xs font-sans mb-3" style={{ color: "var(--muted)" }}>
+              ประเภทสินค้า: <span style={{ color: "var(--charcoal)" }}>{category}</span>
+            </p>
+          )}
+
+          {type === "product" && imageUrl && (
+            <div className="relative mb-3 overflow-hidden" style={{ width: 120, height: 120, backgroundColor: "var(--img-bg)" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageUrl} alt="" className="w-full h-full object-cover" style={{ border: "1px solid var(--border)" }} />
+            </div>
+          )}
+
+          <p className="text-sm font-sans leading-relaxed" style={{ color: "var(--charcoal)" }}>
+            {text.trim()}
+          </p>
+        </div>
+
+        <div className="mt-4 p-3 text-center text-sm font-sans" style={{ backgroundColor: "#F5F0E8", border: "1px solid var(--border)", color: "var(--gold-dark)" }}>
+          แคปหน้าจอส่ง admin ได้เลยค่ะ
+        </div>
+
+        <div className="text-center mt-6">
+          <Link href="/" className="text-xs tracking-widest uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
+            กลับหน้าแรก
+          </Link>
+        </div>
       </div>
     );
   }
