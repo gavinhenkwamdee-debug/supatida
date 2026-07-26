@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import Header from "./Header";
 import HeroBannerWrapper from "./HeroBannerWrapper";
 import PopupBanner from "./PopupBanner";
+import Reviews from "./Reviews";
 
 export default function CatalogClient({
   children,
@@ -17,6 +18,7 @@ export default function CatalogClient({
       </Suspense>
       <HeroBannerWrapper />
       {children}
+      <Reviews />
       <PopupBanner page="home" />
     </>
   );

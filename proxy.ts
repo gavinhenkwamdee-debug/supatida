@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const ADMIN_TOKEN_COOKIE = "supatida_admin";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -9,12 +8,7 @@ export function proxy(request: NextRequest) {
   if (pathname.startsWith("/admin/login")) return NextResponse.next();
 
   if (pathname.startsWith("/admin")) {
-    const token = request.cookies.get(ADMIN_TOKEN_COOKIE)?.value;
-    const expected = Buffer.from(
-      process.env.ADMIN_PASSWORD || "supatida2024"
-    ).toString("base64");
-
-    if (token !== expected) {
+    if (!isAdminRequest(request)) {
       const loginUrl = new URL("/admin/login", request.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
