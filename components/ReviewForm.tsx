@@ -19,6 +19,57 @@ const PLACEHOLDER: Record<ReviewType, string> = {
     "เช่น สินค้าคุณภาพดีมาก ประกายสวย ตรงตามที่สั่ง แพ็คของดี จัดส่งไว บริการหลังการขายประทับใจ...",
 };
 
+const EXAMPLE_TEXT: Record<ReviewType, string> = {
+  preorder:
+    "ตอนแรกดูแหวนจากหลายร้านอยู่เหมือนกันค่ะ เพราะเป็นแหวนที่ตั้งใจจะใช้ขอแต่งงาน เลยอยากเลือกร้านที่ไว้ใจได้ สุดท้ายตัดสินใจเลือก Supatida เพราะทีมงานให้คำแนะนำละเอียด ตอบทุกคำถาม และไม่เร่งให้ตัดสินใจ ทำให้รู้สึกมั่นใจตั้งแต่ก่อนสั่งทำค่ะ",
+  product:
+    "หลังได้รับแหวนรู้สึกว่างานจริงสวยกว่าที่คิดค่ะ เพชรเล่นไฟสวยมาก และตัวเรือนละเอียดมาก พอได้ลองใส่จริงก็พอดีกับนิ้วเลย ประทับใจตั้งแต่ขั้นตอนการให้คำแนะนำจนถึงวันที่ได้รับสินค้า รู้สึกว่าตัดสินใจไม่ผิดที่เลือก Supatida ค่ะ",
+};
+
+function ExampleHint({ type }: { type: ReviewType }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative inline-block ml-1.5 align-middle">
+      <button
+        type="button"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={() => setShow((s) => !s)}
+        className="w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-sans"
+        style={{ backgroundColor: "var(--border)", color: "var(--muted)" }}
+        aria-label="ดูตัวอย่างรีวิว"
+      >
+        i
+      </button>
+      {show && (
+        <span
+          className="absolute z-10 left-1/2 -translate-x-1/2 top-6 w-64 p-3 text-xs font-sans leading-relaxed shadow-lg"
+          style={{ backgroundColor: "white", border: "1px solid var(--border)", color: "var(--charcoal)" }}
+        >
+          <span className="block mb-1 font-medium" style={{ color: "var(--gold-dark)" }}>ตัวอย่างรีวิว</span>
+          {EXAMPLE_TEXT[type]}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Checklist({ items }: { items: { label: string; ok: boolean }[] }) {
+  const remaining = items.filter((i) => !i.ok);
+  if (remaining.length === 0) return null;
+  return (
+    <div className="mb-4 p-3 text-xs font-sans space-y-1" style={{ backgroundColor: "#FAF8F4", border: "1px solid var(--border)" }}>
+      <p className="mb-1.5" style={{ color: "var(--muted)" }}>สิ่งที่ยังต้องกรอกก่อนส่งรีวิว:</p>
+      {items.map((item) => (
+        <div key={item.label} className="flex items-center gap-2">
+          <span style={{ color: item.ok ? "#2E7D32" : "#C0392B" }}>{item.ok ? "✓" : "○"}</span>
+          <span style={{ color: item.ok ? "var(--muted)" : "var(--charcoal)" }}>{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
     const img = new window.Image();
@@ -206,6 +257,7 @@ export default function ReviewForm({ type }: { type: ReviewType }) {
       {/* Text */}
       <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>
         รีวิวของคุณ
+        <ExampleHint type={type} />
       </label>
       <textarea
         value={text}
@@ -216,8 +268,18 @@ export default function ReviewForm({ type }: { type: ReviewType }) {
         style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
       />
       <p className="text-xs font-sans mt-1 mb-4" style={{ color: textOk ? "#2E7D32" : "var(--muted)" }}>
-        {trimmedLen} / {MIN_TEXT_LENGTH} ตัวอักษร{textOk ? " ✓" : ""}
+        {trimmedLen} / {MIN_TEXT_LENGTH} ตัวอักษร (ขั้นต่ำ){textOk ? " ✓" : ""}
       </p>
+
+      <Checklist
+        items={[
+          { label: "ชื่อของคุณ", ok: nameOk },
+          { label: "ให้คะแนน (เลือกดาว)", ok: ratingOk },
+          ...(type === "product" ? [{ label: "ประเภทสินค้า", ok: categoryOk }] : []),
+          ...(type === "product" ? [{ label: "รูปสินค้า", ok: imageOk }] : []),
+          { label: `ข้อความรีวิว อย่างน้อย ${MIN_TEXT_LENGTH} ตัวอักษร`, ok: textOk },
+        ]}
+      />
 
       {error && (
         <p className="text-xs font-sans mb-4" style={{ color: "#C0392B" }}>{error}</p>
