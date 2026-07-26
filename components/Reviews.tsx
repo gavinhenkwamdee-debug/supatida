@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import type { Review } from "@/lib/reviews";
-import ReviewFormModal from "./ReviewFormModal";
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -65,7 +64,6 @@ export default function Reviews() {
   const [enabled, setEnabled] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/reviews")
@@ -83,31 +81,20 @@ export default function Reviews() {
       .catch(() => setLoaded(true));
   }, []);
 
-  function handleSubmitted() {
-    setModalOpen(false);
-  }
-
   if (!loaded || !enabled) return null;
 
   return (
     <section id="reviews" className="max-w-6xl mx-auto px-4 py-16" style={{ scrollMarginTop: "180px" }}>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8">
         <h2 className="text-2xl tracking-wider" style={{ color: "var(--charcoal)" }}>
           รีวิวจากลูกค้า
         </h2>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="px-5 py-2.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
-          style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
-        >
-          + เขียนรีวิว
-        </button>
       </div>
 
       {reviews.length === 0 ? (
         <div className="bg-white p-12 text-center" style={{ border: "1px solid var(--border)" }}>
           <p className="text-sm font-sans" style={{ color: "var(--muted)" }}>
-            ยังไม่มีรีวิว เป็นคนแรกที่รีวิวสิ!
+            ยังไม่มีรีวิว
           </p>
         </div>
       ) : (
@@ -116,10 +103,6 @@ export default function Reviews() {
             <ReviewCard key={r.id} review={r} />
           ))}
         </div>
-      )}
-
-      {modalOpen && (
-        <ReviewFormModal onClose={() => setModalOpen(false)} onSubmitted={handleSubmitted} />
       )}
     </section>
   );
