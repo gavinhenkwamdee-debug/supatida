@@ -249,7 +249,7 @@ export default function ProductForm({ product }: Props) {
   const [category, setCategory] = useState(product?.category || CATEGORIES[0]);
   const [description, setDescription] = useState(product?.description || "");
   const [specifications, setSpecifications] = useState<Record<string, string>>(
-    product?.specifications || { "Diamond Quality": "DEF" }
+    product?.specifications || { "Diamond Quality": "D-F Color, VS Clarity Up" }
   );
   const [images, setImages] = useState<string[]>(product?.images || []);
   const [saving, setSaving] = useState(false);

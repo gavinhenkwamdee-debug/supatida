@@ -11,13 +11,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const TARGET = "D-F Color, VS Clarity Up";
   const products = await getAllProducts();
   let updated = 0, skipped = 0;
 
   for (const product of products) {
-    if (product.specifications["Diamond Quality"]) { skipped++; continue; }
+    if (product.specifications["Diamond Quality"] === TARGET) { skipped++; continue; }
     await updateProduct(product.id, {
-      specifications: { ...product.specifications, "Diamond Quality": "DEF" },
+      specifications: { ...product.specifications, "Diamond Quality": TARGET },
     });
     updated++;
   }
