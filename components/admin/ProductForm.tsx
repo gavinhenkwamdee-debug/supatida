@@ -12,6 +12,7 @@ const SPEC_KEYS = [
   "Metal Color",
   "Product Code",
   "Total Carat Weight",
+  "Diamond Quality",
   "Other",
 ];
 const MAX_SLOTS = 5;
@@ -60,7 +61,7 @@ function SpecsEditor({
                 className="w-full px-3 py-2 text-xs font-sans outline-none"
                 style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
                 value={selectVal}
-                onChange={(e) => updateKey(key, e.target.value === "Other" ? "" : e.target.value)}
+                onChange={(e) => updateKey(key, e.target.value)}
               >
                 <option value="">— เลือก —</option>
                 {SPEC_KEYS.map((k) => (
@@ -248,7 +249,7 @@ export default function ProductForm({ product }: Props) {
   const [category, setCategory] = useState(product?.category || CATEGORIES[0]);
   const [description, setDescription] = useState(product?.description || "");
   const [specifications, setSpecifications] = useState<Record<string, string>>(
-    product?.specifications || {}
+    product?.specifications || { "Diamond Quality": "DEF" }
   );
   const [images, setImages] = useState<string[]>(product?.images || []);
   const [saving, setSaving] = useState(false);
