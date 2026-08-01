@@ -14,6 +14,7 @@ const SORT_OPTIONS = [
   { label: "Price: High → Low", value: "price-desc" },
   { label: "Name A → Z", value: "name-asc" },
   { label: "No Image First", value: "noimage" },
+  { label: "Most Viewed", value: "views-desc" },
 ];
 
 const THB = (n: number) =>
@@ -213,6 +214,16 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
         </button>
       </td>
 
+      {/* Views */}
+      <td className="px-4 py-3 text-xs font-sans" style={{ color: "var(--muted)" }}>
+        {product.views.toLocaleString()}
+      </td>
+
+      {/* LINE Clicks */}
+      <td className="px-4 py-3 text-xs font-sans" style={{ color: "var(--muted)" }}>
+        {product.lineClicks.toLocaleString()}
+      </td>
+
       {/* Actions */}
       <td className="px-4 py-3">
         <div className="flex gap-3">
@@ -294,6 +305,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
         const bHas = b.images.some(Boolean) ? 1 : 0;
         return aHas - bHas;
       }); break;
+      case "views-desc": list.sort((a, b) => b.views - a.views); break;
     }
 
     return list;
@@ -424,7 +436,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#FAF8F4" }}>
-                  {["Product", "Category", "Price", "Images", "Best Seller", "Status", "Visibility", "IGI", "Actions"].map((h) => (
+                  {["Product", "Category", "Price", "Images", "Best Seller", "Status", "Visibility", "IGI", "Views", "LINE Clicks", "Actions"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs tracking-widest uppercase"
                       style={{ color: "var(--muted)" }}>
                       {h}

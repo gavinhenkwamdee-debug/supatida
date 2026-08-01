@@ -20,6 +20,8 @@ export interface Product {
   bestSeller: boolean;
   badge: string | null;
   igi: boolean;
+  views: number;
+  lineClicks: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -59,6 +61,12 @@ export async function initDB() {
   await sql`
     ALTER TABLE products ADD COLUMN IF NOT EXISTS igi BOOLEAN NOT NULL DEFAULT FALSE
   `;
+  await sql`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0
+  `;
+  await sql`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS line_clicks INT NOT NULL DEFAULT 0
+  `;
 }
 
 // ── Row mapper ────────────────────────────────────────────
@@ -77,6 +85,8 @@ function toProduct(row: any): Product {
     bestSeller: row.best_seller ?? false,
     badge: row.badge ?? null,
     igi: row.igi ?? false,
+    views: row.views ?? 0,
+    lineClicks: row.line_clicks ?? 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -99,7 +109,7 @@ export async function getProductById(id: number): Promise<Product | undefined> {
 }
 
 export async function createProduct(
-  data: Omit<Product, "id" | "createdAt" | "updatedAt">
+  data: Omit<Product, "id" | "createdAt" | "updatedAt" | "views" | "lineClicks">
 ): Promise<Product> {
   const rows = await sql`
     INSERT INTO products (name, price, category, description, specifications, images, sold_out, hidden, best_seller, badge)
@@ -150,6 +160,14 @@ export async function updateProduct(
 export async function deleteProduct(id: number): Promise<boolean> {
   const rows = await sql`DELETE FROM products WHERE id = ${id} RETURNING id`;
   return rows.length > 0;
+}
+
+export async function incrementProductViews(id: number): Promise<void> {
+  await sql`UPDATE products SET views = views + 1 WHERE id = ${id}`;
+}
+
+export async function incrementProductLineClicks(id: number): Promise<void> {
+  await sql`UPDATE products SET line_clicks = line_clicks + 1 WHERE id = ${id}`;
 }
 
 export const CATEGORIES = [

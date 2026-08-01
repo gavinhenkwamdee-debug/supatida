@@ -32,6 +32,19 @@ function LineButton({ product }: { product: Product }) {
         content_name: product.name,
       });
     }
+    if ((window as any).gtag) {
+      (window as any).gtag("event", "line_click", {
+        item_id: String(product.id),
+        item_name: product.name,
+        item_category: product.category,
+      });
+    }
+    fetch(`/api/products/${product.id}/track`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "line_click" }),
+      keepalive: true,
+    }).catch(() => {});
   }
 
   return (
@@ -75,6 +88,24 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         currency: "THB",
       });
     }
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "view_item", {
+        currency: "THB",
+        value: product.price,
+        items: [{
+          item_id: String(product.id),
+          item_name: product.name,
+          item_category: product.category,
+          price: product.price,
+        }],
+      });
+    }
+    fetch(`/api/products/${product.id}/track`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "view" }),
+      keepalive: true,
+    }).catch(() => {});
   }, [product.id]);
 
   return (

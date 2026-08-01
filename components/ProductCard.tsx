@@ -21,7 +21,7 @@ const LINE_ICON = (
   </svg>
 );
 
-export default function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
+export default function ProductCard({ product, priority = false, popular = false }: { product: Product; priority?: boolean; popular?: boolean }) {
   const images = product.images.filter(Boolean);
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
@@ -39,6 +39,19 @@ export default function ProductCard({ product, priority = false }: { product: Pr
         content_name: product.name,
       });
     }
+    if ((window as any).gtag) {
+      (window as any).gtag("event", "line_click", {
+        item_id: String(product.id),
+        item_name: product.name,
+        item_category: product.category,
+      });
+    }
+    fetch(`/api/products/${product.id}/track`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "line_click" }),
+      keepalive: true,
+    }).catch(() => {});
   }
 
   function handleMouseEnter() {
@@ -99,6 +112,16 @@ export default function ProductCard({ product, priority = false }: { product: Pr
           >
             {product.category}
           </span>
+
+          {/* Popular tag */}
+          {popular && (
+            <span
+              className="absolute top-2 right-2 px-1.5 py-0.5 tracking-wider uppercase font-sans font-bold"
+              style={{ fontSize: "9px", backgroundColor: "#C0392B", color: "white" }}
+            >
+              🔥 ยอดนิยม
+            </span>
+          )}
 
           {/* Badge ribbon */}
           {product.badge && (() => {

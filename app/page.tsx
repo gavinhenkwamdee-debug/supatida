@@ -2,7 +2,10 @@ import { Suspense } from "react";
 import { getAllProducts } from "@/lib/db";
 import CatalogClient from "@/components/CatalogClient";
 import ProductCard from "@/components/ProductCard";
+import { seededShuffle } from "@/lib/shuffle";
 import type { Product } from "@/lib/db";
+
+const POPULAR_COUNT = 10;
 
 interface PageProps {
   searchParams: Promise<{
@@ -18,13 +21,7 @@ function filterProducts(
   minPrice: string | undefined,
   maxPrice: string | undefined
 ): Product[] {
-  const sorted = [...products].sort((a, b) => {
-    const rank = (p: typeof a) => p.soldOut ? 2 : p.badge ? 0 : 1;
-    const rankDiff = rank(a) - rank(b);
-    if (rankDiff !== 0) return rankDiff;
-    return a.price - b.price;
-  });
-  return sorted.filter((p) => {
+  return products.filter((p) => {
     if (p.hidden) return false;
     if (category === "Super Sale") return p.badge === "super-sale";
     if (category && category !== "All" && p.category !== category) return false;
@@ -34,11 +31,44 @@ function filterProducts(
   });
 }
 
+// Filtered views (category/price picked): today's original deterministic order.
+function sortFiltered(products: Product[]): Product[] {
+  return [...products].sort((a, b) => {
+    const rank = (p: Product) => p.soldOut ? 2 : p.badge ? 0 : 1;
+    const rankDiff = rank(a) - rank(b);
+    if (rankDiff !== 0) return rankDiff;
+    return a.price - b.price;
+  });
+}
+
+// Default "All Pieces" view: popular items pinned on top, the rest shuffled
+// (stable per day), sold-out always last.
+function sortDefault(products: Product[]): { ordered: Product[]; popularIds: Set<number> } {
+  const soldOut = products.filter((p) => p.soldOut);
+  const available = products.filter((p) => !p.soldOut);
+
+  const popular = [...available]
+    .filter((p) => p.views > 0)
+    .sort((a, b) => b.views - a.views)
+    .slice(0, POPULAR_COUNT);
+  const popularIds = new Set(popular.map((p) => p.id));
+
+  const rest = available.filter((p) => !popularIds.has(p.id));
+  const today = new Date().toISOString().slice(0, 10);
+  const shuffledRest = seededShuffle(rest, today);
+
+  return { ordered: [...popular, ...shuffledRest, ...soldOut], popularIds };
+}
+
 export default async function CatalogPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const all = await getAllProducts();
-  const products = filterProducts(all, sp.category, sp.minPrice, sp.maxPrice);
+  const filtered = filterProducts(all, sp.category, sp.minPrice, sp.maxPrice);
   const hasFilters = sp.category || sp.minPrice || sp.maxPrice;
+
+  const { ordered: products, popularIds } = hasFilters
+    ? { ordered: sortFiltered(filtered), popularIds: new Set<number>() }
+    : sortDefault(filtered);
 
   return (
     <div style={{ backgroundColor: "var(--ivory)" }} className="flex flex-col min-h-screen">
@@ -62,7 +92,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {products.map((product, i) => (
-                <ProductCard key={product.id} product={product} priority={i < 4} />
+                <ProductCard key={product.id} product={product} priority={i < 4} popular={popularIds.has(product.id)} />
               ))}
             </div>
           )}
