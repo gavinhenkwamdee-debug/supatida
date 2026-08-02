@@ -21,16 +21,11 @@ export default function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [reviewsEnabled, setReviewsEnabled] = useState(false);
-  const [hasCustomRings, setHasCustomRings] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/reviews")
       .then((r) => r.json())
       .then((d) => setReviewsEnabled(!!d.enabled))
-      .catch(() => {});
-    fetch("/api/custom-rings")
-      .then((r) => r.json())
-      .then((d) => setHasCustomRings(Array.isArray(d) && d.length > 0))
       .catch(() => {});
   }, []);
 
@@ -144,20 +139,6 @@ export default function Header() {
             >
               ⭐ รีวิว
             </a>
-          )}
-
-          {hasCustomRings && (
-            <Link
-              href="/custom-rings"
-              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
-              style={{
-                color: "var(--muted)",
-                borderBottom: "2px solid transparent",
-                background: "none",
-              }}
-            >
-              🎨 ออกแบบเอง
-            </Link>
           )}
         </div>
       </nav>
