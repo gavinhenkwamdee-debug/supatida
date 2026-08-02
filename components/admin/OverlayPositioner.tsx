@@ -54,6 +54,24 @@ export default function OverlayPositioner({
     if (pos) onChange(pos.x, pos.y, width);
   }
 
+  function handleTouchStart(e: React.TouchEvent) {
+    setDragging(true);
+    const t = e.touches[0];
+    const pos = t && posFromEvent(t.clientX, t.clientY);
+    if (pos) onChange(pos.x, pos.y, width);
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    e.preventDefault();
+    const t = e.touches[0];
+    const pos = t && posFromEvent(t.clientX, t.clientY);
+    if (pos) onChange(pos.x, pos.y, width);
+  }
+
+  function handleTouchEnd() {
+    setDragging(false);
+  }
+
   return (
     <div>
       <div
@@ -63,8 +81,11 @@ export default function OverlayPositioner({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         className="relative w-full overflow-hidden select-none"
-        style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)", cursor: "crosshair" }}
+        style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)", cursor: "crosshair", touchAction: "none" }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={baseImage} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" draggable={false} />
@@ -74,6 +95,7 @@ export default function OverlayPositioner({
           alt=""
           draggable={false}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
           className="absolute pointer-events-auto"
           style={{
             left: `${x}%`,
