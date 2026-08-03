@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MothersDayConfig } from "@/lib/mothersday-config";
+import type { Product } from "@/lib/db";
 
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
@@ -32,6 +33,9 @@ async function compressImage(file: File): Promise<File> {
 export default function MothersDayAdmin() {
   const [enabled, setEnabled] = useState(false);
   const [bannerImage, setBannerImage] = useState("");
+  const [productIds, setProductIds] = useState<number[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -41,15 +45,24 @@ export default function MothersDayAdmin() {
   useEffect(() => {
     fetch("/api/settings/mothersday")
       .then((r) => r.json())
-      .then((d: MothersDayConfig) => { setEnabled(d.enabled); setBannerImage(d.bannerImage); setLoading(false); });
+      .then((d: MothersDayConfig) => {
+        setEnabled(d.enabled);
+        setBannerImage(d.bannerImage);
+        setProductIds(d.productIds || []);
+        setLoading(false);
+      });
+    fetch("/api/products?category=All")
+      .then((r) => r.json())
+      .then((d: Product[]) => setProducts(Array.isArray(d) ? d : []))
+      .catch(() => {});
   }, []);
 
-  async function saveConfig(nextEnabled: boolean, nextBanner: string) {
+  async function saveConfig(next: { enabled: boolean; bannerImage: string; productIds: number[] }) {
     setSaving(true);
     await fetch("/api/settings/mothersday", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ enabled: nextEnabled, bannerImage: nextBanner }),
+      body: JSON.stringify(next),
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -68,13 +81,44 @@ export default function MothersDayAdmin() {
       if (res.ok) {
         const data = await res.json();
         setBannerImage(data.url);
-        await saveConfig(enabled, data.url);
+        await saveConfig({ enabled, bannerImage: data.url, productIds });
       }
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
+
+  function addProduct(id: number) {
+    if (productIds.includes(id)) return;
+    const next = [...productIds, id];
+    setProductIds(next);
+    saveConfig({ enabled, bannerImage, productIds: next });
+    setSearch("");
+  }
+
+  function removeProduct(id: number) {
+    const next = productIds.filter((x) => x !== id);
+    setProductIds(next);
+    saveConfig({ enabled, bannerImage, productIds: next });
+  }
+
+  const selectedProducts = useMemo(
+    () => productIds.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => Boolean(p)),
+    [productIds, products]
+  );
+
+  const searchResults = useMemo(() => {
+    if (!search.trim()) return [];
+    const q = search.trim().toLowerCase();
+    return products
+      .filter((p) => !productIds.includes(p.id))
+      .filter((p) => p.name.toLowerCase().includes(q) || (p.specifications["Product Code"] || "").toLowerCase().includes(q))
+      .slice(0, 10);
+  }, [search, products, productIds]);
+
+  const THB = (n: number) =>
+    new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
 
   if (loading) return (
     <div className="p-8 text-sm font-sans" style={{ color: "var(--muted)" }}>Loading…</div>
@@ -104,7 +148,7 @@ export default function MothersDayAdmin() {
             </p>
           </div>
           <button
-            onClick={() => { const next = !enabled; setEnabled(next); saveConfig(next, bannerImage); }}
+            onClick={() => { const next = !enabled; setEnabled(next); saveConfig({ enabled: next, bannerImage, productIds }); }}
             disabled={saving}
             className="relative w-14 h-7 rounded-full transition-colors duration-200 disabled:opacity-50"
             style={{ backgroundColor: enabled ? "#0284C7" : "#D1D5DB" }}
@@ -145,10 +189,78 @@ export default function MothersDayAdmin() {
         </div>
       </div>
 
+      {/* Product picker */}
       <div className="bg-white p-6" style={{ border: "1px solid var(--border)" }}>
-        <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>
-          {saved ? "✓ บันทึกแล้ว" : "รายการสินค้าและส่วนลด 12% ถูกกำหนดไว้ในโค้ดสำหรับโปรโมชั่นนี้ (7–12 ส.ค. 2569) — ถ้าต้องการเปลี่ยนรายการสินค้า แจ้งได้เลยครับ"}
+        <h2 className="text-xs tracking-widest uppercase mb-1 font-sans" style={{ color: "var(--muted)" }}>
+          สินค้าที่ร่วมโปรโมชั่น ({selectedProducts.length})
+        </h2>
+        <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
+          ลดราคาพิเศษ 12% ทุกชิ้นที่เลือกไว้ · {saved ? "✓ บันทึกแล้ว" : "บันทึกอัตโนมัติเมื่อเพิ่ม/ลบ"}
         </p>
+
+        <div className="relative mb-3">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ค้นหาชื่อ หรือรหัสสินค้า (Product Code) เพื่อเพิ่ม…"
+            className="w-full px-3 py-2 text-xs font-sans outline-none"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+          />
+          {searchResults.length > 0 && (
+            <div className="absolute z-10 left-0 right-0 mt-1 bg-white max-h-64 overflow-y-auto" style={{ border: "1px solid var(--border)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
+              {searchResults.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => addProduct(p.id)}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-amber-50/50 transition-colors"
+                  style={{ borderBottom: "1px solid var(--border)" }}
+                >
+                  <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 36, height: 36, backgroundColor: "var(--img-bg)" }}>
+                    {p.images.find(Boolean) && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.images.find(Boolean)} alt="" className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs truncate" style={{ color: "var(--charcoal)" }}>{p.name}</p>
+                    <p className="text-xs font-mono" style={{ color: "var(--muted)" }}>{p.specifications["Product Code"] || "—"} · {THB(p.price)}</p>
+                  </div>
+                  <span className="text-xs tracking-wider uppercase flex-shrink-0" style={{ color: "var(--gold-dark)" }}>+ เพิ่ม</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {selectedProducts.length === 0 ? (
+          <p className="text-xs font-sans py-6 text-center" style={{ color: "var(--muted)" }}>ยังไม่ได้เลือกสินค้า — ค้นหาด้านบนเพื่อเพิ่ม</p>
+        ) : (
+          <div className="space-y-2">
+            {selectedProducts.map((p) => (
+              <div key={p.id} className="flex items-center gap-3 p-2" style={{ border: "1px solid var(--border)" }}>
+                <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 40, height: 40, backgroundColor: "var(--img-bg)" }}>
+                  {p.images.find(Boolean) && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.images.find(Boolean)} alt="" className="w-full h-full object-cover" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs truncate" style={{ color: "var(--charcoal)" }}>{p.name}</p>
+                  <p className="text-xs font-mono" style={{ color: "var(--muted)" }}>{p.specifications["Product Code"] || "—"} · {THB(p.price)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeProduct(p.id)}
+                  className="text-xs tracking-wider uppercase underline flex-shrink-0"
+                  style={{ color: "#C0392B" }}
+                >
+                  ลบ
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

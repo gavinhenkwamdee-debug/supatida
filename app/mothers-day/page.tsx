@@ -8,21 +8,13 @@ export const dynamic = "force-dynamic";
 
 const DISCOUNT = 0.12;
 
-const PROMO_CODES = [
-  // แหวน
-  "ready06", "ready14", "ready77", "ready120",
-  // สร้อยคอ & สร้อยข้อมือ
-  "ready50", "ready149", "ready263", "ready264",
-  // ต่างหู
-  "ready303", "ready306", "ready308", "ready298",
-];
-
 export default async function MothersDayPage() {
   const config = await getSetting<MothersDayConfig>("mothersday", DEFAULT_MOTHERSDAY);
   const allProducts = await getAllProducts();
+  const productIds = config.productIds || [];
 
   const promoProducts = allProducts
-    .filter((p) => !p.hidden && PROMO_CODES.includes(p.specifications["Product Code"]))
+    .filter((p) => !p.hidden && productIds.includes(p.id))
     .sort((a, b) => a.price - b.price);
 
   return (
