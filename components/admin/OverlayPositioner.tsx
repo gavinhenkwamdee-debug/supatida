@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function OverlayPositioner({
   baseImage,
@@ -19,9 +19,24 @@ export default function OverlayPositioner({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [containerSize, setContainerSize] = useState(320);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => setContainerSize(el.getBoundingClientRect().width);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   function clamp(n: number) {
     return Math.max(0, Math.min(100, n));
+  }
+
+  function pxToPct(px: number) {
+    return clamp((px / containerSize) * 100);
   }
 
   function posFromEvent(clientX: number, clientY: number) {
@@ -107,8 +122,35 @@ export default function OverlayPositioner({
         />
       </div>
       <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
-        คลิกหรือลากรูป gem เพื่อวางตำแหน่งบนแหวน
+        คลิกหรือลากรูป gem เพื่อวางตำแหน่งบนแหวน หรือใส่พิกัดพิกเซลด้านล่างเพื่อความแม่นยำ
       </p>
+
+      <div className="flex gap-3 mt-2">
+        <div className="flex-1">
+          <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>X (px)</label>
+          <input
+            type="number"
+            value={Math.round((x / 100) * containerSize)}
+            onChange={(e) => onChange(pxToPct(Number(e.target.value) || 0), y, width)}
+            className="w-full px-2 py-1.5 text-xs font-sans outline-none"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>Y (px)</label>
+          <input
+            type="number"
+            value={Math.round((y / 100) * containerSize)}
+            onChange={(e) => onChange(x, pxToPct(Number(e.target.value) || 0), width)}
+            className="w-full px-2 py-1.5 text-xs font-sans outline-none"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+          />
+        </div>
+      </div>
+      <p className="text-xs font-mono mt-1" style={{ color: "var(--muted)", fontSize: "10px" }}>
+        กรอบตัวอย่างขนาด {Math.round(containerSize)}×{Math.round(containerSize)}px
+      </p>
+
       <label className="text-xs font-sans block mt-3 mb-1" style={{ color: "var(--muted)" }}>
         ขนาด ({width.toFixed(0)}%)
       </label>
