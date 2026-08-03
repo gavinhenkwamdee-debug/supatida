@@ -21,11 +21,16 @@ export default function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [reviewsEnabled, setReviewsEnabled] = useState(false);
+  const [mothersDayEnabled, setMothersDayEnabled] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/reviews")
       .then((r) => r.json())
       .then((d) => setReviewsEnabled(!!d.enabled))
+      .catch(() => {});
+    fetch("/api/settings/mothersday")
+      .then((r) => r.json())
+      .then((d) => setMothersDayEnabled(!!d.enabled))
       .catch(() => {});
   }, []);
 
@@ -90,6 +95,21 @@ export default function Header() {
         className="flex gap-1 px-4 py-2 overflow-x-auto scrollbar-hide"
       >
         <div className="flex gap-1 mx-auto">
+          {/* Mother's Day tab — before Super Sale */}
+          {mothersDayEnabled && (
+            <Link
+              href="/mothers-day"
+              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0 font-bold"
+              style={{
+                color: "white",
+                background: "#DB2777",
+                borderBottom: "2px solid #DB2777",
+              }}
+            >
+              🌷 Mother&apos;s Day
+            </Link>
+          )}
+
           {/* Super Sale tab — special styling */}
           <button
             onClick={() => setParam({ category: "Super Sale" })}
