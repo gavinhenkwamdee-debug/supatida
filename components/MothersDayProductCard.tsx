@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/db";
+import { getOriginalPrice, getDiscountPercent } from "@/lib/pricing";
 
 const LINE_ICON = (
   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current" xmlns="http://www.w3.org/2000/svg">
@@ -13,6 +14,8 @@ const LINE_ICON = (
 export default function MothersDayProductCard({ product, promoPrice }: { product: Product; promoPrice: number }) {
   const fmt = (n: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
   const firstImage = product.images.find(Boolean) || "";
+  const originalPrice = getOriginalPrice(product.id, product.price);
+  const originalDiscountPct = getDiscountPercent(product.id);
 
   function handleLineClick() {
     if ((window as any).fbq) {
@@ -62,8 +65,19 @@ export default function MothersDayProductCard({ product, promoPrice }: { product
         </Link>
 
         <div className="mb-2 sm:mb-3">
-          <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(product.price)}</span>
-          <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "#0284C7" }}>{fmt(promoPrice)}</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(originalPrice)}</span>
+            <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#C0392B", color: "white", fontSize: "9px" }}>
+              -{originalDiscountPct}%
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+            <span className="text-xs sm:text-sm font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(product.price)}</span>
+            <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#0284C7", color: "white", fontSize: "9px" }}>
+              -12%
+            </span>
+          </div>
+          <p className="text-sm sm:text-xl font-sans font-light tracking-wide mt-1" style={{ color: "#0284C7" }}>{fmt(promoPrice)}</p>
         </div>
 
         <a
