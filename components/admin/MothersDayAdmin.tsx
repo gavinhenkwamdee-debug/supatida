@@ -107,7 +107,7 @@ export default function MothersDayAdmin() {
             onClick={() => { const next = !enabled; setEnabled(next); saveConfig(next, bannerImage); }}
             disabled={saving}
             className="relative w-14 h-7 rounded-full transition-colors duration-200 disabled:opacity-50"
-            style={{ backgroundColor: enabled ? "#DB2777" : "#D1D5DB" }}
+            style={{ backgroundColor: enabled ? "#0284C7" : "#D1D5DB" }}
           >
             <span
               className="absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"

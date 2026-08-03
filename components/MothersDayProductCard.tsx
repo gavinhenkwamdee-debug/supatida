@@ -47,7 +47,7 @@ export default function MothersDayProductCard({ product, promoPrice }: { product
           </span>
           <span
             className="absolute top-2 left-2 px-2 py-1 tracking-wider uppercase font-sans font-bold"
-            style={{ fontSize: "10px", backgroundColor: "#DB2777", color: "white" }}
+            style={{ fontSize: "10px", backgroundColor: "#0284C7", color: "white" }}
           >
             -12% Mother&apos;s Day
           </span>
@@ -63,7 +63,7 @@ export default function MothersDayProductCard({ product, promoPrice }: { product
 
         <div className="mb-2 sm:mb-3">
           <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(product.price)}</span>
-          <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "#DB2777" }}>{fmt(promoPrice)}</p>
+          <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "#0284C7" }}>{fmt(promoPrice)}</p>
         </div>
 
         <a

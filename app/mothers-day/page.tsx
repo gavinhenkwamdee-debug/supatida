@@ -52,12 +52,12 @@ export default async function MothersDayPage() {
           )}
 
           <div className="text-center mb-10">
-            <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#DB2777" }}>Mother&apos;s Day Promotion</p>
+            <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#0284C7" }}>Mother&apos;s Day Promotion</p>
             <h2 className="text-2xl tracking-[0.1em]" style={{ color: "var(--charcoal)" }}>ลดพิเศษ 12% รับวันแม่</h2>
             <p className="text-sm font-sans mt-3" style={{ color: "var(--muted)" }}>
               Selective Items 12% discount special only for mother&apos;s day · 7–12 Aug 2026
             </p>
-            <div className="mx-auto mt-4 w-16 h-px" style={{ backgroundColor: "#DB2777" }} />
+            <div className="mx-auto mt-4 w-16 h-px" style={{ backgroundColor: "#0284C7" }} />
           </div>
 
           {promoProducts.length === 0 ? (

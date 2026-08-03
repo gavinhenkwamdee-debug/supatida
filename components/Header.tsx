@@ -102,8 +102,8 @@ export default function Header() {
               className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0 font-bold"
               style={{
                 color: "white",
-                background: "#DB2777",
-                borderBottom: "2px solid #DB2777",
+                background: "#0284C7",
+                borderBottom: "2px solid #0284C7",
               }}
             >
               🌷 Mother&apos;s Day

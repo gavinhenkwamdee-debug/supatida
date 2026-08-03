@@ -324,7 +324,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
         <div className="flex gap-2">
           <Link href="/admin/mothers-day"
             className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
-            style={{ backgroundColor: "#DB2777", color: "white" }}>
+            style={{ backgroundColor: "#0284C7", color: "white" }}>
             🌷 Mother&apos;s Day
           </Link>
           <Link href="/admin/hero-banner"
