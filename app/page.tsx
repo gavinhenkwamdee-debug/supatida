@@ -3,6 +3,8 @@ import { getAllProducts } from "@/lib/db";
 import CatalogClient from "@/components/CatalogClient";
 import ProductCard from "@/components/ProductCard";
 import { seededShuffle } from "@/lib/shuffle";
+import { getSetting } from "@/lib/settings";
+import { DEFAULT_MOTHERSDAY, type MothersDayConfig } from "@/lib/mothersday-config";
 import type { Product } from "@/lib/db";
 
 const POPULAR_COUNT = 10;
@@ -70,6 +72,10 @@ export default async function CatalogPage({ searchParams }: PageProps) {
     ? { ordered: sortFiltered(filtered), popularIds: new Set<number>() }
     : sortDefault(filtered);
 
+  const mothersDay = await getSetting<MothersDayConfig>("mothersday", DEFAULT_MOTHERSDAY);
+  const mothersDaySelected = new Set(mothersDay.productIds || []);
+  const mothersDaySitewide = mothersDay.enabled;
+
   return (
     <div style={{ backgroundColor: "var(--ivory)" }} className="flex flex-col min-h-screen">
       <CatalogClient>
@@ -92,7 +98,13 @@ export default async function CatalogPage({ searchParams }: PageProps) {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {products.map((product, i) => (
-                <ProductCard key={product.id} product={product} priority={i < 4} popular={popularIds.has(product.id)} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  priority={i < 4}
+                  popular={popularIds.has(product.id)}
+                  mothersDayDiscount={mothersDaySitewide && !mothersDaySelected.has(product.id)}
+                />
               ))}
             </div>
           )}

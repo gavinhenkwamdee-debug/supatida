@@ -63,7 +63,7 @@ function LineButton({ product }: { product: Product }) {
   );
 }
 
-export default function ProductDetailClient({ product }: { product: Product }) {
+export default function ProductDetailClient({ product, mothersDayDiscount = false }: { product: Product; mothersDayDiscount?: boolean }) {
   const [activeImg, setActiveImg] = useState(0);
   const images = product.images.filter(Boolean);
 
@@ -185,13 +185,24 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               const fmt = (n: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
               const originalPrice = getOriginalPrice(product.id, product.price);
               const discountPct = getDiscountPercent(product.id);
+              const mothersDayPrice = Math.round((product.price * 0.95) / 10) * 10;
               return (
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-sm font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(originalPrice)}</span>
                     <span className="text-xs font-sans font-bold px-2 py-0.5" style={{ backgroundColor: "#C0392B", color: "white" }}>-{discountPct}%</span>
                   </div>
-                  <p className="text-3xl font-sans font-light" style={{ color: "var(--gold)" }}>{fmt(product.price)}</p>
+                  {mothersDayDiscount ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-lg font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(product.price)}</span>
+                        <span className="text-xs font-sans font-bold px-2 py-0.5" style={{ backgroundColor: "#0284C7", color: "white" }}>-5%</span>
+                      </div>
+                      <p className="text-3xl font-sans font-light" style={{ color: "#0284C7" }}>{fmt(mothersDayPrice)}</p>
+                    </>
+                  ) : (
+                    <p className="text-3xl font-sans font-light" style={{ color: "var(--gold)" }}>{fmt(product.price)}</p>
+                  )}
                 </div>
               );
             })()}
