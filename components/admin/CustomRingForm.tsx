@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import OverlayPositioner from "./OverlayPositioner";
-import type { CustomRingDetail } from "@/lib/customRings";
+import type { CustomRingDetail, GroupWithRing } from "@/lib/customRings";
 
 interface ChoiceState {
   key: string;
@@ -34,6 +34,14 @@ function emptyChoice(): ChoiceState {
 
 function emptyGroup(): GroupState {
   return { key: nextKey(), label: "", choices: [emptyChoice()] };
+}
+
+function cloneGroup(label: string, choices: Omit<ChoiceState, "key">[]): GroupState {
+  return {
+    key: nextKey(),
+    label,
+    choices: choices.map((c) => ({ ...c, key: nextKey() })),
+  };
 }
 
 async function compressImage(file: File): Promise<File> {
@@ -122,11 +130,17 @@ function ChoiceEditor({
   baseImage,
   onChange,
   onRemove,
+  onMove,
+  isFirst,
+  isLast,
 }: {
   choice: ChoiceState;
   baseImage: string;
   onChange: (c: ChoiceState) => void;
   onRemove: () => void;
+  onMove: (dir: -1 | 1) => void;
+  isFirst: boolean;
+  isLast: boolean;
 }) {
   const [positioning, setPositioning] = useState(false);
 
@@ -165,6 +179,25 @@ function ChoiceEditor({
             </button>
           </div>
         </div>
+
+        <div className="flex flex-col gap-1 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => onMove(-1)}
+            disabled={isFirst}
+            className="w-6 h-6 text-xs flex items-center justify-center disabled:opacity-30"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            title="เลื่อนขึ้น"
+          >↑</button>
+          <button
+            type="button"
+            onClick={() => onMove(1)}
+            disabled={isLast}
+            className="w-6 h-6 text-xs flex items-center justify-center disabled:opacity-30"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            title="เลื่อนลง"
+          >↓</button>
+        </div>
       </div>
 
       {positioning && choice.overlayImage && baseImage && (
@@ -189,13 +222,23 @@ function GroupEditor({
   onChange,
   onRemove,
   onMove,
+  onDuplicate,
 }: {
   group: GroupState;
   baseImage: string;
   onChange: (g: GroupState) => void;
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
+  onDuplicate: () => void;
 }) {
+  function moveChoice(index: number, dir: -1 | 1) {
+    const next = [...group.choices];
+    const j = index + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[index], next[j]] = [next[j], next[index]];
+    onChange({ ...group, choices: next });
+  }
+
   return (
     <div className="p-4 mb-4" style={{ border: "1px solid var(--border)", backgroundColor: "#FAF8F4" }}>
       <div className="flex items-center gap-2 mb-3">
@@ -208,19 +251,25 @@ function GroupEditor({
         />
         <button type="button" onClick={() => onMove(-1)} className="w-7 h-7 text-xs" style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}>↑</button>
         <button type="button" onClick={() => onMove(1)} className="w-7 h-7 text-xs" style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}>↓</button>
+        <button type="button" onClick={onDuplicate} className="px-3 py-2 text-xs tracking-wider uppercase font-sans" style={{ border: "1px solid var(--gold-dark)", color: "var(--gold-dark)", backgroundColor: "white" }}>
+          Duplicate
+        </button>
         <button type="button" onClick={onRemove} className="px-3 py-2 text-xs tracking-wider uppercase font-sans" style={{ border: "1px solid #C0392B", color: "#C0392B", backgroundColor: "white" }}>
           ลบหมวด
         </button>
       </div>
 
       <div className="space-y-2">
-        {group.choices.map((choice) => (
+        {group.choices.map((choice, i) => (
           <ChoiceEditor
             key={choice.key}
             choice={choice}
             baseImage={baseImage}
             onChange={(c) => onChange({ ...group, choices: group.choices.map((x) => (x.key === c.key ? c : x)) })}
             onRemove={() => onChange({ ...group, choices: group.choices.filter((x) => x.key !== choice.key) })}
+            onMove={(dir) => moveChoice(i, dir)}
+            isFirst={i === 0}
+            isLast={i === group.choices.length - 1}
           />
         ))}
       </div>
@@ -267,12 +316,49 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const [availableGroups, setAvailableGroups] = useState<GroupWithRing[]>([]);
+  const [importSelection, setImportSelection] = useState("");
+
+  useEffect(() => {
+    fetch("/api/admin/custom-ring-groups")
+      .then((r) => r.json())
+      .then((d: GroupWithRing[]) => setAvailableGroups(Array.isArray(d) ? d.filter((g) => g.ringId !== ring?.id) : []))
+      .catch(() => {});
+  }, [ring?.id]);
+
   function moveGroup(index: number, dir: -1 | 1) {
     const next = [...groups];
     const j = index + dir;
     if (j < 0 || j >= next.length) return;
     [next[index], next[j]] = [next[j], next[index]];
     setGroups(next);
+  }
+
+  function duplicateGroup(index: number) {
+    const source = groups[index];
+    const copy = cloneGroup(`${source.label} (copy)`, source.choices.map(({ key, ...rest }) => rest));
+    const next = [...groups];
+    next.splice(index + 1, 0, copy);
+    setGroups(next);
+  }
+
+  function importGroup() {
+    const found = availableGroups.find((g) => String(g.group.id) === importSelection);
+    if (!found) return;
+    const copy = cloneGroup(
+      found.group.label,
+      found.group.choices.map((c) => ({
+        label: c.label,
+        swatchImage: c.swatchImage,
+        overlayImage: c.overlayImage,
+        overlayX: c.overlayX,
+        overlayY: c.overlayY,
+        overlayWidth: c.overlayWidth,
+        priceDelta: c.priceDelta,
+      }))
+    );
+    setGroups([...groups, copy]);
+    setImportSelection("");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -387,16 +473,48 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
           onChange={(ng) => setGroups(groups.map((x) => (x.key === g.key ? ng : x)))}
           onRemove={() => setGroups(groups.filter((x) => x.key !== g.key))}
           onMove={(dir) => moveGroup(i, dir)}
+          onDuplicate={() => duplicateGroup(i)}
         />
       ))}
       <button
         type="button"
         onClick={() => setGroups([...groups, emptyGroup()])}
-        className="text-xs tracking-wider uppercase underline font-sans mb-8"
+        className="text-xs tracking-wider uppercase underline font-sans"
         style={{ color: "var(--gold-dark)" }}
       >
         + Add Group
       </button>
+
+      {availableGroups.length > 0 && (
+        <div className="mt-4 mb-8 p-4 flex flex-wrap items-center gap-2" style={{ border: "1px dashed var(--border)", backgroundColor: "#FAF8F4" }}>
+          <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>นำเข้า Group จากแหวนอื่น:</span>
+          <select
+            value={importSelection}
+            onChange={(e) => setImportSelection(e.target.value)}
+            className="px-2 py-1.5 text-xs font-sans outline-none flex-1 min-w-[220px]"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
+          >
+            <option value="">— เลือก Group —</option>
+            {availableGroups.map((g) => (
+              <option key={g.group.id} value={g.group.id}>
+                {g.ringName} — {g.group.label} ({g.group.choices.length} ตัวเลือก)
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={importGroup}
+            disabled={!importSelection}
+            className="px-4 py-1.5 text-xs tracking-wider uppercase font-sans disabled:opacity-40"
+            style={{ backgroundColor: "var(--gold-dark)", color: "white" }}
+          >
+            นำเข้า
+          </button>
+          <p className="w-full text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
+            * ตำแหน่ง gem จะถูกคัดลอกมาด้วย แต่อาจต้องปรับใหม่ให้ตรงกับรูปแหวนนี้
+          </p>
+        </div>
+      )}
 
       {error && <p className="text-sm font-sans mb-4" style={{ color: "#C0392B" }}>{error}</p>}
 

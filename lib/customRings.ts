@@ -168,6 +168,36 @@ export async function getCustomRingById(id: number): Promise<CustomRingDetail | 
   return { ...toRing(ringRows[0]), groups };
 }
 
+export interface GroupWithRing {
+  ringId: number;
+  ringName: string;
+  group: CustomRingGroup;
+}
+
+export async function getAllGroupsWithChoices(): Promise<GroupWithRing[]> {
+  await initCustomRingsDB();
+  const rings = await sql`SELECT id, name FROM custom_rings`;
+  const groupRows = await sql`SELECT * FROM custom_ring_groups ORDER BY ring_id ASC, sort_order ASC, id ASC`;
+  const choiceRows = groupRows.length
+    ? await sql`
+        SELECT * FROM custom_ring_choices
+        WHERE group_id = ANY(${groupRows.map((g) => g.id)})
+        ORDER BY sort_order ASC, id ASC
+      `
+    : [];
+
+  return groupRows.map((g) => ({
+    ringId: g.ring_id,
+    ringName: rings.find((r) => r.id === g.ring_id)?.name ?? "?",
+    group: {
+      id: g.id,
+      label: g.label,
+      sortOrder: g.sort_order,
+      choices: choiceRows.filter((c) => c.group_id === g.id).map(toChoice),
+    },
+  }));
+}
+
 export async function createCustomRingShell(name: string, basePrice: number): Promise<CustomRing> {
   await initCustomRingsDB();
   const rows = await sql`
