@@ -46,6 +46,7 @@ export async function PUT(request: Request, { params }: Params) {
                   overlayX: Number(choice.overlayX) || 50,
                   overlayY: Number(choice.overlayY) || 50,
                   overlayWidth: Number(choice.overlayWidth) || 20,
+                  baseImageOverride: choice.baseImageOverride ? String(choice.baseImageOverride) : null,
                   priceDelta: Number(choice.priceDelta) || 0,
                   sortOrder: ci,
                 };

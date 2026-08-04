@@ -30,6 +30,13 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
 
   const totalPrice = ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0);
 
+  // A choice can replace the whole ring photo (e.g. metal color) instead of
+  // just layering a gem on top — last selected group with an override wins.
+  const effectiveBaseImage = useMemo(() => {
+    const override = [...selectedChoices].reverse().find((c) => c.baseImageOverride);
+    return override?.baseImageOverride || ring.baseImage;
+  }, [selectedChoices, ring.baseImage]);
+
   function selectChoice(groupId: number, choiceId: number) {
     setSelections((prev) => ({ ...prev, [groupId]: choiceId }));
   }
@@ -60,9 +67,9 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
 
         {/* Image with layered overlays */}
         <div className="relative w-full mb-6" style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
-          {ring.baseImage && (
+          {effectiveBaseImage && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={ring.baseImage} alt={ring.name} className="absolute inset-0 w-full h-full object-contain" />
+            <img src={effectiveBaseImage} alt={ring.name} className="absolute inset-0 w-full h-full object-contain" />
           )}
           {selectedChoices.map((c) =>
             c.overlayImage ? (

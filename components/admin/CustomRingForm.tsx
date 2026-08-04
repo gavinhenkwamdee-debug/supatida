@@ -13,6 +13,7 @@ interface ChoiceState {
   overlayX: number;
   overlayY: number;
   overlayWidth: number;
+  baseImageOverride: string | null;
   priceDelta: number;
 }
 
@@ -29,7 +30,7 @@ function nextKey() {
 }
 
 function emptyChoice(): ChoiceState {
-  return { key: nextKey(), label: "", swatchImage: "", overlayImage: null, overlayX: 50, overlayY: 50, overlayWidth: 20, priceDelta: 0 };
+  return { key: nextKey(), label: "", swatchImage: "", overlayImage: null, overlayX: 50, overlayY: 50, overlayWidth: 20, baseImageOverride: null, priceDelta: 0 };
 }
 
 function emptyGroup(): GroupState {
@@ -85,11 +86,13 @@ function ImageUploadBox({
   src,
   label,
   onUploaded,
+  onClear,
   size = 90,
 }: {
   src: string;
   label: string;
   onUploaded: (url: string) => void;
+  onClear?: () => void;
   size?: number;
 }) {
   const [uploading, setUploading] = useState(false);
@@ -108,20 +111,33 @@ function ImageUploadBox({
     }
   }
   return (
-    <label
-      className="relative flex flex-col items-center justify-center flex-shrink-0 cursor-pointer overflow-hidden"
-      style={{ width: size, height: size, border: "1px dashed var(--border)", backgroundColor: "#FAF8F4" }}
-    >
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt="" className="w-full h-full object-contain" />
-      ) : (
-        <span className="text-xs font-sans text-center px-1" style={{ color: "var(--muted)" }}>
-          {uploading ? "…" : label}
-        </span>
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      <label
+        className="relative flex flex-col items-center justify-center cursor-pointer overflow-hidden w-full h-full"
+        style={{ border: "1px dashed var(--border)", backgroundColor: "#FAF8F4" }}
+      >
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="" className="w-full h-full object-contain" />
+        ) : (
+          <span className="text-xs font-sans text-center px-1" style={{ color: "var(--muted)" }}>
+            {uploading ? "…" : label}
+          </span>
+        )}
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleChange} disabled={uploading} />
+      </label>
+      {src && onClear && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="absolute -top-1.5 -right-1.5 w-5 h-5 text-xs flex items-center justify-center rounded-full"
+          style={{ backgroundColor: "#C0392B", color: "white" }}
+          title="ลบรูป"
+        >
+          ✕
+        </button>
       )}
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleChange} disabled={uploading} />
-    </label>
+    </div>
   );
 }
 
@@ -146,9 +162,25 @@ function ChoiceEditor({
 
   return (
     <div className="p-3" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
+      <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
+        <strong>Gem overlay</strong> = ลอยทับรูปหลัก (ใช้กับพลอย) · <strong>Base</strong> = เปลี่ยนรูปแหวนทั้งรูป (ใช้กับโลหะ/สี)
+      </p>
       <div className="flex gap-3 items-start">
         <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
-        <ImageUploadBox src={choice.overlayImage || ""} label="+ Gem overlay" size={64} onUploaded={(url) => onChange({ ...choice, overlayImage: url })} />
+        <ImageUploadBox
+          src={choice.overlayImage || ""}
+          label="+ Gem overlay"
+          size={64}
+          onUploaded={(url) => onChange({ ...choice, overlayImage: url })}
+          onClear={() => onChange({ ...choice, overlayImage: null })}
+        />
+        <ImageUploadBox
+          src={choice.baseImageOverride || ""}
+          label="+ Base (แทนรูปหลัก)"
+          size={64}
+          onUploaded={(url) => onChange({ ...choice, baseImageOverride: url })}
+          onClear={() => onChange({ ...choice, baseImageOverride: null })}
+        />
 
         <div className="flex-1 min-w-0 space-y-2">
           <input
@@ -308,6 +340,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             overlayX: c.overlayX,
             overlayY: c.overlayY,
             overlayWidth: c.overlayWidth,
+            baseImageOverride: c.baseImageOverride,
             priceDelta: c.priceDelta,
           })),
         }))
@@ -354,6 +387,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         overlayX: c.overlayX,
         overlayY: c.overlayY,
         overlayWidth: c.overlayWidth,
+        baseImageOverride: c.baseImageOverride,
         priceDelta: c.priceDelta,
       }))
     );
@@ -385,6 +419,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
               overlayX: c.overlayX,
               overlayY: c.overlayY,
               overlayWidth: c.overlayWidth,
+              baseImageOverride: c.baseImageOverride,
               priceDelta: c.priceDelta,
             })),
         })),

@@ -10,6 +10,7 @@ export interface CustomRingChoice {
   overlayX: number;
   overlayY: number;
   overlayWidth: number;
+  baseImageOverride: string | null;
   priceDelta: number;
   sortOrder: number;
 }
@@ -43,6 +44,7 @@ export interface ChoiceInput {
   overlayX: number;
   overlayY: number;
   overlayWidth: number;
+  baseImageOverride: string | null;
   priceDelta: number;
   sortOrder: number;
 }
@@ -85,17 +87,21 @@ export async function initCustomRingsDB() {
   `;
   await sql`
     CREATE TABLE IF NOT EXISTS custom_ring_choices (
-      id             SERIAL PRIMARY KEY,
-      group_id       INT NOT NULL REFERENCES custom_ring_groups(id) ON DELETE CASCADE,
-      label          TEXT NOT NULL,
-      swatch_image   TEXT NOT NULL DEFAULT '',
-      overlay_image  TEXT,
-      overlay_x      NUMERIC NOT NULL DEFAULT 50,
-      overlay_y      NUMERIC NOT NULL DEFAULT 50,
-      overlay_width  NUMERIC NOT NULL DEFAULT 20,
-      price_delta    NUMERIC NOT NULL DEFAULT 0,
-      sort_order     INT NOT NULL DEFAULT 0
+      id                  SERIAL PRIMARY KEY,
+      group_id            INT NOT NULL REFERENCES custom_ring_groups(id) ON DELETE CASCADE,
+      label               TEXT NOT NULL,
+      swatch_image        TEXT NOT NULL DEFAULT '',
+      overlay_image       TEXT,
+      overlay_x           NUMERIC NOT NULL DEFAULT 50,
+      overlay_y           NUMERIC NOT NULL DEFAULT 50,
+      overlay_width       NUMERIC NOT NULL DEFAULT 20,
+      base_image_override TEXT,
+      price_delta         NUMERIC NOT NULL DEFAULT 0,
+      sort_order          INT NOT NULL DEFAULT 0
     )
+  `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS base_image_override TEXT
   `;
 }
 
@@ -124,6 +130,7 @@ function toChoice(row: any): CustomRingChoice {
     overlayX: parseFloat(row.overlay_x),
     overlayY: parseFloat(row.overlay_y),
     overlayWidth: parseFloat(row.overlay_width),
+    baseImageOverride: row.base_image_override ?? null,
     priceDelta: parseFloat(row.price_delta),
     sortOrder: row.sort_order,
   };
@@ -240,10 +247,10 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, overlay_image, overlay_x, overlay_y, overlay_width, price_delta, sort_order)
+          (group_id, label, swatch_image, overlay_image, overlay_x, overlay_y, overlay_width, base_image_override, price_delta, sort_order)
         VALUES (
           ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.overlayImage},
-          ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.priceDelta}, ${choice.sortOrder}
+          ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder}
         )
       `;
     }
