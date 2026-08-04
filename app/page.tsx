@@ -4,7 +4,7 @@ import CatalogClient from "@/components/CatalogClient";
 import ProductCard from "@/components/ProductCard";
 import { seededShuffle } from "@/lib/shuffle";
 import { getSetting } from "@/lib/settings";
-import { DEFAULT_MOTHERSDAY, type MothersDayConfig } from "@/lib/mothersday-config";
+import { DEFAULT_MOTHERSDAY, isMothersDayDiscountExcluded, type MothersDayConfig } from "@/lib/mothersday-config";
 import type { Product } from "@/lib/db";
 
 const POPULAR_COUNT = 10;
@@ -103,7 +103,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
                   product={product}
                   priority={i < 4}
                   popular={popularIds.has(product.id)}
-                  mothersDayDiscount={mothersDaySitewide && !mothersDaySelected.has(product.id)}
+                  mothersDayDiscount={mothersDaySitewide && !mothersDaySelected.has(product.id) && !isMothersDayDiscountExcluded(product)}
                 />
               ))}
             </div>

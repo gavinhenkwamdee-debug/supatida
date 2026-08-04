@@ -103,6 +103,18 @@ export default function MothersDayAdmin() {
     saveConfig({ enabled, bannerImage, productIds: next });
   }
 
+  async function toggleSoldOut(product: Product) {
+    const res = await fetch(`/api/products/${product.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ soldOut: !product.soldOut }),
+    });
+    if (res.ok) {
+      const updated: Product = await res.json();
+      setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    }
+  }
+
   const selectedProducts = useMemo(
     () => productIds.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => Boolean(p)),
     [productIds, products]
@@ -249,6 +261,19 @@ export default function MothersDayAdmin() {
                   <p className="text-xs truncate" style={{ color: "var(--charcoal)" }}>{p.name}</p>
                   <p className="text-xs font-mono" style={{ color: "var(--muted)" }}>{p.specifications["Product Code"] || "—"} · {THB(p.price)}</p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => toggleSoldOut(p)}
+                  className="text-xs px-2 py-1 rounded font-sans transition-all flex-shrink-0"
+                  style={{
+                    backgroundColor: p.soldOut ? "#C0392B" : "#F5F0E8",
+                    color: p.soldOut ? "white" : "var(--muted)",
+                    border: "1px solid",
+                    borderColor: p.soldOut ? "#C0392B" : "var(--border)",
+                  }}
+                >
+                  {p.soldOut ? "SOLD OUT" : "In Stock"}
+                </button>
                 <button
                   type="button"
                   onClick={() => removeProduct(p.id)}

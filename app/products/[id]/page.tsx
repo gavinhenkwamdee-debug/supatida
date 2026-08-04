@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProductById } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
-import { DEFAULT_MOTHERSDAY, type MothersDayConfig } from "@/lib/mothersday-config";
+import { DEFAULT_MOTHERSDAY, isMothersDayDiscountExcluded, type MothersDayConfig } from "@/lib/mothersday-config";
 import ProductDetailClient from "@/components/ProductDetailClient";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +55,7 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const mothersDay = await getSetting<MothersDayConfig>("mothersday", DEFAULT_MOTHERSDAY);
-  const mothersDayDiscount = mothersDay.enabled && !(mothersDay.productIds || []).includes(product.id);
+  const mothersDayDiscount = mothersDay.enabled && !(mothersDay.productIds || []).includes(product.id) && !isMothersDayDiscountExcluded(product);
 
   const priceFormatted = new Intl.NumberFormat("th-TH", {
     style: "currency", currency: "THB", maximumFractionDigits: 0,

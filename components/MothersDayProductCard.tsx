@@ -54,6 +54,15 @@ export default function MothersDayProductCard({ product, promoPrice }: { product
           >
             -12% Mother&apos;s Day
           </span>
+          {product.soldOut && (
+            <div className="absolute inset-0 flex items-center justify-center"
+              style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+              <span className="text-xl tracking-[0.2em] font-sans font-bold"
+                style={{ color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                SOLD OUT
+              </span>
+            </div>
+          )}
         </div>
       </Link>
 
@@ -64,21 +73,23 @@ export default function MothersDayProductCard({ product, promoPrice }: { product
           </h2>
         </Link>
 
-        <div className="mb-2 sm:mb-3">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(originalPrice)}</span>
-            <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#C0392B", color: "white", fontSize: "9px" }}>
-              -{originalDiscountPct}%
-            </span>
+        {!product.soldOut && (
+          <div className="mb-2 sm:mb-3">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(originalPrice)}</span>
+              <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#C0392B", color: "white", fontSize: "9px" }}>
+                -{originalDiscountPct}%
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+              <span className="text-xs sm:text-sm font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(product.price)}</span>
+              <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#0284C7", color: "white", fontSize: "9px" }}>
+                -12%
+              </span>
+            </div>
+            <p className="text-sm sm:text-xl font-sans font-light tracking-wide mt-1" style={{ color: "#0284C7" }}>{fmt(promoPrice)}</p>
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-            <span className="text-xs sm:text-sm font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(product.price)}</span>
-            <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#0284C7", color: "white", fontSize: "9px" }}>
-              -12%
-            </span>
-          </div>
-          <p className="text-sm sm:text-xl font-sans font-light tracking-wide mt-1" style={{ color: "#0284C7" }}>{fmt(promoPrice)}</p>
-        </div>
+        )}
 
         <a
           href="https://lin.ee/U9D2iyG"
