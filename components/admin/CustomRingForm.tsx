@@ -37,6 +37,15 @@ function emptyGroup(): GroupState {
   return { key: nextKey(), label: "", choices: [emptyChoice()] };
 }
 
+// Positioner's preview box is a fixed max-w-xs (320px) square — used only
+// to show an approximate px hint next to the copy/paste buttons.
+const POSITIONER_PX = 320;
+function fmtPx(pct: number) {
+  return Math.round((pct / 100) * POSITIONER_PX);
+}
+
+type CopiedPosition = { x: number; y: number; width: number };
+
 function cloneGroup(label: string, choices: Omit<ChoiceState, "key">[]): GroupState {
   return {
     key: nextKey(),
@@ -149,6 +158,8 @@ function ChoiceEditor({
   onMove,
   isFirst,
   isLast,
+  copiedPosition,
+  onCopyPosition,
 }: {
   choice: ChoiceState;
   baseImage: string;
@@ -156,6 +167,8 @@ function ChoiceEditor({
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
   isFirst: boolean;
+  copiedPosition: CopiedPosition | null;
+  onCopyPosition: (p: CopiedPosition) => void;
   isLast: boolean;
 }) {
   const [positioning, setPositioning] = useState(false);
@@ -200,10 +213,33 @@ function ChoiceEditor({
               style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {choice.overlayImage && baseImage && (
               <button type="button" onClick={() => setPositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
                 {positioning ? "ปิดตำแหน่ง" : "จัดตำแหน่ง"}
+              </button>
+            )}
+            {choice.overlayImage && (
+              <button
+                type="button"
+                onClick={() => onCopyPosition({ x: choice.overlayX, y: choice.overlayY, width: choice.overlayWidth })}
+                className="text-xs tracking-wider uppercase underline font-sans"
+                style={{ color: "var(--gold-dark)" }}
+                title={`x=${fmtPx(choice.overlayX)}px, y=${fmtPx(choice.overlayY)}px`}
+              >
+                คัดลอกตำแหน่ง
+              </button>
+            )}
+            {choice.overlayImage && copiedPosition && (
+              <button
+                type="button"
+                onClick={() =>
+                  onChange({ ...choice, overlayX: copiedPosition.x, overlayY: copiedPosition.y, overlayWidth: copiedPosition.width })
+                }
+                className="text-xs tracking-wider uppercase underline font-sans"
+                style={{ color: "var(--gold-dark)" }}
+              >
+                วางตำแหน่ง ({fmtPx(copiedPosition.x)}, {fmtPx(copiedPosition.y)}px)
               </button>
             )}
             <button type="button" onClick={onRemove} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "#C0392B" }}>
@@ -255,6 +291,8 @@ function GroupEditor({
   onRemove,
   onMove,
   onDuplicate,
+  copiedPosition,
+  onCopyPosition,
 }: {
   group: GroupState;
   baseImage: string;
@@ -262,6 +300,8 @@ function GroupEditor({
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
   onDuplicate: () => void;
+  copiedPosition: CopiedPosition | null;
+  onCopyPosition: (p: CopiedPosition) => void;
 }) {
   function moveChoice(index: number, dir: -1 | 1) {
     const next = [...group.choices];
@@ -302,6 +342,8 @@ function GroupEditor({
             onMove={(dir) => moveChoice(i, dir)}
             isFirst={i === 0}
             isLast={i === group.choices.length - 1}
+            copiedPosition={copiedPosition}
+            onCopyPosition={onCopyPosition}
           />
         ))}
       </div>
@@ -348,6 +390,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [copiedPosition, setCopiedPosition] = useState<CopiedPosition | null>(null);
 
   const [availableGroups, setAvailableGroups] = useState<GroupWithRing[]>([]);
   const [importSelection, setImportSelection] = useState("");
@@ -509,6 +552,8 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
           onRemove={() => setGroups(groups.filter((x) => x.key !== g.key))}
           onMove={(dir) => moveGroup(i, dir)}
           onDuplicate={() => duplicateGroup(i)}
+          copiedPosition={copiedPosition}
+          onCopyPosition={setCopiedPosition}
         />
       ))}
       <button
