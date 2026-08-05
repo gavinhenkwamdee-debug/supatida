@@ -160,6 +160,19 @@ export default function Header() {
               ⭐ รีวิว
             </a>
           )}
+
+          <Link
+            href="/account"
+            className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
+            style={{
+              color: "var(--muted)",
+              borderBottom: "2px solid transparent",
+              background: "none",
+              cursor: "pointer",
+            }}
+          >
+            👤 บัญชีของฉัน
+          </Link>
         </div>
       </nav>
 
