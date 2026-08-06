@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   const welcomePerks = await getWelcomePerks();
   for (const perk of welcomePerks) {
-    await grantPrivilege(customer.id, perk, "signup");
+    await grantPrivilege(customer.id, perk.title, "signup", null, "", perk.image);
   }
 
   const tiers = await getCrmTiers();

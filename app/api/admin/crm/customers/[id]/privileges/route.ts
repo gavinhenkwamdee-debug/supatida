@@ -20,11 +20,12 @@ export async function POST(request: Request, { params }: Params) {
   const body = await request.json().catch(() => null);
   const title = String(body?.title ?? "").trim();
   const note = String(body?.note ?? "").trim();
+  const image = body?.image ? String(body.image) : null;
 
   if (!title) {
     return NextResponse.json({ error: "กรอกชื่อสิทธิพิเศษ" }, { status: 400 });
   }
 
-  const privilege = await grantPrivilege(Number(id), title, "manual", null, note);
+  const privilege = await grantPrivilege(Number(id), title, "manual", null, note, image);
   return NextResponse.json(privilege);
 }

@@ -26,6 +26,7 @@ export default function AccountClient() {
   const [interests, setInterests] = useState<string[]>([]);
   const [interestsOther, setInterestsOther] = useState("");
   const [pdpaConsent, setPdpaConsent] = useState(false);
+  const [signupBanner, setSignupBanner] = useState<string | null>(null);
 
   const passwordCheck = checkPasswordStrength(password);
 
@@ -38,6 +39,12 @@ export default function AccountClient() {
   }
 
   useEffect(loadMe, []);
+  useEffect(() => {
+    fetch("/api/settings/crm-signup-banner")
+      .then((r) => r.json())
+      .then((d) => setSignupBanner(d.image ?? null))
+      .catch(() => {});
+  }, []);
 
   function toggleInterest(reason: string) {
     setInterests((prev) => (prev.includes(reason) ? prev.filter((r) => r !== reason) : [...prev, reason]));
@@ -106,6 +113,10 @@ export default function AccountClient() {
           <Dashboard me={me} onLogout={handleLogout} />
         ) : (
           <div className="bg-white p-8" style={{ border: "1px solid var(--border)" }}>
+            {mode === "signup" && signupBanner && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={signupBanner} alt="" className="w-full mb-6" style={{ border: "1px solid var(--border)" }} />
+            )}
             <div className="flex mb-6" style={{ borderBottom: "1px solid var(--border)" }}>
               <button
                 type="button"
@@ -274,10 +285,16 @@ function Dashboard({ me, onLogout }: { me: Me; onLogout: () => void }) {
         <div className="space-y-1.5 mb-2">
           {privileges.map((p) => (
             <div key={p.id} className="flex items-center justify-between text-sm font-sans">
-              <span style={{ color: p.used ? "var(--muted)" : "var(--charcoal)", textDecoration: p.used ? "line-through" : "none" }}>
-                {p.used ? "" : "✓ "}{p.title}
+              <span className="flex items-center gap-2">
+                {p.image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.image} alt="" className="w-8 h-8 object-cover flex-shrink-0" style={{ border: "1px solid var(--border)", opacity: p.used ? 0.5 : 1 }} />
+                )}
+                <span style={{ color: p.used ? "var(--muted)" : "var(--charcoal)", textDecoration: p.used ? "line-through" : "none" }}>
+                  {p.used ? "" : "✓ "}{p.title}
+                </span>
               </span>
-              {p.used && <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>ใช้แล้ว</span>}
+              {p.used && <span className="text-xs font-sans flex-shrink-0" style={{ color: "var(--muted)" }}>ใช้แล้ว</span>}
             </div>
           ))}
         </div>

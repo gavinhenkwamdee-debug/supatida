@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
 import { getCrmTiers, setCrmTiers } from "@/lib/crm-settings";
-import type { CrmTier } from "@/lib/crm";
+import type { CrmTier, PerkDef } from "@/lib/crm";
 import { isAdminRequest } from "@/lib/admin-auth";
+
+function parsePerks(value: unknown): PerkDef[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((p: unknown) => {
+      const perk = p as Record<string, unknown>;
+      return { title: String(perk.title ?? "").trim(), image: perk.image ? String(perk.image) : null };
+    })
+    .filter((p) => p.title);
+}
 
 export async function GET(request: Request) {
   if (!isAdminRequest(request)) {
@@ -25,7 +35,7 @@ export async function PUT(request: Request) {
       name: String(tier.name ?? "").trim() || "Tier",
       minPoints: Number(tier.minPoints) || 0,
       discountPercent: Number(tier.discountPercent) || 0,
-      perks: Array.isArray(tier.perks) ? tier.perks.map((p) => String(p).trim()).filter(Boolean) : [],
+      perks: parsePerks(tier.perks),
     };
   });
 

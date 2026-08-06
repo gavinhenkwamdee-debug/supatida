@@ -41,12 +41,19 @@ export interface PrivilegeGrant {
   id: number;
   customerId: number;
   title: string;
+  image: string | null;
   source: "signup" | "tier" | "manual";
   sourceDetail: string | null;
   note: string;
   used: boolean;
   usedAt: string | null;
   createdAt: string;
+}
+
+// A perk as defined on a tier or as a welcome bonus — becomes a PrivilegeGrant when awarded.
+export interface PerkDef {
+  title: string;
+  image: string | null;
 }
 
 // ── Schema init ───────────────────────────────────────────
@@ -87,6 +94,7 @@ export async function initCrmDB() {
       id            SERIAL PRIMARY KEY,
       customer_id   INT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
       title         TEXT NOT NULL,
+      image         TEXT,
       source        TEXT NOT NULL DEFAULT 'manual',
       source_detail TEXT,
       note          TEXT NOT NULL DEFAULT '',
@@ -95,6 +103,7 @@ export async function initCrmDB() {
       created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  await sql`ALTER TABLE customer_privileges ADD COLUMN IF NOT EXISTS image TEXT`;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -144,6 +153,7 @@ function toPrivilege(row: any): PrivilegeGrant {
     id: row.id,
     customerId: row.customer_id,
     title: row.title,
+    image: row.image ?? null,
     source: row.source,
     sourceDetail: row.source_detail ?? null,
     note: row.note ?? "",
@@ -227,12 +237,13 @@ export async function grantPrivilege(
   title: string,
   source: "signup" | "tier" | "manual",
   sourceDetail: string | null = null,
-  note = ""
+  note = "",
+  image: string | null = null
 ): Promise<PrivilegeGrant> {
   await initCrmDB();
   const rows = await sql`
-    INSERT INTO customer_privileges (customer_id, title, source, source_detail, note)
-    VALUES (${customerId}, ${title}, ${source}, ${sourceDetail}, ${note})
+    INSERT INTO customer_privileges (customer_id, title, image, source, source_detail, note)
+    VALUES (${customerId}, ${title}, ${image}, ${source}, ${sourceDetail}, ${note})
     RETURNING *
   `;
   return toPrivilege(rows[0]);
@@ -264,7 +275,7 @@ export async function grantCrossedTierPrivileges(
   const granted: PrivilegeGrant[] = [];
   for (const tier of crossed) {
     for (const perk of tier.perks) {
-      granted.push(await grantPrivilege(customerId, perk, "tier", tier.name));
+      granted.push(await grantPrivilege(customerId, perk.title, "tier", tier.name, "", perk.image));
     }
   }
   return granted;
@@ -275,13 +286,18 @@ export interface CrmTier {
   name: string;
   minPoints: number;
   discountPercent: number;
-  perks: string[];
+  perks: PerkDef[];
 }
 
 export const DEFAULT_TIERS: CrmTier[] = [
   { name: "Bronze", minPoints: 0, discountPercent: 0, perks: [] },
-  { name: "Silver", minPoints: 1000, discountPercent: 5, perks: ["ขัดแหวนฟรี"] },
-  { name: "Gold", minPoints: 3000, discountPercent: 10, perks: ["ขัดแหวนฟรี", "จัดส่งฟรี"] },
+  { name: "Silver", minPoints: 1000, discountPercent: 5, perks: [{ title: "ขัดแหวนฟรี", image: null }] },
+  {
+    name: "Gold",
+    minPoints: 3000,
+    discountPercent: 10,
+    perks: [{ title: "ขัดแหวนฟรี", image: null }, { title: "จัดส่งฟรี", image: null }],
+  },
 ];
 
 export function getTierForPoints(points: number, tiers: CrmTier[]): CrmTier {

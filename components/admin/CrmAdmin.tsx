@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Customer, PointTransaction, CrmTier, PrivilegeGrant } from "@/lib/crm";
+import type { Customer, PointTransaction, CrmTier, PrivilegeGrant, PerkDef } from "@/lib/crm";
 
 type CustomerRow = Customer & { tier: string };
 
 export default function CrmAdmin() {
-  const [tab, setTab] = useState<"customers" | "tiers">("customers");
+  const [tab, setTab] = useState<"customers" | "tiers" | "banner">("customers");
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -47,9 +47,118 @@ export default function CrmAdmin() {
         >
           ระดับสิทธิพิเศษ
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("banner")}
+          className="px-4 py-2 text-xs tracking-widest uppercase font-sans"
+          style={{
+            backgroundColor: tab === "banner" ? "var(--charcoal)" : "white",
+            color: tab === "banner" ? "var(--gold-light)" : "var(--charcoal)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          แบนเนอร์สมัครสมาชิก
+        </button>
       </div>
 
-      {tab === "customers" ? <CustomersTab /> : <TiersTab />}
+      {tab === "customers" ? <CustomersTab /> : tab === "tiers" ? <TiersTab /> : <SignupBannerTab />}
+    </div>
+  );
+}
+
+// ── Shared: small image upload/preview/clear box ───────────
+function MiniImageUpload({
+  src,
+  onUploaded,
+  onClear,
+  size = 40,
+}: {
+  src: string | null;
+  onUploaded: (url: string) => void;
+  onClear: () => void;
+  size?: number;
+}) {
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-crm", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) onUploaded(data.url);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  return (
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      <label
+        className="relative flex flex-col items-center justify-center cursor-pointer overflow-hidden w-full h-full"
+        style={{ border: "1px dashed var(--border)", backgroundColor: "#FAF8F4" }}
+      >
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="" className="w-full h-full object-cover" />
+        ) : uploading ? (
+          <span className="text-[9px] font-sans" style={{ color: "var(--muted)" }}>…</span>
+        ) : (
+          <span className="text-[9px] font-sans text-center leading-tight" style={{ color: "var(--muted)" }}>+ รูป</span>
+        )}
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={handleFile} className="hidden" />
+      </label>
+      {src && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="absolute -top-1.5 -right-1.5 w-4 h-4 text-[10px] flex items-center justify-center rounded-full"
+          style={{ backgroundColor: "#C0392B", color: "white" }}
+          title="ลบรูป"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Shared: editable list of {title, image} perks ──────────
+function PerkListEditor({ perks, onChange }: { perks: PerkDef[]; onChange: (perks: PerkDef[]) => void }) {
+  function updatePerk(i: number, patch: Partial<PerkDef>) {
+    onChange(perks.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+  }
+  function removePerk(i: number) {
+    onChange(perks.filter((_, idx) => idx !== i));
+  }
+
+  return (
+    <div className="space-y-2">
+      {perks.map((perk, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <MiniImageUpload src={perk.image} onUploaded={(url) => updatePerk(i, { image: url })} onClear={() => updatePerk(i, { image: null })} />
+          <input
+            value={perk.title}
+            onChange={(e) => updatePerk(i, { title: e.target.value })}
+            placeholder="เช่น ขัดแหวนฟรี"
+            className="flex-1 px-2 py-1.5 text-xs font-sans outline-none"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+          />
+          <button type="button" onClick={() => removePerk(i)} className="text-xs flex-shrink-0" style={{ color: "#C0392B" }}>✕</button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...perks, { title: "", image: null }])}
+        className="text-xs tracking-wider uppercase underline font-sans"
+        style={{ color: "var(--gold-dark)" }}
+      >
+        + เพิ่มสิทธิพิเศษ
+      </button>
     </div>
   );
 }
@@ -139,6 +248,7 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }: { customerId: n
   const [error, setError] = useState("");
   const [grantTitle, setGrantTitle] = useState("");
   const [grantNote, setGrantNote] = useState("");
+  const [grantImage, setGrantImage] = useState<string | null>(null);
   const [granting, setGranting] = useState(false);
 
   function load() {
@@ -191,10 +301,11 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }: { customerId: n
       await fetch(`/api/admin/crm/customers/${customerId}/privileges`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: grantTitle, note: grantNote }),
+        body: JSON.stringify({ title: grantTitle, note: grantNote, image: grantImage }),
       });
       setGrantTitle("");
       setGrantNote("");
+      setGrantImage(null);
       load();
     } finally {
       setGranting(false);
@@ -277,11 +388,17 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }: { customerId: n
               <div className="space-y-1.5 mb-3">
                 {privileges.map((p) => (
                   <div key={p.id} className="flex items-center justify-between text-xs font-sans p-2" style={{ border: "1px solid var(--border)" }}>
-                    <div>
-                      <span style={{ color: "var(--charcoal)" }}>{p.title}</span>
-                      <span className="ml-2" style={{ color: "var(--muted)" }}>
-                        {p.source === "signup" ? "(สมัครสมาชิก)" : p.source === "tier" ? `(ระดับ ${p.sourceDetail})` : "(แอดมินเพิ่ม)"}
-                      </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {p.image && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.image} alt="" className="w-6 h-6 object-cover flex-shrink-0" style={{ border: "1px solid var(--border)" }} />
+                      )}
+                      <div className="min-w-0">
+                        <span style={{ color: "var(--charcoal)" }}>{p.title}</span>
+                        <span className="ml-2" style={{ color: "var(--muted)" }}>
+                          {p.source === "signup" ? "(สมัครสมาชิก)" : p.source === "tier" ? `(ระดับ ${p.sourceDetail})` : "(แอดมินเพิ่ม)"}
+                        </span>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -299,29 +416,34 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }: { customerId: n
                 ))}
               </div>
             )}
-            <form onSubmit={handleGrantPrivilege} className="flex gap-2 mb-6">
-              <input
-                value={grantTitle}
-                onChange={(e) => setGrantTitle(e.target.value)}
-                placeholder="เพิ่มสิทธิพิเศษเอง เช่น ส่วนลดพิเศษ"
-                className="flex-1 px-2 py-1.5 text-xs font-sans outline-none"
-                style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-              />
-              <input
-                value={grantNote}
-                onChange={(e) => setGrantNote(e.target.value)}
-                placeholder="หมายเหตุ (ถ้ามี)"
-                className="flex-1 px-2 py-1.5 text-xs font-sans outline-none"
-                style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-              />
-              <button
-                type="submit"
-                disabled={granting}
-                className="px-3 py-1.5 text-xs tracking-wider uppercase font-sans flex-shrink-0 disabled:opacity-50"
-                style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
-              >
-                เพิ่ม
-              </button>
+            <form onSubmit={handleGrantPrivilege} className="space-y-2 mb-6">
+              <div className="flex items-center gap-2">
+                <MiniImageUpload src={grantImage} onUploaded={setGrantImage} onClear={() => setGrantImage(null)} />
+                <input
+                  value={grantTitle}
+                  onChange={(e) => setGrantTitle(e.target.value)}
+                  placeholder="เพิ่มสิทธิพิเศษเอง เช่น ส่วนลดพิเศษ"
+                  className="flex-1 px-2 py-1.5 text-xs font-sans outline-none"
+                  style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+                />
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={grantNote}
+                  onChange={(e) => setGrantNote(e.target.value)}
+                  placeholder="หมายเหตุ (ถ้ามี)"
+                  className="flex-1 px-2 py-1.5 text-xs font-sans outline-none"
+                  style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+                />
+                <button
+                  type="submit"
+                  disabled={granting}
+                  className="px-3 py-1.5 text-xs tracking-wider uppercase font-sans flex-shrink-0 disabled:opacity-50"
+                  style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
+                >
+                  เพิ่ม
+                </button>
+              </div>
             </form>
 
             <p className="text-xs tracking-widest uppercase font-sans mb-2" style={{ color: "var(--gold-dark)" }}>ประวัติแต้ม</p>
@@ -434,19 +556,13 @@ function TiersTab() {
               </div>
             </div>
             <div>
-              <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>สิทธิพิเศษอื่นๆ (คั่นด้วยเครื่องหมาย ,)</label>
-              <input
-                value={tier.perks.join(", ")}
-                onChange={(e) => updateTier(i, { perks: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
-                placeholder="เช่น ขัดแหวนฟรี, จัดส่งฟรี"
-                className="w-full px-2 py-1.5 text-xs font-sans outline-none"
-                style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-              />
+              <label className="text-xs font-sans block mb-2" style={{ color: "var(--muted)" }}>สิทธิพิเศษอื่นๆ (ใส่รูปได้)</label>
+              <PerkListEditor perks={tier.perks} onChange={(perks) => updateTier(i, { perks })} />
             </div>
             <button
               type="button"
               onClick={() => removeTier(i)}
-              className="mt-2 text-xs tracking-wider uppercase underline font-sans"
+              className="mt-3 text-xs tracking-wider uppercase underline font-sans"
               style={{ color: "#C0392B" }}
             >
               ลบระดับ
@@ -475,7 +591,7 @@ function TiersTab() {
 }
 
 function WelcomePerksEditor() {
-  const [perks, setPerks] = useState<string[]>([]);
+  const [perks, setPerks] = useState<PerkDef[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -510,27 +626,72 @@ function WelcomePerksEditor() {
         สิทธิ์ต้อนรับสมาชิกใหม่
       </p>
       <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
-        มอบให้ทันทีที่สมัครสมาชิก โดยไม่ต้องรอแต้ม (คั่นด้วยเครื่องหมาย ,)
+        มอบให้ทันทีที่สมัครสมาชิก โดยไม่ต้องรอแต้ม
       </p>
-      <div className="flex gap-2">
-        <input
-          value={perks.join(", ")}
-          onChange={(e) => { setPerks(e.target.value.split(",").map((s) => s.trim()).filter(Boolean)); setSaved(false); }}
-          placeholder="เช่น ส่วนลด 300 บาทสำหรับการซื้อครั้งแรก"
-          className="flex-1 px-2 py-1.5 text-xs font-sans outline-none"
-          style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+      <PerkListEditor perks={perks} onChange={(next) => { setPerks(next); setSaved(false); }} />
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving}
+        className="mt-3 px-4 py-1.5 text-xs tracking-widest uppercase font-sans flex-shrink-0 disabled:opacity-50"
+        style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
+      >
+        {saving ? "…" : "บันทึก"}
+      </button>
+      {saved && <span className="ml-2 text-xs font-sans" style={{ color: "var(--gold-dark)" }}>บันทึกแล้ว ✓</span>}
+    </div>
+  );
+}
+
+function SignupBannerTab() {
+  const [image, setImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/crm/signup-banner")
+      .then((r) => r.json())
+      .then((d) => setImage(d.image ?? null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function save(next: string | null) {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await fetch("/api/admin/crm/signup-banner", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: next }),
+      });
+      if (res.ok) setSaved(true);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return <p className="text-sm font-sans" style={{ color: "var(--muted)" }}>Loading…</p>;
+
+  return (
+    <div className="bg-white p-6" style={{ border: "1px solid var(--border)" }}>
+      <p className="text-xs tracking-widest uppercase font-sans mb-1" style={{ color: "var(--gold-dark)" }}>
+        รูปโปรโมทแคมเปญ
+      </p>
+      <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
+        แสดงด้านบนของฟอร์มสมัครสมาชิกที่หน้า /account เช่น โปรโมชันสมัครวันนี้รับแต้มพิเศษ
+      </p>
+      <div className="flex items-center gap-4">
+        <MiniImageUpload
+          src={image}
+          size={100}
+          onUploaded={(url) => { setImage(url); save(url); }}
+          onClear={() => { setImage(null); save(null); }}
         />
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="px-4 py-1.5 text-xs tracking-widest uppercase font-sans flex-shrink-0 disabled:opacity-50"
-          style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
-        >
-          {saving ? "…" : "บันทึก"}
-        </button>
+        <div className="text-xs font-sans" style={{ color: "var(--muted)" }}>
+          {saving ? "กำลังบันทึก…" : saved ? "บันทึกแล้ว ✓" : "อัปโหลดรูปเพื่อบันทึกอัตโนมัติ"}
+        </div>
       </div>
-      {saved && <span className="text-xs font-sans" style={{ color: "var(--gold-dark)" }}>บันทึกแล้ว ✓</span>}
     </div>
   );
 }
