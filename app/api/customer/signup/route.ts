@@ -1,16 +1,31 @@
 import { NextResponse } from "next/server";
-import { createCustomer, getCustomerByPhone, getTierForPoints } from "@/lib/crm";
+import { createCustomer, getCustomerByPhone, getTierForPoints, grantPrivilege } from "@/lib/crm";
 import { hashPassword, sessionCookieValue, SESSION_COOKIE } from "@/lib/customer-auth";
-import { getCrmTiers } from "@/lib/crm-settings";
+import { getCrmTiers, getWelcomePerks } from "@/lib/crm-settings";
+import { checkPasswordStrength } from "@/lib/password-policy";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const name = String(body?.name ?? "").trim();
   const phone = String(body?.phone ?? "").trim();
   const password = String(body?.password ?? "");
+  const birthday = body?.birthday ? String(body.birthday) : null;
+  const budgetRange = body?.budgetRange ? String(body.budgetRange) : null;
+  const interests = Array.isArray(body?.interests) ? body.interests.map((i: unknown) => String(i)) : [];
+  const interestsOther = body?.interestsOther ? String(body.interestsOther).trim() : null;
+  const pdpaConsent = Boolean(body?.pdpaConsent);
 
-  if (!name || !phone || password.length < 6) {
-    return NextResponse.json({ error: "กรอกชื่อ เบอร์โทร และรหัสผ่าน (อย่างน้อย 6 ตัว) ให้ครบ" }, { status: 400 });
+  if (!name || !phone) {
+    return NextResponse.json({ error: "กรอกชื่อและเบอร์โทรให้ครบ" }, { status: 400 });
+  }
+
+  const passwordCheck = checkPasswordStrength(password);
+  if (!passwordCheck.ok) {
+    return NextResponse.json({ error: `รหัสผ่านต้อง: ${passwordCheck.issues.join(", ")}` }, { status: 400 });
+  }
+
+  if (!pdpaConsent) {
+    return NextResponse.json({ error: "กรุณายินยอมให้เก็บข้อมูลส่วนบุคคลก่อนสมัครสมาชิก" }, { status: 400 });
   }
 
   const existing = await getCustomerByPhone(phone);
@@ -18,7 +33,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "เบอร์โทรนี้สมัครสมาชิกไว้แล้ว กรุณาเข้าสู่ระบบ" }, { status: 409 });
   }
 
-  const customer = await createCustomer(name, phone, hashPassword(password));
+  const customer = await createCustomer({
+    name,
+    phone,
+    passwordHash: hashPassword(password),
+    birthday,
+    budgetRange,
+    interests,
+    interestsOther,
+    pdpaConsent,
+  });
+
+  const welcomePerks = await getWelcomePerks();
+  for (const perk of welcomePerks) {
+    await grantPrivilege(customer.id, perk, "signup");
+  }
+
   const tiers = await getCrmTiers();
 
   const response = NextResponse.json({ customer, tier: getTierForPoints(customer.points, tiers) });

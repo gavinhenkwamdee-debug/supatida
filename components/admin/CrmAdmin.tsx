@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Customer, PointTransaction, CrmTier } from "@/lib/crm";
+import type { Customer, PointTransaction, CrmTier, PrivilegeGrant } from "@/lib/crm";
 
 type CustomerRow = Customer & { tier: string };
 
@@ -131,11 +131,15 @@ function CustomersTab() {
 function CustomerDetailModal({ customerId, onClose, onUpdated }: { customerId: number; onClose: () => void; onUpdated: () => void }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [transactions, setTransactions] = useState<PointTransaction[]>([]);
+  const [privileges, setPrivileges] = useState<PrivilegeGrant[]>([]);
   const [tier, setTier] = useState<CrmTier | null>(null);
   const [points, setPoints] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [grantTitle, setGrantTitle] = useState("");
+  const [grantNote, setGrantNote] = useState("");
+  const [granting, setGranting] = useState(false);
 
   function load() {
     fetch(`/api/admin/crm/customers/${customerId}`)
@@ -143,6 +147,7 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }: { customerId: n
       .then((d) => {
         setCustomer(d.customer);
         setTransactions(d.transactions);
+        setPrivileges(d.privileges);
         setTier(d.tier);
       });
   }
@@ -178,6 +183,33 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }: { customerId: n
     }
   }
 
+  async function handleGrantPrivilege(e: React.FormEvent) {
+    e.preventDefault();
+    if (!grantTitle.trim()) return;
+    setGranting(true);
+    try {
+      await fetch(`/api/admin/crm/customers/${customerId}/privileges`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: grantTitle, note: grantNote }),
+      });
+      setGrantTitle("");
+      setGrantNote("");
+      load();
+    } finally {
+      setGranting(false);
+    }
+  }
+
+  async function toggleUsed(privilege: PrivilegeGrant) {
+    setPrivileges((prev) => prev.map((p) => (p.id === privilege.id ? { ...p, used: !p.used } : p)));
+    await fetch(`/api/admin/crm/customers/${customerId}/privileges/${privilege.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ used: !privilege.used }),
+    });
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={onClose}>
       <div className="bg-white w-full max-w-md max-h-[85vh] overflow-y-auto" style={{ border: "1px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
@@ -192,6 +224,16 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }: { customerId: n
               </div>
               <button onClick={onClose} className="text-sm" style={{ color: "var(--muted)" }}>✕</button>
             </div>
+
+            {(customer.birthday || customer.budgetRange || customer.interests.length > 0) && (
+              <div className="mb-4 text-xs font-sans space-y-1" style={{ color: "var(--muted)" }}>
+                {customer.birthday && <p>🎂 วันเกิด: {new Date(customer.birthday).toLocaleDateString("th-TH")}</p>}
+                {customer.budgetRange && <p>💰 งบประมาณที่สนใจ: {customer.budgetRange}</p>}
+                {customer.interests.length > 0 && (
+                  <p>❤️ สนใจ Supatida เพราะ: {customer.interests.join(", ")}{customer.interestsOther ? ` (${customer.interestsOther})` : ""}</p>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center justify-between p-3 mb-5" style={{ backgroundColor: "#FAF8F4", border: "1px solid var(--border)" }}>
               <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>ระดับ: <strong style={{ color: "var(--gold-dark)" }}>{tier?.name}</strong></span>
@@ -225,6 +267,60 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }: { customerId: n
                 style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
               >
                 {saving ? "กำลังบันทึก…" : "บันทึก"}
+              </button>
+            </form>
+
+            <p className="text-xs tracking-widest uppercase font-sans mb-2" style={{ color: "var(--gold-dark)" }}>สิทธิพิเศษ</p>
+            {privileges.length === 0 ? (
+              <p className="text-xs font-sans mb-3" style={{ color: "var(--muted)" }}>ยังไม่มีสิทธิพิเศษที่ได้รับ</p>
+            ) : (
+              <div className="space-y-1.5 mb-3">
+                {privileges.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between text-xs font-sans p-2" style={{ border: "1px solid var(--border)" }}>
+                    <div>
+                      <span style={{ color: "var(--charcoal)" }}>{p.title}</span>
+                      <span className="ml-2" style={{ color: "var(--muted)" }}>
+                        {p.source === "signup" ? "(สมัครสมาชิก)" : p.source === "tier" ? `(ระดับ ${p.sourceDetail})` : "(แอดมินเพิ่ม)"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleUsed(p)}
+                      className="px-2 py-1 text-xs font-sans flex-shrink-0"
+                      style={{
+                        backgroundColor: p.used ? "#FAF8F4" : "var(--gold-dark)",
+                        color: p.used ? "var(--muted)" : "white",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      {p.used ? "ใช้แล้ว ✓" : "ยังไม่ใช้"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <form onSubmit={handleGrantPrivilege} className="flex gap-2 mb-6">
+              <input
+                value={grantTitle}
+                onChange={(e) => setGrantTitle(e.target.value)}
+                placeholder="เพิ่มสิทธิพิเศษเอง เช่น ส่วนลดพิเศษ"
+                className="flex-1 px-2 py-1.5 text-xs font-sans outline-none"
+                style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+              />
+              <input
+                value={grantNote}
+                onChange={(e) => setGrantNote(e.target.value)}
+                placeholder="หมายเหตุ (ถ้ามี)"
+                className="flex-1 px-2 py-1.5 text-xs font-sans outline-none"
+                style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+              />
+              <button
+                type="submit"
+                disabled={granting}
+                className="px-3 py-1.5 text-xs tracking-wider uppercase font-sans flex-shrink-0 disabled:opacity-50"
+                style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
+              >
+                เพิ่ม
               </button>
             </form>
 
@@ -297,8 +393,11 @@ function TiersTab() {
 
   return (
     <div>
+      <WelcomePerksEditor />
+
       <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
-        กำหนดแต้มขั้นต่ำ ส่วนลด และสิทธิพิเศษของแต่ละระดับ (เรียงจากน้อยไปมาก)
+        กำหนดแต้มขั้นต่ำ ส่วนลด และสิทธิพิเศษของแต่ละระดับ (เรียงจากน้อยไปมาก) — ส่วนลด % จะใช้ได้ตลอดขณะอยู่ระดับนั้น
+        ส่วนสิทธิพิเศษอื่นๆ จะถูกมอบให้ลูกค้า 1 ครั้งทันทีที่ขึ้นถึงระดับนั้นเป็นครั้งแรก (แอดมินกดว่า &quot;ใช้แล้ว&quot; ได้ในหน้าสมาชิก)
       </p>
       <div className="space-y-3 mb-4">
         {tiers.map((tier, i) => (
@@ -371,6 +470,67 @@ function TiersTab() {
         </button>
         {saved && <span className="text-xs font-sans" style={{ color: "var(--gold-dark)" }}>บันทึกแล้ว ✓</span>}
       </div>
+    </div>
+  );
+}
+
+function WelcomePerksEditor() {
+  const [perks, setPerks] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/crm/welcome-perks")
+      .then((r) => r.json())
+      .then((d) => setPerks(Array.isArray(d) ? d : []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await fetch("/api/admin/crm/welcome-perks", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(perks),
+      });
+      if (res.ok) setSaved(true);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="bg-white p-4 mb-6" style={{ border: "1px solid var(--border)" }}>
+      <p className="text-xs tracking-widest uppercase font-sans mb-1" style={{ color: "var(--gold-dark)" }}>
+        สิทธิ์ต้อนรับสมาชิกใหม่
+      </p>
+      <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
+        มอบให้ทันทีที่สมัครสมาชิก โดยไม่ต้องรอแต้ม (คั่นด้วยเครื่องหมาย ,)
+      </p>
+      <div className="flex gap-2">
+        <input
+          value={perks.join(", ")}
+          onChange={(e) => { setPerks(e.target.value.split(",").map((s) => s.trim()).filter(Boolean)); setSaved(false); }}
+          placeholder="เช่น ส่วนลด 300 บาทสำหรับการซื้อครั้งแรก"
+          className="flex-1 px-2 py-1.5 text-xs font-sans outline-none"
+          style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+        />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="px-4 py-1.5 text-xs tracking-widest uppercase font-sans flex-shrink-0 disabled:opacity-50"
+          style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
+        >
+          {saving ? "…" : "บันทึก"}
+        </button>
+      </div>
+      {saved && <span className="text-xs font-sans" style={{ color: "var(--gold-dark)" }}>บันทึกแล้ว ✓</span>}
     </div>
   );
 }

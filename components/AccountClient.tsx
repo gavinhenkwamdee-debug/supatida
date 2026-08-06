@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Customer, CrmTier } from "@/lib/crm";
+import type { Customer, CrmTier, PrivilegeGrant } from "@/lib/crm";
+import { BUDGET_RANGES, INTEREST_REASONS, PDPA_CONSENT_TEXT } from "@/lib/crm-options";
+import { checkPasswordStrength } from "@/lib/password-policy";
 
-type Me = { customer: Customer; tier: CrmTier; nextTier: CrmTier | null };
+type Me = { customer: Customer; tier: CrmTier; nextTier: CrmTier | null; privileges: PrivilegeGrant[] };
 
 const inputClass = "w-full px-3 py-2.5 text-sm font-sans outline-none";
 const inputStyle = { border: "1px solid var(--border)", color: "var(--charcoal)" };
@@ -19,6 +21,13 @@ export default function AccountClient() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [birthday, setBirthday] = useState("");
+  const [budgetRange, setBudgetRange] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
+  const [interestsOther, setInterestsOther] = useState("");
+  const [pdpaConsent, setPdpaConsent] = useState(false);
+
+  const passwordCheck = checkPasswordStrength(password);
 
   function loadMe() {
     fetch("/api/customer/me")
@@ -30,15 +39,33 @@ export default function AccountClient() {
 
   useEffect(loadMe, []);
 
+  function toggleInterest(reason: string) {
+    setInterests((prev) => (prev.includes(reason) ? prev.filter((r) => r !== reason) : [...prev, reason]));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (mode === "signup" && !passwordCheck.ok) {
+      setError(`รหัสผ่านต้อง: ${passwordCheck.issues.join(", ")}`);
+      return;
+    }
+    if (mode === "signup" && !pdpaConsent) {
+      setError("กรุณายินยอมให้เก็บข้อมูลส่วนบุคคลก่อนสมัครสมาชิก");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch(`/api/customer/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mode === "signup" ? { name, phone, password } : { phone, password }),
+        body: JSON.stringify(
+          mode === "signup"
+            ? { name, phone, password, birthday: birthday || null, budgetRange: budgetRange || null, interests, interestsOther, pdpaConsent }
+            : { phone, password }
+        ),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -117,8 +144,70 @@ export default function AccountClient() {
               </div>
               <div>
                 <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>รหัสผ่าน</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className={inputClass} style={inputStyle} />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className={inputClass}
+                  style={inputStyle}
+                />
+                {mode === "signup" && password.length > 0 && !passwordCheck.ok && (
+                  <p className="text-xs font-sans mt-1" style={{ color: "#C0392B" }}>
+                    ต้องมี: {passwordCheck.issues.join(", ")}
+                  </p>
+                )}
               </div>
+
+              {mode === "signup" && (
+                <>
+                  <div>
+                    <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>วันเกิด (ไม่บังคับ)</label>
+                    <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} className={inputClass} style={inputStyle} />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>งบประมาณแหวนที่สนใจ (ไม่บังคับ)</label>
+                    <select value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)} className={inputClass} style={inputStyle}>
+                      <option value="">ไม่ระบุ</option>
+                      {BUDGET_RANGES.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-sans block mb-2" style={{ color: "var(--muted)" }}>ทำไมถึงสนใจ Supatida (เลือกได้หลายข้อ, ไม่บังคับ)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {INTEREST_REASONS.map((reason) => (
+                        <label key={reason} className="flex items-center gap-2 text-xs font-sans" style={{ color: "var(--charcoal)" }}>
+                          <input type="checkbox" checked={interests.includes(reason)} onChange={() => toggleInterest(reason)} />
+                          {reason}
+                        </label>
+                      ))}
+                    </div>
+                    {interests.includes("อื่นๆ") && (
+                      <input
+                        value={interestsOther}
+                        onChange={(e) => setInterestsOther(e.target.value)}
+                        placeholder="ระบุเหตุผลอื่นๆ"
+                        className={`${inputClass} mt-2`}
+                        style={inputStyle}
+                      />
+                    )}
+                  </div>
+
+                  <label className="flex items-start gap-2 text-xs font-sans" style={{ color: "var(--charcoal)" }}>
+                    <input type="checkbox" checked={pdpaConsent} onChange={(e) => setPdpaConsent(e.target.checked)} className="mt-0.5" required />
+                    <span>
+                      {PDPA_CONSENT_TEXT}{" "}
+                      <Link href="/privacy-policy" target="_blank" className="underline" style={{ color: "var(--gold-dark)" }}>
+                        อ่านนโยบายความเป็นส่วนตัว
+                      </Link>
+                    </span>
+                  </label>
+                </>
+              )}
 
               {error && <p className="text-xs font-sans" style={{ color: "#C0392B" }}>{error}</p>}
 
@@ -139,7 +228,7 @@ export default function AccountClient() {
 }
 
 function Dashboard({ me, onLogout }: { me: Me; onLogout: () => void }) {
-  const { customer, tier, nextTier } = me;
+  const { customer, tier, nextTier, privileges } = me;
   const progressPct = nextTier
     ? Math.min(100, Math.round(((customer.points - tier.minPoints) / (nextTier.minPoints - tier.minPoints)) * 100))
     : 100;
@@ -171,18 +260,28 @@ function Dashboard({ me, onLogout }: { me: Me; onLogout: () => void }) {
         )}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 mb-2">
         <p className="text-xs tracking-widest uppercase font-sans" style={{ color: "var(--gold-dark)" }}>สิทธิพิเศษของคุณ</p>
         {tier.discountPercent > 0 && (
-          <p className="text-sm font-sans" style={{ color: "var(--charcoal)" }}>✓ ส่วนลด {tier.discountPercent}% ทุกการสั่งซื้อ</p>
+          <p className="text-sm font-sans" style={{ color: "var(--charcoal)" }}>✓ ส่วนลด {tier.discountPercent}% ทุกการสั่งซื้อ (ระดับ {tier.name})</p>
         )}
-        {tier.perks.map((perk) => (
-          <p key={perk} className="text-sm font-sans" style={{ color: "var(--charcoal)" }}>✓ {perk}</p>
-        ))}
-        {tier.discountPercent === 0 && tier.perks.length === 0 && (
+        {tier.discountPercent === 0 && privileges.length === 0 && (
           <p className="text-sm font-sans" style={{ color: "var(--muted)" }}>สะสมแต้มเพิ่มเพื่อปลดล็อกสิทธิพิเศษ</p>
         )}
       </div>
+
+      {privileges.length > 0 && (
+        <div className="space-y-1.5 mb-2">
+          {privileges.map((p) => (
+            <div key={p.id} className="flex items-center justify-between text-sm font-sans">
+              <span style={{ color: p.used ? "var(--muted)" : "var(--charcoal)", textDecoration: p.used ? "line-through" : "none" }}>
+                {p.used ? "" : "✓ "}{p.title}
+              </span>
+              {p.used && <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>ใช้แล้ว</span>}
+            </div>
+          ))}
+        </div>
+      )}
 
       <a
         href="https://lin.ee/U9D2iyG"

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCustomerById, getCustomerTransactions, getTierForPoints } from "@/lib/crm";
+import { getCustomerById, getCustomerTransactions, getCustomerPrivileges, getTierForPoints } from "@/lib/crm";
 import { getCrmTiers } from "@/lib/crm-settings";
 import { isAdminRequest } from "@/lib/admin-auth";
 
@@ -13,6 +13,10 @@ export async function GET(request: Request, { params }: Params) {
   const customer = await getCustomerById(Number(id));
   if (!customer) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const [transactions, tiers] = await Promise.all([getCustomerTransactions(customer.id), getCrmTiers()]);
-  return NextResponse.json({ customer, transactions, tier: getTierForPoints(customer.points, tiers) });
+  const [transactions, privileges, tiers] = await Promise.all([
+    getCustomerTransactions(customer.id),
+    getCustomerPrivileges(customer.id),
+    getCrmTiers(),
+  ]);
+  return NextResponse.json({ customer, transactions, privileges, tier: getTierForPoints(customer.points, tiers) });
 }

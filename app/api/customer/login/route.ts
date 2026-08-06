@@ -14,7 +14,17 @@ export async function POST(request: Request) {
   }
 
   const tiers = await getCrmTiers();
-  const publicCustomer = { id: customer.id, name: customer.name, phone: customer.phone, points: customer.points, createdAt: customer.createdAt };
+  const publicCustomer = {
+    id: customer.id,
+    name: customer.name,
+    phone: customer.phone,
+    points: customer.points,
+    birthday: customer.birthday,
+    budgetRange: customer.budgetRange,
+    interests: customer.interests,
+    interestsOther: customer.interestsOther,
+    createdAt: customer.createdAt,
+  };
 
   const response = NextResponse.json({ customer: publicCustomer, tier: getTierForPoints(customer.points, tiers) });
   response.cookies.set(SESSION_COOKIE, sessionCookieValue(customer.id), {
