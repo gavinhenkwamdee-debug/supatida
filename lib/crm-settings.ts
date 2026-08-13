@@ -4,6 +4,15 @@ import { DEFAULT_TIERS, type CrmTier, type PerkDef } from "./crm";
 const TIERS_KEY = "crm_tiers";
 const WELCOME_PERKS_KEY = "crm_welcome_perks";
 const SIGNUP_BANNER_KEY = "crm_signup_banner";
+const ENABLED_KEY = "crm_enabled";
+
+export async function getCrmEnabled(): Promise<boolean> {
+  return getSetting<boolean>(ENABLED_KEY, true);
+}
+
+export async function setCrmEnabled(enabled: boolean): Promise<void> {
+  await setSetting(ENABLED_KEY, enabled);
+}
 
 export async function getCrmTiers(): Promise<CrmTier[]> {
   return getSetting<CrmTier[]>(TIERS_KEY, DEFAULT_TIERS);

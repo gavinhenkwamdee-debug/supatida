@@ -17,9 +17,12 @@ export default function CrmAdmin() {
             สมาชิก แต้มสะสม และระดับสิทธิพิเศษ
           </p>
         </div>
-        <a href="/admin" className="text-xs tracking-widest uppercase underline font-sans" style={{ color: "var(--muted)" }}>
-          ← Back
-        </a>
+        <div className="flex items-center gap-4">
+          <CrmEnabledToggle />
+          <a href="/admin" className="text-xs tracking-widest uppercase underline font-sans" style={{ color: "var(--muted)" }}>
+            ← Back
+          </a>
+        </div>
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -63,6 +66,52 @@ export default function CrmAdmin() {
 
       {tab === "customers" ? <CustomersTab /> : tab === "tiers" ? <TiersTab /> : <SignupBannerTab />}
     </div>
+  );
+}
+
+function CrmEnabledToggle() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/crm/enabled")
+      .then((r) => r.json())
+      .then((d) => setEnabled(!!d.enabled))
+      .catch(() => setEnabled(true));
+  }, []);
+
+  async function toggle() {
+    if (enabled === null) return;
+    const next = !enabled;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/crm/enabled", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      if (res.ok) setEnabled(next);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (enabled === null) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={saving}
+      className="px-3 py-1.5 text-xs tracking-widest uppercase font-sans disabled:opacity-50"
+      style={{
+        backgroundColor: enabled ? "#1B7A43" : "#C0392B",
+        color: "white",
+      }}
+      title="ซ่อน/แสดงระบบ CRM ทั้งหมดบนเว็บไซต์"
+    >
+      {enabled ? "🟢 เปิดใช้งานอยู่" : "🔴 ซ่อนอยู่"}
+    </button>
   );
 }
 

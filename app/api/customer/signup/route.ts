@@ -3,11 +3,12 @@ import { createCustomer, getCustomerByPhone, getTierForPoints, grantPrivilege } 
 import { hashPassword, sessionCookieValue, SESSION_COOKIE } from "@/lib/customer-auth";
 import { getCrmTiers, getWelcomePerks } from "@/lib/crm-settings";
 import { checkPasswordStrength } from "@/lib/password-policy";
+import { normalizePhone, isValidThaiPhone } from "@/lib/phone";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const name = String(body?.name ?? "").trim();
-  const phone = String(body?.phone ?? "").trim();
+  const phone = normalizePhone(String(body?.phone ?? "").trim());
   const password = String(body?.password ?? "");
   const birthday = body?.birthday ? String(body.birthday) : null;
   const budgetRange = body?.budgetRange ? String(body.budgetRange) : null;
@@ -15,8 +16,12 @@ export async function POST(request: Request) {
   const interestsOther = body?.interestsOther ? String(body.interestsOther).trim() : null;
   const pdpaConsent = Boolean(body?.pdpaConsent);
 
-  if (!name || !phone) {
-    return NextResponse.json({ error: "กรอกชื่อและเบอร์โทรให้ครบ" }, { status: 400 });
+  if (!name) {
+    return NextResponse.json({ error: "กรอกชื่อให้ครบ" }, { status: 400 });
+  }
+
+  if (!isValidThaiPhone(phone)) {
+    return NextResponse.json({ error: "กรอกเบอร์โทรศัพท์ให้ถูกต้อง (ตัวเลข 10 หลัก ขึ้นต้นด้วย 0)" }, { status: 400 });
   }
 
   const passwordCheck = checkPasswordStrength(password);

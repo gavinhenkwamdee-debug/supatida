@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Customer, CrmTier, PrivilegeGrant } from "@/lib/crm";
 import { BUDGET_RANGES, INTEREST_REASONS, PDPA_CONSENT_TEXT } from "@/lib/crm-options";
 import { checkPasswordStrength } from "@/lib/password-policy";
+import { isValidThaiPhone } from "@/lib/phone";
 
 type Me = { customer: Customer; tier: CrmTier; nextTier: CrmTier | null; privileges: PrivilegeGrant[] };
 
@@ -27,6 +28,7 @@ export default function AccountClient() {
   const [interestsOther, setInterestsOther] = useState("");
   const [pdpaConsent, setPdpaConsent] = useState(false);
   const [signupBanner, setSignupBanner] = useState<string | null>(null);
+  const [crmEnabled, setCrmEnabled] = useState<boolean | null>(null);
 
   const passwordCheck = checkPasswordStrength(password);
 
@@ -44,6 +46,10 @@ export default function AccountClient() {
       .then((r) => r.json())
       .then((d) => setSignupBanner(d.image ?? null))
       .catch(() => {});
+    fetch("/api/settings/crm-enabled")
+      .then((r) => r.json())
+      .then((d) => setCrmEnabled(!!d.enabled))
+      .catch(() => setCrmEnabled(true));
   }, []);
 
   function toggleInterest(reason: string) {
@@ -54,6 +60,10 @@ export default function AccountClient() {
     e.preventDefault();
     setError("");
 
+    if (mode === "signup" && !isValidThaiPhone(phone)) {
+      setError("กรอกเบอร์โทรศัพท์ให้ถูกต้อง (ตัวเลข 10 หลัก ขึ้นต้นด้วย 0)");
+      return;
+    }
     if (mode === "signup" && !passwordCheck.ok) {
       setError(`รหัสผ่านต้อง: ${passwordCheck.issues.join(", ")}`);
       return;
@@ -107,7 +117,13 @@ export default function AccountClient() {
           </Link>
         </div>
 
-        {loading ? (
+        {crmEnabled === false ? (
+          <div className="bg-white p-10 text-center" style={{ border: "1px solid var(--border)" }}>
+            <p className="text-sm font-sans" style={{ color: "var(--muted)" }}>
+              ขณะนี้ระบบสมาชิกปิดปรับปรุงชั่วคราว ขออภัยในความไม่สะดวกค่ะ
+            </p>
+          </div>
+        ) : loading ? (
           <p className="text-center text-sm font-sans" style={{ color: "var(--muted)" }}>กำลังโหลด…</p>
         ) : me ? (
           <Dashboard me={me} onLogout={handleLogout} />
@@ -152,6 +168,11 @@ export default function AccountClient() {
               <div>
                 <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>เบอร์โทรศัพท์</label>
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClass} style={inputStyle} />
+                {mode === "signup" && phone.length > 0 && !isValidThaiPhone(phone) && (
+                  <p className="text-xs font-sans mt-1" style={{ color: "#C0392B" }}>
+                    เบอร์โทรต้องเป็นตัวเลข 10 หลัก ขึ้นต้นด้วย 0 เช่น 0812345678
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>รหัสผ่าน</label>

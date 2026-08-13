@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { getCustomerByPhone, getTierForPoints } from "@/lib/crm";
 import { verifyPassword, sessionCookieValue, SESSION_COOKIE } from "@/lib/customer-auth";
 import { getCrmTiers } from "@/lib/crm-settings";
+import { normalizePhone } from "@/lib/phone";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
-  const phone = String(body?.phone ?? "").trim();
+  const phone = normalizePhone(String(body?.phone ?? "").trim());
   const password = String(body?.password ?? "");
 
   const customer = await getCustomerByPhone(phone);

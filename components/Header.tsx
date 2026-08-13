@@ -22,6 +22,7 @@ export default function Header() {
   const searchParams = useSearchParams();
   const [reviewsEnabled, setReviewsEnabled] = useState(false);
   const [mothersDayEnabled, setMothersDayEnabled] = useState(false);
+  const [crmEnabled, setCrmEnabled] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/reviews")
@@ -31,6 +32,10 @@ export default function Header() {
     fetch("/api/settings/mothersday")
       .then((r) => r.json())
       .then((d) => setMothersDayEnabled(!!d.enabled))
+      .catch(() => {});
+    fetch("/api/settings/crm-enabled")
+      .then((r) => r.json())
+      .then((d) => setCrmEnabled(!!d.enabled))
       .catch(() => {});
   }, []);
 
@@ -161,18 +166,20 @@ export default function Header() {
             </a>
           )}
 
-          <Link
-            href="/account"
-            className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
-            style={{
-              color: "var(--muted)",
-              borderBottom: "2px solid transparent",
-              background: "none",
-              cursor: "pointer",
-            }}
-          >
-            👤 บัญชีของฉัน
-          </Link>
+          {crmEnabled && (
+            <Link
+              href="/account"
+              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
+              style={{
+                color: "var(--muted)",
+                borderBottom: "2px solid transparent",
+                background: "none",
+                cursor: "pointer",
+              }}
+            >
+              👤 บัญชีของฉัน
+            </Link>
+          )}
         </div>
       </nav>
 
