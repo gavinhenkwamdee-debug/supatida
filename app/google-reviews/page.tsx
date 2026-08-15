@@ -13,6 +13,10 @@ function Stars({ rating }: { rating: number }) {
 
 export default async function GoogleReviewsPage() {
   const data = await getGoogleReviews();
+  const placeId = process.env.GOOGLE_PLACE_ID;
+  // Official Google deep link — the only sanctioned way to get a review onto
+  // a Google Business Profile is to send the customer to Google's own form.
+  const writeReviewUrl = placeId ? `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}` : null;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--ivory)" }}>
@@ -43,17 +47,30 @@ export default async function GoogleReviewsPage() {
               <p className="text-sm font-sans" style={{ color: "var(--muted)" }}>
                 จาก {data.totalReviews.toLocaleString()} รีวิวบน Google
               </p>
-              {data.mapsUrl && (
-                <a
-                  href={data.mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-3 text-xs font-sans underline"
-                  style={{ color: "var(--gold-dark)" }}
-                >
-                  ดูรีวิวทั้งหมดบน Google Maps ↗
-                </a>
-              )}
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-3">
+                {data.mapsUrl && (
+                  <a
+                    href={data.mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-sans underline"
+                    style={{ color: "var(--gold-dark)" }}
+                  >
+                    ดูรีวิวทั้งหมดบน Google Maps ↗
+                  </a>
+                )}
+                {writeReviewUrl && (
+                  <a
+                    href={writeReviewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-sans underline"
+                    style={{ color: "var(--gold-dark)" }}
+                  >
+                    เขียนรีวิวบน Google ↗
+                  </a>
+                )}
+              </div>
               <div className="mx-auto mt-4 w-16 h-px" style={{ backgroundColor: "var(--border)" }} />
             </div>
 
@@ -77,6 +94,23 @@ export default async function GoogleReviewsPage() {
                     <p className="text-sm font-sans" style={{ color: "var(--charcoal)" }}>{r.text}</p>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {writeReviewUrl && (
+              <div className="bg-white p-6 mt-6 text-center" style={{ border: "1px solid var(--border)" }}>
+                <p className="text-sm font-sans mb-3" style={{ color: "var(--charcoal)" }}>
+                  พอใจกับบริการของเราไหมคะ? ช่วยเขียนรีวิวให้เราหน่อยได้ไหมคะ
+                </p>
+                <a
+                  href={writeReviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block py-3 px-8 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
+                >
+                  เขียนรีวิวบน Google
+                </a>
               </div>
             )}
           </>
