@@ -23,6 +23,7 @@ export default function Header() {
   const [reviewsEnabled, setReviewsEnabled] = useState(false);
   const [mothersDayEnabled, setMothersDayEnabled] = useState(false);
   const [crmEnabled, setCrmEnabled] = useState(false);
+  const [googleReviewsConnected, setGoogleReviewsConnected] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/reviews")
@@ -36,6 +37,10 @@ export default function Header() {
     fetch("/api/settings/crm-enabled")
       .then((r) => r.json())
       .then((d) => setCrmEnabled(!!d.enabled))
+      .catch(() => {});
+    fetch("/api/settings/google-reviews")
+      .then((r) => r.json())
+      .then((d) => setGoogleReviewsConnected(!!d.connected))
       .catch(() => {});
   }, []);
 
@@ -164,6 +169,21 @@ export default function Header() {
             >
               ⭐ รีวิว
             </a>
+          )}
+
+          {googleReviewsConnected && (
+            <Link
+              href="/google-reviews"
+              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
+              style={{
+                color: "var(--muted)",
+                borderBottom: "2px solid transparent",
+                background: "none",
+                cursor: "pointer",
+              }}
+            >
+              ⭐ Google Reviews
+            </Link>
           )}
 
           {crmEnabled && (
