@@ -2,6 +2,14 @@ import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL!);
 
+// "Power" groups drive the special ring-stone selection UI: main_power lets the
+// customer pick diamond (any shape) or gemstone (round only), secondary_power is
+// always a small round stone, tertiary_power is always a square gemstone.
+export type GroupKind = "generic" | "main_power" | "secondary_power" | "tertiary_power";
+export type StoneKind = "diamond" | "gem";
+export const DIAMOND_SHAPES = ["pear", "emerald", "baguette", "heart", "oval", "round", "princess", "marquise"] as const;
+export type DiamondShape = (typeof DIAMOND_SHAPES)[number];
+
 export interface CustomRingChoice {
   id: number;
   label: string;
@@ -13,12 +21,15 @@ export interface CustomRingChoice {
   baseImageOverride: string | null;
   priceDelta: number;
   sortOrder: number;
+  stoneKind: StoneKind | null;
+  shape: string | null;
 }
 
 export interface CustomRingGroup {
   id: number;
   label: string;
   sortOrder: number;
+  kind: GroupKind;
   choices: CustomRingChoice[];
 }
 
@@ -47,11 +58,14 @@ export interface ChoiceInput {
   baseImageOverride: string | null;
   priceDelta: number;
   sortOrder: number;
+  stoneKind: StoneKind | null;
+  shape: string | null;
 }
 
 export interface GroupInput {
   label: string;
   sortOrder: number;
+  kind: GroupKind;
   choices: ChoiceInput[];
 }
 
@@ -103,6 +117,15 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS base_image_override TEXT
   `;
+  await sql`
+    ALTER TABLE custom_ring_groups ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'generic'
+  `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS stone_kind TEXT
+  `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS shape TEXT
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -133,6 +156,8 @@ function toChoice(row: any): CustomRingChoice {
     baseImageOverride: row.base_image_override ?? null,
     priceDelta: parseFloat(row.price_delta),
     sortOrder: row.sort_order,
+    stoneKind: (row.stone_kind as StoneKind | null) ?? null,
+    shape: row.shape ?? null,
   };
 }
 
@@ -169,6 +194,7 @@ export async function getCustomRingById(id: number): Promise<CustomRingDetail | 
     id: g.id,
     label: g.label,
     sortOrder: g.sort_order,
+    kind: (g.kind as GroupKind) ?? "generic",
     choices: choiceRows.filter((c) => c.group_id === g.id).map(toChoice),
   }));
 
@@ -200,6 +226,7 @@ export async function getAllGroupsWithChoices(): Promise<GroupWithRing[]> {
       id: g.id,
       label: g.label,
       sortOrder: g.sort_order,
+      kind: (g.kind as GroupKind) ?? "generic",
       choices: choiceRows.filter((c) => c.group_id === g.id).map(toChoice),
     },
   }));
@@ -239,18 +266,19 @@ export async function replaceCustomRing(
 
   for (const group of groups) {
     const groupRows = await sql`
-      INSERT INTO custom_ring_groups (ring_id, label, sort_order)
-      VALUES (${id}, ${group.label}, ${group.sortOrder})
+      INSERT INTO custom_ring_groups (ring_id, label, sort_order, kind)
+      VALUES (${id}, ${group.label}, ${group.sortOrder}, ${group.kind})
       RETURNING id
     `;
     const groupId = groupRows[0].id;
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, overlay_image, overlay_x, overlay_y, overlay_width, base_image_override, price_delta, sort_order)
+          (group_id, label, swatch_image, overlay_image, overlay_x, overlay_y, overlay_width, base_image_override, price_delta, sort_order, stone_kind, shape)
         VALUES (
           ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.overlayImage},
-          ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder}
+          ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder},
+          ${choice.stoneKind}, ${choice.shape}
         )
       `;
     }

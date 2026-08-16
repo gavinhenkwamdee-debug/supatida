@@ -2,29 +2,148 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { CustomRingDetail } from "@/lib/customRings";
+import type { CustomRingChoice, CustomRingDetail, CustomRingGroup, StoneKind } from "@/lib/customRings";
 
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
 
+const STONE_KIND_LABEL: Record<StoneKind, string> = { diamond: "เพชร", gem: "พลอย" };
+
+function isSizeGroup(label: string) {
+  const l = label.toLowerCase();
+  return l.includes("size") || l.includes("ไซส์") || l.includes("ไซซ์") || l.includes("ขนาด");
+}
+
+function GroupSection({
+  group,
+  selectedId,
+  onToggle,
+  stoneKind,
+  onStoneKindChange,
+}: {
+  group: CustomRingGroup;
+  selectedId: number | undefined;
+  onToggle: (choiceId: number) => void;
+  stoneKind?: StoneKind;
+  onStoneKindChange?: (k: StoneKind) => void;
+}) {
+  const isMainPower = group.kind === "main_power";
+  const availableKinds = useMemo(
+    () => (isMainPower ? Array.from(new Set(group.choices.map((c) => c.stoneKind).filter((k): k is StoneKind => Boolean(k)))) : []),
+    [isMainPower, group.choices]
+  );
+  const visibleChoices = isMainPower && stoneKind ? group.choices.filter((c) => c.stoneKind === stoneKind) : group.choices;
+  const selectedChoice = group.choices.find((c) => c.id === selectedId);
+  const sizeLike = isSizeGroup(group.label);
+  const allHaveImages = visibleChoices.length > 0 && visibleChoices.every((c) => c.swatchImage);
+
+  return (
+    <div className="py-5" style={{ borderBottom: "1px solid var(--border)" }}>
+      <div className="flex items-baseline justify-between gap-3 mb-3">
+        <p className="text-xs tracking-[0.25em] uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
+        <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>{selectedChoice?.label ?? "None"}</p>
+      </div>
+
+      {isMainPower && availableKinds.length > 1 && (
+        <div className="flex gap-2 mb-3">
+          {availableKinds.map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => onStoneKindChange?.(k)}
+              className="flex-1 py-2 text-xs tracking-wider uppercase font-sans transition-colors"
+              style={{
+                border: stoneKind === k ? "1.5px solid var(--charcoal)" : "1px solid var(--border)",
+                color: "var(--charcoal)",
+                backgroundColor: "white",
+              }}
+            >
+              {STONE_KIND_LABEL[k]}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {sizeLike ? (
+        <select
+          value={selectedId ?? ""}
+          onChange={(e) => onToggle(Number(e.target.value))}
+          className="w-full px-3 py-2.5 text-sm font-sans outline-none"
+          style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
+        >
+          {visibleChoices.map((c) => (
+            <option key={c.id} value={c.id}>{c.label}</option>
+          ))}
+        </select>
+      ) : allHaveImages ? (
+        <div className="flex flex-wrap gap-3">
+          {visibleChoices.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => onToggle(c.id)}
+              title={c.label}
+              className="rounded-full overflow-hidden flex-shrink-0 transition-shadow"
+              style={{
+                width: 44,
+                height: 44,
+                border: selectedId === c.id ? "2px solid var(--charcoal)" : "1px solid var(--border)",
+                backgroundColor: "var(--img-bg)",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={c.swatchImage} alt={c.label} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          {visibleChoices.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => onToggle(c.id)}
+              title={c.label}
+              className="px-3 py-2.5 text-xs font-sans text-center transition-colors"
+              style={{
+                border: selectedId === c.id ? "1.5px solid var(--charcoal)" : "1px solid var(--border)",
+                color: "var(--charcoal)",
+                backgroundColor: "white",
+              }}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetail }) {
-  const [selections, setSelections] = useState<Record<number, number>>(() => {
-    const initial: Record<number, number> = {};
+  const [selections, setSelections] = useState<Record<number, number | undefined>>(() => {
+    const initial: Record<number, number | undefined> = {};
+    for (const g of ring.groups) if (g.choices[0]) initial[g.id] = g.choices[0].id;
+    return initial;
+  });
+  const [powerStoneKind, setPowerStoneKind] = useState<Record<number, StoneKind>>(() => {
+    const initial: Record<number, StoneKind> = {};
     for (const g of ring.groups) {
-      if (g.choices[0]) initial[g.id] = g.choices[0].id;
+      if (g.kind === "main_power") {
+        const first = g.choices.find((c) => c.stoneKind)?.stoneKind;
+        if (first) initial[g.id] = first;
+      }
     }
     return initial;
   });
-  const [groupIndex, setGroupIndex] = useState(0);
 
   const groups = ring.groups;
-  const currentGroup = groups[groupIndex];
 
   const selectedChoices = useMemo(
     () =>
       groups
         .map((g) => g.choices.find((c) => c.id === selections[g.id]))
-        .filter((c): c is NonNullable<typeof c> => Boolean(c)),
+        .filter((c): c is CustomRingChoice => Boolean(c)),
     [groups, selections]
   );
 
@@ -37,11 +156,16 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     return override?.baseImageOverride || ring.baseImage;
   }, [selectedChoices, ring.baseImage]);
 
-  function selectChoice(groupId: number, choiceId: number) {
-    setSelections((prev) => ({ ...prev, [groupId]: choiceId }));
+  function toggleChoice(groupId: number, choiceId: number) {
+    setSelections((prev) => (prev[groupId] === choiceId ? { ...prev, [groupId]: undefined } : { ...prev, [groupId]: choiceId }));
   }
 
-  const currentChoice = currentGroup ? groups[groupIndex].choices.find((c) => c.id === selections[currentGroup.id]) : undefined;
+  function changeStoneKind(groupId: number, kind: StoneKind) {
+    setPowerStoneKind((prev) => ({ ...prev, [groupId]: kind }));
+    const group = groups.find((g) => g.id === groupId);
+    const first = group?.choices.find((c) => c.stoneKind === kind);
+    setSelections((prev) => ({ ...prev, [groupId]: first?.id }));
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--ivory)" }}>
@@ -55,129 +179,67 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
         </Link>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl tracking-wide" style={{ color: "var(--charcoal)" }}>{ring.name}</h2>
-          <p className="text-xl font-sans font-light" style={{ color: "var(--gold)" }}>{THB(totalPrice)}</p>
-        </div>
+      <div className="lg:grid lg:grid-cols-[380px_1fr] lg:items-start">
+        {/* Sidebar — all options shown at once */}
+        <aside className="px-6 py-8 lg:px-10 lg:py-10" style={{ borderBottom: "1px solid var(--border)" }}>
+          <div className="flex items-baseline justify-between mb-1">
+            <h2 className="text-xl tracking-wide" style={{ color: "var(--charcoal)" }}>{ring.name}</h2>
+          </div>
+          <p className="text-lg font-sans font-light mb-4" style={{ color: "var(--gold)" }}>{THB(totalPrice)}</p>
 
-        {ring.description && (
-          <p className="text-sm font-sans mb-6" style={{ color: "var(--muted)" }}>{ring.description}</p>
-        )}
-
-        {/* Image with layered overlays */}
-        <div className="relative w-full mb-6" style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
-          {effectiveBaseImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={effectiveBaseImage} alt={ring.name} className="absolute inset-0 w-full h-full object-contain" />
+          {ring.description && (
+            <p className="text-sm font-sans mb-4" style={{ color: "var(--muted)" }}>{ring.description}</p>
           )}
-          {selectedChoices.map((c) =>
-            c.overlayImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={c.id}
-                src={c.overlayImage}
-                alt=""
-                className="absolute"
-                style={{ left: `${c.overlayX}%`, top: `${c.overlayY}%`, width: `${c.overlayWidth}%`, transform: "translate(-50%, -50%)" }}
+
+          <div>
+            {groups.map((g) => (
+              <GroupSection
+                key={g.id}
+                group={g}
+                selectedId={selections[g.id]}
+                onToggle={(choiceId) => toggleChoice(g.id, choiceId)}
+                stoneKind={powerStoneKind[g.id]}
+                onStoneKindChange={(k) => changeStoneKind(g.id, k)}
               />
-            ) : null
-          )}
-        </div>
+            ))}
+          </div>
+        </aside>
 
-        {currentGroup && (
-          <div className="text-center mb-4">
-            <p className="text-xs tracking-[0.3em] uppercase font-sans" style={{ color: "var(--gold)" }}>{currentGroup.label}</p>
-            <p className="text-sm font-sans mt-1" style={{ color: "var(--muted)" }}>{currentChoice?.label}</p>
+        {/* Image + purchase action */}
+        <main className="flex flex-col items-center px-6 py-10 lg:py-16 lg:sticky lg:top-0">
+          <div className="relative w-full max-w-lg mb-8" style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
+            {effectiveBaseImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={effectiveBaseImage} alt={ring.name} className="absolute inset-0 w-full h-full object-contain" />
+            )}
+            {selectedChoices.map((c) =>
+              c.overlayImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={c.id}
+                  src={c.overlayImage}
+                  alt=""
+                  title={c.label}
+                  className="absolute"
+                  style={{ left: `${c.overlayX}%`, top: `${c.overlayY}%`, width: `${c.overlayWidth}%`, transform: "translate(-50%, -50%)" }}
+                />
+              ) : null
+            )}
           </div>
-        )}
 
-        {/* Swatches for current group */}
-        {currentGroup && (
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            {currentGroup.choices.map((choice) => {
-              const isSelected = selections[currentGroup.id] === choice.id;
-              return (
-                <button
-                  key={choice.id}
-                  onClick={() => selectChoice(currentGroup.id, choice.id)}
-                  className="rounded-full overflow-hidden flex-shrink-0"
-                  style={{
-                    width: 48,
-                    height: 48,
-                    border: isSelected ? "2px solid var(--charcoal)" : "1px solid var(--border)",
-                    backgroundColor: "var(--img-bg)",
-                  }}
-                  title={choice.label}
-                >
-                  {choice.swatchImage && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={choice.swatchImage} alt={choice.label} className="w-full h-full object-cover" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Stepper */}
-        {groups.length > 1 && (
-          <div className="flex items-center justify-center gap-6 mb-10">
-            <button
-              onClick={() => setGroupIndex((i) => Math.max(0, i - 1))}
-              disabled={groupIndex === 0}
-              className="w-10 h-10 flex items-center justify-center disabled:opacity-30"
-              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-            >
-              ←
-            </button>
-            <span className="text-xs font-sans tracking-wider" style={{ color: "var(--muted)" }}>
-              {groupIndex + 1} / {groups.length}
-            </span>
-            <button
-              onClick={() => setGroupIndex((i) => Math.min(groups.length - 1, i + 1))}
-              disabled={groupIndex === groups.length - 1}
-              className="w-10 h-10 flex items-center justify-center disabled:opacity-30"
-              style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
-            >
-              →
-            </button>
-          </div>
-        )}
-
-        {/* Summary + LINE */}
-        <div className="bg-white p-6" style={{ border: "1px solid var(--border)" }}>
-          <p className="text-xs tracking-widest uppercase mb-3 font-sans" style={{ color: "var(--gold-dark)" }}>
-            สรุปตัวเลือกของคุณ
-          </p>
-          <div className="space-y-1 mb-4">
-            {groups.map((g) => {
-              const c = g.choices.find((ch) => ch.id === selections[g.id]);
-              return (
-                <div key={g.id} className="flex justify-between text-xs font-sans">
-                  <span style={{ color: "var(--muted)" }}>{g.label}</span>
-                  <span style={{ color: "var(--charcoal)" }}>{c?.label ?? "-"}</span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex justify-between text-sm mb-4 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-            <span style={{ color: "var(--charcoal)" }}>ราคารวม</span>
-            <span style={{ color: "var(--gold)" }}>{THB(totalPrice)}</span>
-          </div>
           <a
             href="https://lin.ee/U9D2iyG"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 py-3 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
-            style={{ backgroundColor: "#06C755", color: "white" }}
+            className="w-full max-w-xs text-center py-3.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
+            style={{ border: "1px solid var(--charcoal)", color: "var(--charcoal)" }}
           >
-            สอบถามข้อมูล
+            สอบถามข้อมูล / สั่งทำแหวนนี้
           </a>
-          <p className="text-xs font-sans mt-2 text-center" style={{ color: "var(--muted)" }}>
+          <p className="text-xs font-sans mt-3 text-center" style={{ color: "var(--muted)" }}>
             แคปหน้าจอส่ง admin ได้เลยค่ะ
           </p>
-        </div>
+        </main>
       </div>
     </div>
   );

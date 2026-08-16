@@ -3,7 +3,26 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import OverlayPositioner from "./OverlayPositioner";
-import type { CustomRingDetail, GroupWithRing } from "@/lib/customRings";
+import { DIAMOND_SHAPES } from "@/lib/customRings";
+import type { CustomRingDetail, GroupKind, GroupWithRing, StoneKind } from "@/lib/customRings";
+
+const GROUP_KIND_OPTIONS: { value: GroupKind; label: string }[] = [
+  { value: "generic", label: "ทั่วไป" },
+  { value: "main_power", label: "พลังงานหลัก (Main Power)" },
+  { value: "secondary_power", label: "พลังงานรอง (Secondary Power)" },
+  { value: "tertiary_power", label: "พลังงานที่สาม (Tertiary Power)" },
+];
+
+const DIAMOND_SHAPE_LABELS: Record<string, string> = {
+  pear: "ทรงหยดน้ำ (Pear)",
+  emerald: "ทรงมรกต (Emerald)",
+  baguette: "ทรงแบเกตต์ (Baguette)",
+  heart: "ทรงหัวใจ (Heart)",
+  oval: "ทรงไข่ (Oval)",
+  round: "ทรงกลม (Round)",
+  princess: "ทรงเหลี่ยม (Princess)",
+  marquise: "ทรงมาร์คีส์ (Marquise)",
+};
 
 interface ChoiceState {
   key: string;
@@ -15,11 +34,14 @@ interface ChoiceState {
   overlayWidth: number;
   baseImageOverride: string | null;
   priceDelta: number;
+  stoneKind: StoneKind | null;
+  shape: string | null;
 }
 
 interface GroupState {
   key: string;
   label: string;
+  kind: GroupKind;
   choices: ChoiceState[];
 }
 
@@ -30,11 +52,23 @@ function nextKey() {
 }
 
 function emptyChoice(): ChoiceState {
-  return { key: nextKey(), label: "", swatchImage: "", overlayImage: null, overlayX: 50, overlayY: 50, overlayWidth: 20, baseImageOverride: null, priceDelta: 0 };
+  return {
+    key: nextKey(),
+    label: "",
+    swatchImage: "",
+    overlayImage: null,
+    overlayX: 50,
+    overlayY: 50,
+    overlayWidth: 20,
+    baseImageOverride: null,
+    priceDelta: 0,
+    stoneKind: null,
+    shape: null,
+  };
 }
 
 function emptyGroup(): GroupState {
-  return { key: nextKey(), label: "", choices: [emptyChoice()] };
+  return { key: nextKey(), label: "", kind: "generic", choices: [emptyChoice()] };
 }
 
 // Positioner's preview box is a fixed max-w-xs (320px) square — used only
@@ -46,10 +80,11 @@ function fmtPx(pct: number) {
 
 type CopiedPosition = { x: number; y: number; width: number };
 
-function cloneGroup(label: string, choices: Omit<ChoiceState, "key">[]): GroupState {
+function cloneGroup(label: string, kind: GroupKind, choices: Omit<ChoiceState, "key">[]): GroupState {
   return {
     key: nextKey(),
     label,
+    kind,
     choices: choices.map((c) => ({ ...c, key: nextKey() })),
   };
 }
@@ -153,6 +188,7 @@ function ImageUploadBox({
 function ChoiceEditor({
   choice,
   baseImage,
+  groupKind,
   onChange,
   onRemove,
   onMove,
@@ -163,6 +199,7 @@ function ChoiceEditor({
 }: {
   choice: ChoiceState;
   baseImage: string;
+  groupKind: GroupKind;
   onChange: (c: ChoiceState) => void;
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
@@ -178,6 +215,47 @@ function ChoiceEditor({
       <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
         <strong>Gem overlay</strong> = ลอยทับรูปหลัก (ใช้กับพลอย) · <strong>Base</strong> = เปลี่ยนรูปแหวนทั้งรูป (ใช้กับโลหะ/สี)
       </p>
+      {groupKind === "main_power" && (
+        <div className="flex items-center flex-wrap gap-2 mb-2 p-2" style={{ backgroundColor: "#FAF8F4", border: "1px solid var(--border)" }}>
+          <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>ชนิดพลอย:</span>
+          <select
+            value={choice.stoneKind ?? "diamond"}
+            onChange={(e) => {
+              const stoneKind = e.target.value as StoneKind;
+              onChange({
+                ...choice,
+                stoneKind,
+                shape: stoneKind === "gem" ? "round" : choice.shape && choice.shape !== "round" ? choice.shape : "pear",
+              });
+            }}
+            className="px-2 py-1 text-xs font-sans outline-none"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+          >
+            <option value="diamond">เพชร (Diamond)</option>
+            <option value="gem">พลอย (Gemstone)</option>
+          </select>
+          {(choice.stoneKind ?? "diamond") === "diamond" ? (
+            <select
+              value={choice.shape ?? "pear"}
+              onChange={(e) => onChange({ ...choice, shape: e.target.value })}
+              className="px-2 py-1 text-xs font-sans outline-none"
+              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            >
+              {DIAMOND_SHAPES.map((s) => (
+                <option key={s} value={s}>{DIAMOND_SHAPE_LABELS[s]}</option>
+              ))}
+            </select>
+          ) : (
+            <span className="text-xs font-sans italic" style={{ color: "var(--muted)" }}>ทรงกลมเท่านั้น</span>
+          )}
+        </div>
+      )}
+      {groupKind === "secondary_power" && (
+        <p className="text-xs font-sans italic mb-2" style={{ color: "var(--muted)" }}>* บันทึกเป็นเม็ดกลมขนาดเล็กอัตโนมัติ</p>
+      )}
+      {groupKind === "tertiary_power" && (
+        <p className="text-xs font-sans italic mb-2" style={{ color: "var(--muted)" }}>* บันทึกเป็นพลอยทรงสี่เหลี่ยมจตุรัสอัตโนมัติ</p>
+      )}
       <div className="flex gap-3 items-start">
         <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
         <ImageUploadBox
@@ -321,6 +399,16 @@ function GroupEditor({
           className="flex-1 px-3 py-2 text-sm font-sans outline-none"
           style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
         />
+        <select
+          value={group.kind}
+          onChange={(e) => onChange({ ...group, kind: e.target.value as GroupKind })}
+          className="px-2 py-2 text-xs font-sans outline-none"
+          style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
+        >
+          {GROUP_KIND_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
         <button type="button" onClick={() => onMove(-1)} className="w-7 h-7 text-xs" style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}>↑</button>
         <button type="button" onClick={() => onMove(1)} className="w-7 h-7 text-xs" style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}>↓</button>
         <button type="button" onClick={onDuplicate} className="px-3 py-2 text-xs tracking-wider uppercase font-sans" style={{ border: "1px solid var(--gold-dark)", color: "var(--gold-dark)", backgroundColor: "white" }}>
@@ -337,6 +425,7 @@ function GroupEditor({
             key={choice.key}
             choice={choice}
             baseImage={baseImage}
+            groupKind={group.kind}
             onChange={(c) => onChange({ ...group, choices: group.choices.map((x) => (x.key === c.key ? c : x)) })}
             onRemove={() => onChange({ ...group, choices: group.choices.filter((x) => x.key !== choice.key) })}
             onMove={(dir) => moveChoice(i, dir)}
@@ -374,6 +463,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
       ? ring.groups.map((g) => ({
           key: nextKey(),
           label: g.label,
+          kind: g.kind,
           choices: g.choices.map((c) => ({
             key: nextKey(),
             label: c.label,
@@ -384,6 +474,8 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             overlayWidth: c.overlayWidth,
             baseImageOverride: c.baseImageOverride,
             priceDelta: c.priceDelta,
+            stoneKind: c.stoneKind,
+            shape: c.shape,
           })),
         }))
       : [emptyGroup()]
@@ -412,7 +504,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
 
   function duplicateGroup(index: number) {
     const source = groups[index];
-    const copy = cloneGroup(`${source.label} (copy)`, source.choices.map(({ key, ...rest }) => rest));
+    const copy = cloneGroup(`${source.label} (copy)`, source.kind, source.choices.map(({ key, ...rest }) => rest));
     const next = [...groups];
     next.splice(index + 1, 0, copy);
     setGroups(next);
@@ -423,6 +515,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
     if (!found) return;
     const copy = cloneGroup(
       found.group.label,
+      found.group.kind,
       found.group.choices.map((c) => ({
         label: c.label,
         swatchImage: c.swatchImage,
@@ -432,6 +525,8 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         overlayWidth: c.overlayWidth,
         baseImageOverride: c.baseImageOverride,
         priceDelta: c.priceDelta,
+        stoneKind: c.stoneKind,
+        shape: c.shape,
       }))
     );
     setGroups([...groups, copy]);
@@ -453,18 +548,38 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         .filter((g) => g.label.trim())
         .map((g) => ({
           label: g.label.trim(),
+          kind: g.kind,
           choices: g.choices
             .filter((c) => c.label.trim())
-            .map((c) => ({
-              label: c.label.trim(),
-              swatchImage: c.swatchImage,
-              overlayImage: c.overlayImage,
-              overlayX: c.overlayX,
-              overlayY: c.overlayY,
-              overlayWidth: c.overlayWidth,
-              baseImageOverride: c.baseImageOverride,
-              priceDelta: c.priceDelta,
-            })),
+            .map((c) => {
+              // Power groups enforce their shape/material rule regardless of what's stored in local state.
+              let stoneKind = c.stoneKind;
+              let shape = c.shape;
+              if (g.kind === "secondary_power") {
+                shape = "round";
+              } else if (g.kind === "tertiary_power") {
+                stoneKind = "gem";
+                shape = "square";
+              } else if (g.kind === "main_power") {
+                stoneKind = stoneKind ?? "diamond";
+                shape = stoneKind === "gem" ? "round" : shape ?? "pear";
+              } else {
+                stoneKind = null;
+                shape = null;
+              }
+              return {
+                label: c.label.trim(),
+                swatchImage: c.swatchImage,
+                overlayImage: c.overlayImage,
+                overlayX: c.overlayX,
+                overlayY: c.overlayY,
+                overlayWidth: c.overlayWidth,
+                baseImageOverride: c.baseImageOverride,
+                priceDelta: c.priceDelta,
+                stoneKind,
+                shape,
+              };
+            }),
         })),
     };
 

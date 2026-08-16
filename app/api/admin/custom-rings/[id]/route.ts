@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
 import { deleteCustomRing, getCustomRingById, replaceCustomRing } from "@/lib/customRings";
-import type { GroupInput, RingFieldsInput } from "@/lib/customRings";
+import type { GroupInput, GroupKind, RingFieldsInput, StoneKind } from "@/lib/customRings";
 import { isAdminRequest } from "@/lib/admin-auth";
+
+const GROUP_KINDS: GroupKind[] = ["generic", "main_power", "secondary_power", "tertiary_power"];
+const STONE_KINDS: StoneKind[] = ["diamond", "gem"];
+
+function parseGroupKind(v: unknown): GroupKind {
+  return GROUP_KINDS.includes(v as GroupKind) ? (v as GroupKind) : "generic";
+}
+
+function parseStoneKind(v: unknown): StoneKind | null {
+  return STONE_KINDS.includes(v as StoneKind) ? (v as StoneKind) : null;
+}
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -33,9 +44,11 @@ export async function PUT(request: Request, { params }: Params) {
   const groups: GroupInput[] = Array.isArray(body.groups)
     ? body.groups.map((g: unknown, gi: number) => {
         const group = g as Record<string, unknown>;
+        const kind = parseGroupKind(group.kind);
         return {
           label: String(group.label ?? "").trim() || "Group",
           sortOrder: gi,
+          kind,
           choices: Array.isArray(group.choices)
             ? group.choices.map((c: unknown, ci: number) => {
                 const choice = c as Record<string, unknown>;
@@ -49,6 +62,8 @@ export async function PUT(request: Request, { params }: Params) {
                   baseImageOverride: choice.baseImageOverride ? String(choice.baseImageOverride) : null,
                   priceDelta: Number(choice.priceDelta) || 0,
                   sortOrder: ci,
+                  stoneKind: parseStoneKind(choice.stoneKind),
+                  shape: choice.shape ? String(choice.shape) : null,
                 };
               })
             : [],
