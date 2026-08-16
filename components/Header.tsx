@@ -21,7 +21,7 @@ export default function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [reviewsEnabled, setReviewsEnabled] = useState(false);
-  const [birthdayEnabled, setBirthdayEnabled] = useState(false);
+  const [payLaterEnabled, setPayLaterEnabled] = useState(false);
   const [crmEnabled, setCrmEnabled] = useState(false);
   const [googleReviewsConnected, setGoogleReviewsConnected] = useState(false);
 
@@ -30,9 +30,9 @@ export default function Header() {
       .then((r) => r.json())
       .then((d) => setReviewsEnabled(!!d.enabled))
       .catch(() => {});
-    fetch("/api/settings/birthday")
+    fetch("/api/settings/paylater")
       .then((r) => r.json())
-      .then((d) => setBirthdayEnabled(!!d.enabled))
+      .then((d) => setPayLaterEnabled(!!d.enabled))
       .catch(() => {});
     fetch("/api/settings/crm-enabled")
       .then((r) => r.json())
@@ -105,10 +105,10 @@ export default function Header() {
         className="flex gap-1 px-4 py-2 overflow-x-auto scrollbar-hide"
       >
         <div className="flex gap-1 mx-auto">
-          {/* Supatida Birthday tab — before Super Sale */}
-          {birthdayEnabled && (
+          {/* Own Now Pay Later tab — before Super Sale */}
+          {payLaterEnabled && (
             <Link
-              href="/birthday"
+              href="/own-now-pay-later"
               className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0 font-bold"
               style={{
                 color: "white",
@@ -116,7 +116,7 @@ export default function Header() {
                 borderBottom: "2px solid #0284C7",
               }}
             >
-              🎂 Birthday
+              💳 Pay Later
             </Link>
           )}
 

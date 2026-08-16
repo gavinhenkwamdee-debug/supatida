@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { BirthdayConfig } from "@/lib/birthday-config";
+import type { PayLaterConfig } from "@/lib/paylater-config";
 import type { Product } from "@/lib/db";
 
 async function compressImage(file: File): Promise<File> {
@@ -30,7 +30,7 @@ async function compressImage(file: File): Promise<File> {
   });
 }
 
-export default function BirthdayAdmin() {
+export default function PayLaterAdmin() {
   const [enabled, setEnabled] = useState(false);
   const [bannerImage, setBannerImage] = useState("");
   const [productIds, setProductIds] = useState<number[]>([]);
@@ -43,9 +43,9 @@ export default function BirthdayAdmin() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch("/api/settings/birthday")
+    fetch("/api/settings/paylater")
       .then((r) => r.json())
-      .then((d: BirthdayConfig) => {
+      .then((d: PayLaterConfig) => {
         setEnabled(d.enabled);
         setBannerImage(d.bannerImage);
         setProductIds(d.productIds || []);
@@ -59,7 +59,7 @@ export default function BirthdayAdmin() {
 
   async function saveConfig(next: { enabled: boolean; bannerImage: string; productIds: number[] }) {
     setSaving(true);
-    await fetch("/api/settings/birthday", {
+    await fetch("/api/settings/paylater", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(next),
@@ -140,9 +140,9 @@ export default function BirthdayAdmin() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl tracking-wider" style={{ color: "var(--charcoal)" }}>Supatida Birthday Promotion</h1>
+          <h1 className="text-2xl tracking-wider" style={{ color: "var(--charcoal)" }}>Own Now Pay Later</h1>
           <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
-            แท็บโปรโมชั่นวันเกิด SUPATIDA พร้อม Hero Banner และรายการสินค้าลด 12%
+            แท็บโปรโมชั่นผ่อนชำระ 3 เดือน พร้อม Hero Banner และรายการสินค้าที่ร่วมรายการ
           </p>
         </div>
         <a href="/admin" className="text-xs tracking-widest uppercase underline font-sans" style={{ color: "var(--muted)" }}>
@@ -154,9 +154,9 @@ export default function BirthdayAdmin() {
       <div className="bg-white p-6 mb-4" style={{ border: "1px solid var(--border)" }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>แสดงแท็บวันเกิด</p>
+            <p className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>แสดงแท็บ Own Now Pay Later</p>
             <p className="text-xs font-sans mt-0.5" style={{ color: "var(--muted)" }}>
-              เปิด/ปิดแท็บ + หน้าโปรโมชั่นวันเกิด SUPATIDA บนหน้าเว็บ
+              เปิด/ปิดแท็บ + หน้าโปรโมชั่น Own Now Pay Later บนหน้าเว็บ
             </p>
           </div>
           <button
@@ -176,7 +176,7 @@ export default function BirthdayAdmin() {
       {/* Banner upload */}
       <div className="bg-white p-6 mb-4" style={{ border: "1px solid var(--border)" }}>
         <h2 className="text-xs tracking-widest uppercase mb-4 font-sans" style={{ color: "var(--muted)" }}>
-          Hero Banner วันเกิด
+          Hero Banner Own Now Pay Later
         </h2>
 
         {bannerImage && (
@@ -207,7 +207,7 @@ export default function BirthdayAdmin() {
           สินค้าที่ร่วมโปรโมชั่น ({selectedProducts.length})
         </h2>
         <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
-          ลดราคาพิเศษ 12% ทุกชิ้นที่เลือกไว้ · {saved ? "✓ บันทึกแล้ว" : "บันทึกอัตโนมัติเมื่อเพิ่ม/ลบ"}
+          ผ่อนชำระได้ 3 เดือน ทุกชิ้นที่เลือกไว้ (ราคาปกติ ไม่ใช่ส่วนลด) · {saved ? "✓ บันทึกแล้ว" : "บันทึกอัตโนมัติเมื่อเพิ่ม/ลบ"}
         </p>
 
         <div className="relative mb-3">

@@ -21,7 +21,7 @@ const LINE_ICON = (
   </svg>
 );
 
-export default function ProductCard({ product, priority = false, popular = false, birthdayDiscount = false }: { product: Product; priority?: boolean; popular?: boolean; birthdayDiscount?: boolean }) {
+export default function ProductCard({ product, priority = false, popular = false, payLaterEligible = false }: { product: Product; priority?: boolean; popular?: boolean; payLaterEligible?: boolean }) {
   const images = product.images.filter(Boolean);
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
@@ -31,7 +31,7 @@ export default function ProductCard({ product, priority = false, popular = false
   const priceFormatted = fmt(product.price);
   const originalPrice = getOriginalPrice(product.id, product.price);
   const discountPct = getDiscountPercent(product.id);
-  const birthdayPrice = Math.round((product.price * 0.95) / 10) * 10;
+  const monthlyInstallment = Math.ceil(product.price / 3 / 10) * 10;
 
   function openLine(e: React.MouseEvent) {
     if ((window as any).fbq) {
@@ -223,23 +223,12 @@ export default function ProductCard({ product, priority = false, popular = false
                 -{discountPct}%
               </span>
             </div>
-            {birthdayDiscount ? (
-              <>
-                <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                  <span className="text-xs sm:text-sm font-sans line-through" style={{ color: "var(--muted)" }}>
-                    {priceFormatted}
-                  </span>
-                  <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#0284C7", color: "white", fontSize: "9px" }}>
-                    -5%
-                  </span>
-                </div>
-                <p className="text-sm sm:text-xl font-sans font-light tracking-wide mt-1" style={{ color: "#0284C7" }}>
-                  {fmt(birthdayPrice)}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "var(--gold)" }}>
-                {priceFormatted}
+            <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "var(--gold)" }}>
+              {priceFormatted}
+            </p>
+            {payLaterEligible && (
+              <p className="text-xs sm:text-sm font-sans mt-1" style={{ color: "#0284C7" }}>
+                ผ่อน 3 เดือน x <span className="font-bold">{fmt(monthlyInstallment)}</span>/เดือน
               </p>
             )}
           </div>

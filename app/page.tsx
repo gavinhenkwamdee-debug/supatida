@@ -4,7 +4,7 @@ import CatalogClient from "@/components/CatalogClient";
 import ProductCard from "@/components/ProductCard";
 import { seededShuffle } from "@/lib/shuffle";
 import { getSetting } from "@/lib/settings";
-import { DEFAULT_BIRTHDAY, isBirthdayDiscountExcluded, type BirthdayConfig } from "@/lib/birthday-config";
+import { DEFAULT_PAYLATER, type PayLaterConfig } from "@/lib/paylater-config";
 import type { Product } from "@/lib/db";
 
 const POPULAR_COUNT = 10;
@@ -72,9 +72,8 @@ export default async function CatalogPage({ searchParams }: PageProps) {
     ? { ordered: sortFiltered(filtered), popularIds: new Set<number>() }
     : sortDefault(filtered);
 
-  const birthday = await getSetting<BirthdayConfig>("birthday", DEFAULT_BIRTHDAY);
-  const birthdaySelected = new Set(birthday.productIds || []);
-  const birthdaySitewide = birthday.enabled;
+  const paylater = await getSetting<PayLaterConfig>("paylater", DEFAULT_PAYLATER);
+  const payLaterIds = new Set(paylater.enabled ? paylater.productIds || [] : []);
 
   return (
     <div style={{ backgroundColor: "var(--ivory)" }} className="flex flex-col min-h-screen">
@@ -103,7 +102,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
                   product={product}
                   priority={i < 4}
                   popular={popularIds.has(product.id)}
-                  birthdayDiscount={birthdaySitewide && !birthdaySelected.has(product.id) && !isBirthdayDiscountExcluded(product)}
+                  payLaterEligible={payLaterIds.has(product.id)}
                 />
               ))}
             </div>

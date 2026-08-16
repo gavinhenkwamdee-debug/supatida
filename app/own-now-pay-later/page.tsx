@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { getAllProducts } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
-import { DEFAULT_BIRTHDAY, type BirthdayConfig } from "@/lib/birthday-config";
-import BirthdayProductCard from "@/components/BirthdayProductCard";
+import { DEFAULT_PAYLATER, type PayLaterConfig } from "@/lib/paylater-config";
+import PayLaterProductCard from "@/components/PayLaterProductCard";
 
 export const dynamic = "force-dynamic";
 
-const DISCOUNT = 0.12;
-
-export default async function BirthdayPage() {
-  const config = await getSetting<BirthdayConfig>("birthday", DEFAULT_BIRTHDAY);
+export default async function OwnNowPayLaterPage() {
+  const config = await getSetting<PayLaterConfig>("paylater", DEFAULT_PAYLATER);
   const allProducts = await getAllProducts();
   const productIds = config.productIds || [];
 
@@ -39,15 +37,15 @@ export default async function BirthdayPage() {
           {config.bannerImage && (
             <div className="relative w-full mb-8 overflow-hidden" style={{ aspectRatio: "3/1", backgroundColor: "var(--img-bg)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={config.bannerImage} alt="Supatida Birthday Promotion" className="w-full h-full object-cover" />
+              <img src={config.bannerImage} alt="Own Now Pay Later" className="w-full h-full object-cover" />
             </div>
           )}
 
           <div className="text-center mb-10">
-            <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#0284C7" }}>Supatida Birthday</p>
-            <h2 className="text-2xl tracking-[0.1em]" style={{ color: "var(--charcoal)" }}>ลดพิเศษ 12% ฉลองวันเกิด SUPATIDA</h2>
+            <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#0284C7" }}>Own Now Pay Later</p>
+            <h2 className="text-2xl tracking-[0.1em]" style={{ color: "var(--charcoal)" }}>รับของวันนี้ ผ่อนชำระได้ 3 เดือน</h2>
             <p className="text-sm font-sans mt-3" style={{ color: "var(--muted)" }}>
-              Selective items 12% discount — Supatida Birthday special
+              สินค้าคัดสรรในแคมเปญนี้ แบ่งชำระได้ 3 เดือน
             </p>
             <div className="mx-auto mt-4 w-16 h-px" style={{ backgroundColor: "#0284C7" }} />
           </div>
@@ -57,11 +55,7 @@ export default async function BirthdayPage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {promoProducts.map((product) => (
-                <BirthdayProductCard
-                  key={product.id}
-                  product={product}
-                  promoPrice={Math.round((product.price * (1 - DISCOUNT)) / 10) * 10}
-                />
+                <PayLaterProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
