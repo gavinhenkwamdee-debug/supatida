@@ -24,6 +24,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "กรอกเบอร์โทรศัพท์ให้ถูกต้อง (ตัวเลข 10 หลัก ขึ้นต้นด้วย 0)" }, { status: 400 });
   }
 
+  if (!birthday) {
+    return NextResponse.json({ error: "กรุณากรอกวันเกิด" }, { status: 400 });
+  }
+
   const passwordCheck = checkPasswordStrength(password);
   if (!passwordCheck.ok) {
     return NextResponse.json({ error: `รหัสผ่านต้อง: ${passwordCheck.issues.join(", ")}` }, { status: 400 });
@@ -53,6 +57,17 @@ export async function POST(request: Request) {
   for (const perk of welcomePerks) {
     await grantPrivilege(customer.id, perk.title, "signup", null, "", perk.image);
   }
+
+  // Fixed welcome coupon shown as a dedicated card on /account — sourceDetail
+  // "welcome_coupon" is how the UI tells it apart from ordinary signup perks.
+  await grantPrivilege(
+    customer.id,
+    "ส่วนลดต้อนรับสมาชิกใหม่ 500 บาท",
+    "signup",
+    "welcome_coupon",
+    "ใช้ได้ทั้งงานคัสตอมและสินค้าพร้อมส่ง · แคปหน้าจอแล้วแจ้ง admin เพื่อใช้สิทธิ์",
+    null
+  );
 
   const tiers = await getCrmTiers();
 

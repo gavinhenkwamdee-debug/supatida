@@ -72,6 +72,10 @@ export default function AccountClient() {
       setError("กรุณายินยอมให้เก็บข้อมูลส่วนบุคคลก่อนสมัครสมาชิก");
       return;
     }
+    if (mode === "signup" && !birthday) {
+      setError("กรุณากรอกวันเกิด");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -194,8 +198,8 @@ export default function AccountClient() {
               {mode === "signup" && (
                 <>
                   <div>
-                    <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>วันเกิด (ไม่บังคับ)</label>
-                    <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} className={inputClass} style={inputStyle} />
+                    <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>วันเกิด</label>
+                    <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} required className={inputClass} style={inputStyle} />
                   </div>
 
                   <div>
@@ -260,10 +264,17 @@ export default function AccountClient() {
 }
 
 function Dashboard({ me, onLogout }: { me: Me; onLogout: () => void }) {
-  const { customer, tier, nextTier, privileges } = me;
-  const progressPct = nextTier
-    ? Math.min(100, Math.round(((customer.points - tier.minPoints) / (nextTier.minPoints - tier.minPoints)) * 100))
-    : 100;
+  const { customer, privileges } = me;
+  const welcomeCoupon = privileges.find((p) => p.sourceDetail === "welcome_coupon");
+  const otherPrivileges = privileges.filter((p) => p.sourceDetail !== "welcome_coupon");
+
+  const expiryLabel = welcomeCoupon
+    ? (() => {
+        const d = new Date(welcomeCoupon.createdAt);
+        d.setMonth(d.getMonth() + 3);
+        return d.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
+      })()
+    : null;
 
   return (
     <div className="bg-white p-8" style={{ border: "1px solid var(--border)" }}>
@@ -275,49 +286,43 @@ function Dashboard({ me, onLogout }: { me: Me; onLogout: () => void }) {
       </div>
       <h2 className="text-xl tracking-wide mb-6" style={{ color: "var(--charcoal)" }}>{customer.name}</h2>
 
-      <div className="p-5 mb-5 text-center" style={{ backgroundColor: "#FAF8F4", border: "1px solid var(--border)" }}>
-        <p className="text-xs tracking-[0.3em] uppercase font-sans mb-1" style={{ color: "var(--gold-dark)" }}>ระดับสมาชิก</p>
-        <p className="text-2xl mb-2" style={{ color: "var(--charcoal)" }}>{tier.name}</p>
-        <p className="text-3xl font-light mb-1" style={{ color: "var(--gold)" }}>{customer.points.toLocaleString()} <span className="text-sm font-sans">แต้ม</span></p>
+      {welcomeCoupon && (
+        <div className="p-6 mb-5 text-center" style={{ backgroundColor: "#FAF8F4", border: "2px dashed var(--gold)" }}>
+          <p className="text-xs tracking-[0.3em] uppercase font-sans mb-2" style={{ color: "var(--gold-dark)" }}>
+            คูปองต้อนรับสมาชิกใหม่
+          </p>
+          <p className="text-sm font-sans mb-2" style={{ color: "var(--muted)" }}>คุณ{customer.name}</p>
+          <p className="text-4xl font-light mb-2" style={{ color: welcomeCoupon.used ? "var(--muted)" : "var(--gold)" }}>
+            ฿500
+          </p>
+          <p className="text-xs font-sans mb-3" style={{ color: "var(--charcoal)" }}>
+            ส่วนลดพิเศษ ใช้ได้ทั้งงานคัสตอมและสินค้าพร้อมส่ง
+          </p>
+          <p className="text-xs font-sans" style={{ color: welcomeCoupon.used ? "#C0392B" : "var(--muted)" }}>
+            {welcomeCoupon.used ? "ใช้สิทธิ์แล้ว" : `ใช้ได้ถึง ${expiryLabel}`}
+          </p>
+        </div>
+      )}
 
-        {nextTier && (
-          <div className="mt-4">
-            <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border)" }}>
-              <div className="h-full rounded-full" style={{ width: `${progressPct}%`, backgroundColor: "var(--gold)" }} />
-            </div>
-            <p className="text-xs font-sans mt-2" style={{ color: "var(--muted)" }}>
-              อีก {(nextTier.minPoints - customer.points).toLocaleString()} แต้มถึงระดับ {nextTier.name}
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2 mb-2">
-        <p className="text-xs tracking-widest uppercase font-sans" style={{ color: "var(--gold-dark)" }}>สิทธิพิเศษของคุณ</p>
-        {tier.discountPercent > 0 && (
-          <p className="text-sm font-sans" style={{ color: "var(--charcoal)" }}>✓ ส่วนลด {tier.discountPercent}% ทุกการสั่งซื้อ (ระดับ {tier.name})</p>
-        )}
-        {tier.discountPercent === 0 && privileges.length === 0 && (
-          <p className="text-sm font-sans" style={{ color: "var(--muted)" }}>สะสมแต้มเพิ่มเพื่อปลดล็อกสิทธิพิเศษ</p>
-        )}
-      </div>
-
-      {privileges.length > 0 && (
-        <div className="space-y-1.5 mb-2">
-          {privileges.map((p) => (
-            <div key={p.id} className="flex items-center justify-between text-sm font-sans">
-              <span className="flex items-center gap-2">
-                {p.image && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.image} alt="" className="w-8 h-8 object-cover flex-shrink-0" style={{ border: "1px solid var(--border)", opacity: p.used ? 0.5 : 1 }} />
-                )}
-                <span style={{ color: p.used ? "var(--muted)" : "var(--charcoal)", textDecoration: p.used ? "line-through" : "none" }}>
-                  {p.used ? "" : "✓ "}{p.title}
+      {otherPrivileges.length > 0 && (
+        <div className="space-y-2 mb-2">
+          <p className="text-xs tracking-widest uppercase font-sans" style={{ color: "var(--gold-dark)" }}>สิทธิพิเศษเพิ่มเติม</p>
+          <div className="space-y-1.5">
+            {otherPrivileges.map((p) => (
+              <div key={p.id} className="flex items-center justify-between text-sm font-sans">
+                <span className="flex items-center gap-2">
+                  {p.image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.image} alt="" className="w-8 h-8 object-cover flex-shrink-0" style={{ border: "1px solid var(--border)", opacity: p.used ? 0.5 : 1 }} />
+                  )}
+                  <span style={{ color: p.used ? "var(--muted)" : "var(--charcoal)", textDecoration: p.used ? "line-through" : "none" }}>
+                    {p.used ? "" : "✓ "}{p.title}
+                  </span>
                 </span>
-              </span>
-              {p.used && <span className="text-xs font-sans flex-shrink-0" style={{ color: "var(--muted)" }}>ใช้แล้ว</span>}
-            </div>
-          ))}
+                {p.used && <span className="text-xs font-sans flex-shrink-0" style={{ color: "var(--muted)" }}>ใช้แล้ว</span>}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
