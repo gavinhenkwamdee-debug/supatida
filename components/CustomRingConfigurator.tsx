@@ -266,7 +266,12 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
                   alt=""
                   title={c.label}
                   className="absolute"
-                  style={{ left: `${c.overlayX}%`, top: `${c.overlayY}%`, width: `${c.overlayWidth}%`, transform: "translate(-50%, -50%)" }}
+                  style={{
+                    left: `${c.overlayX}%`,
+                    top: `${c.overlayY}%`,
+                    width: `${c.overlayWidth}%`,
+                    transform: `translate(-50%, -50%) rotate(${c.overlayRotation}deg)`,
+                  }}
                 />
               ) : null
             )}

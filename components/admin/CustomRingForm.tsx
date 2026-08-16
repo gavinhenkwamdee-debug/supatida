@@ -23,6 +23,7 @@ interface ChoiceState {
   overlayX: number;
   overlayY: number;
   overlayWidth: number;
+  overlayRotation: number;
   baseImageOverride: string | null;
   priceDelta: number;
   stoneKind: StoneKind | null;
@@ -53,6 +54,7 @@ function emptyChoice(): ChoiceState {
     overlayX: 50,
     overlayY: 50,
     overlayWidth: 20,
+    overlayRotation: 0,
     baseImageOverride: null,
     priceDelta: 0,
     stoneKind: null,
@@ -71,7 +73,7 @@ function fmtPx(pct: number) {
   return Math.round((pct / 100) * POSITIONER_PX);
 }
 
-type CopiedPosition = { x: number; y: number; width: number };
+type CopiedPosition = { x: number; y: number; width: number; rotation: number };
 
 function cloneGroup(
   label: string,
@@ -310,10 +312,10 @@ function ChoiceEditor({
             {choice.overlayImage && (
               <button
                 type="button"
-                onClick={() => onCopyPosition({ x: choice.overlayX, y: choice.overlayY, width: choice.overlayWidth })}
+                onClick={() => onCopyPosition({ x: choice.overlayX, y: choice.overlayY, width: choice.overlayWidth, rotation: choice.overlayRotation })}
                 className="text-xs tracking-wider uppercase underline font-sans"
                 style={{ color: "var(--gold-dark)" }}
-                title={`x=${fmtPx(choice.overlayX)}px, y=${fmtPx(choice.overlayY)}px`}
+                title={`x=${fmtPx(choice.overlayX)}px, y=${fmtPx(choice.overlayY)}px, หมุน=${Math.round(choice.overlayRotation)}°`}
               >
                 คัดลอกตำแหน่ง
               </button>
@@ -322,12 +324,18 @@ function ChoiceEditor({
               <button
                 type="button"
                 onClick={() =>
-                  onChange({ ...choice, overlayX: copiedPosition.x, overlayY: copiedPosition.y, overlayWidth: copiedPosition.width })
+                  onChange({
+                    ...choice,
+                    overlayX: copiedPosition.x,
+                    overlayY: copiedPosition.y,
+                    overlayWidth: copiedPosition.width,
+                    overlayRotation: copiedPosition.rotation,
+                  })
                 }
                 className="text-xs tracking-wider uppercase underline font-sans"
                 style={{ color: "var(--gold-dark)" }}
               >
-                วางตำแหน่ง ({fmtPx(copiedPosition.x)}, {fmtPx(copiedPosition.y)}px)
+                วางตำแหน่ง ({fmtPx(copiedPosition.x)}, {fmtPx(copiedPosition.y)}px, {Math.round(copiedPosition.rotation)}°)
               </button>
             )}
             <button type="button" onClick={onRemove} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "#C0392B" }}>
@@ -364,7 +372,8 @@ function ChoiceEditor({
             x={choice.overlayX}
             y={choice.overlayY}
             width={choice.overlayWidth}
-            onChange={(x, y, width) => onChange({ ...choice, overlayX: x, overlayY: y, overlayWidth: width })}
+            rotation={choice.overlayRotation}
+            onChange={(x, y, width, rotation) => onChange({ ...choice, overlayX: x, overlayY: y, overlayWidth: width, overlayRotation: rotation })}
           />
         </div>
       )}
@@ -511,6 +520,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             overlayX: c.overlayX,
             overlayY: c.overlayY,
             overlayWidth: c.overlayWidth,
+            overlayRotation: c.overlayRotation,
             baseImageOverride: c.baseImageOverride,
             priceDelta: c.priceDelta,
             stoneKind: c.stoneKind,
@@ -570,6 +580,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         overlayX: c.overlayX,
         overlayY: c.overlayY,
         overlayWidth: c.overlayWidth,
+        overlayRotation: c.overlayRotation,
         baseImageOverride: c.baseImageOverride,
         priceDelta: c.priceDelta,
         stoneKind: c.stoneKind,
@@ -623,6 +634,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
                 overlayX: c.overlayX,
                 overlayY: c.overlayY,
                 overlayWidth: c.overlayWidth,
+                overlayRotation: c.overlayRotation,
                 baseImageOverride: c.baseImageOverride,
                 priceDelta: c.priceDelta,
                 stoneKind,

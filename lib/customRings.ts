@@ -21,6 +21,7 @@ export interface CustomRingChoice {
   overlayX: number;
   overlayY: number;
   overlayWidth: number;
+  overlayRotation: number;
   baseImageOverride: string | null;
   priceDelta: number;
   sortOrder: number;
@@ -60,6 +61,7 @@ export interface ChoiceInput {
   overlayX: number;
   overlayY: number;
   overlayWidth: number;
+  overlayRotation: number;
   baseImageOverride: string | null;
   priceDelta: number;
   sortOrder: number;
@@ -139,6 +141,9 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_groups ADD COLUMN IF NOT EXISTS price_delta NUMERIC NOT NULL DEFAULT 0
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS overlay_rotation NUMERIC NOT NULL DEFAULT 0
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -166,6 +171,7 @@ function toChoice(row: any): CustomRingChoice {
     overlayX: parseFloat(row.overlay_x),
     overlayY: parseFloat(row.overlay_y),
     overlayWidth: parseFloat(row.overlay_width),
+    overlayRotation: parseFloat(row.overlay_rotation) || 0,
     baseImageOverride: row.base_image_override ?? null,
     priceDelta: parseFloat(row.price_delta),
     sortOrder: row.sort_order,
@@ -291,10 +297,10 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, overlay_image, overlay_x, overlay_y, overlay_width, base_image_override, price_delta, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
         VALUES (
           ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.overlayImage},
-          ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder},
+          ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )
       `;

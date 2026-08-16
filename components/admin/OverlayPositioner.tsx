@@ -8,6 +8,7 @@ export default function OverlayPositioner({
   x,
   y,
   width,
+  rotation,
   onChange,
 }: {
   baseImage: string;
@@ -15,7 +16,8 @@ export default function OverlayPositioner({
   x: number;
   y: number;
   width: number;
-  onChange: (x: number, y: number, width: number) => void;
+  rotation: number;
+  onChange: (x: number, y: number, width: number, rotation: number) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -56,7 +58,7 @@ export default function OverlayPositioner({
   function handleMouseMove(e: React.MouseEvent) {
     if (!dragging) return;
     const pos = posFromEvent(e.clientX, e.clientY);
-    if (pos) onChange(pos.x, pos.y, width);
+    if (pos) onChange(pos.x, pos.y, width, rotation);
   }
 
   function handleMouseUp() {
@@ -66,21 +68,21 @@ export default function OverlayPositioner({
   function handleClick(e: React.MouseEvent) {
     if (dragging) return;
     const pos = posFromEvent(e.clientX, e.clientY);
-    if (pos) onChange(pos.x, pos.y, width);
+    if (pos) onChange(pos.x, pos.y, width, rotation);
   }
 
   function handleTouchStart(e: React.TouchEvent) {
     setDragging(true);
     const t = e.touches[0];
     const pos = t && posFromEvent(t.clientX, t.clientY);
-    if (pos) onChange(pos.x, pos.y, width);
+    if (pos) onChange(pos.x, pos.y, width, rotation);
   }
 
   function handleTouchMove(e: React.TouchEvent) {
     e.preventDefault();
     const t = e.touches[0];
     const pos = t && posFromEvent(t.clientX, t.clientY);
-    if (pos) onChange(pos.x, pos.y, width);
+    if (pos) onChange(pos.x, pos.y, width, rotation);
   }
 
   function handleTouchEnd() {
@@ -116,7 +118,7 @@ export default function OverlayPositioner({
             left: `${x}%`,
             top: `${y}%`,
             width: `${width}%`,
-            transform: "translate(-50%, -50%)",
+            transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
             cursor: dragging ? "grabbing" : "grab",
           }}
         />
@@ -131,7 +133,7 @@ export default function OverlayPositioner({
           <input
             type="number"
             value={Math.round((x / 100) * containerSize)}
-            onChange={(e) => onChange(pxToPct(Number(e.target.value) || 0), y, width)}
+            onChange={(e) => onChange(pxToPct(Number(e.target.value) || 0), y, width, rotation)}
             className="w-full px-2 py-1.5 text-xs font-sans outline-none"
             style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
           />
@@ -141,7 +143,7 @@ export default function OverlayPositioner({
           <input
             type="number"
             value={Math.round((y / 100) * containerSize)}
-            onChange={(e) => onChange(x, pxToPct(Number(e.target.value) || 0), width)}
+            onChange={(e) => onChange(x, pxToPct(Number(e.target.value) || 0), width, rotation)}
             className="w-full px-2 py-1.5 text-xs font-sans outline-none"
             style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
           />
@@ -159,7 +161,49 @@ export default function OverlayPositioner({
         min={3}
         max={60}
         value={width}
-        onChange={(e) => onChange(x, y, Number(e.target.value))}
+        onChange={(e) => onChange(x, y, Number(e.target.value), rotation)}
+        className="w-full"
+      />
+
+      <div className="flex items-center justify-between mt-3 mb-1">
+        <label className="text-xs font-sans" style={{ color: "var(--muted)" }}>
+          หมุน ({Math.round(rotation)}°)
+        </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onChange(x, y, width, ((rotation - 15) % 360 + 360) % 360)}
+            className="w-6 h-6 text-xs flex items-center justify-center"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            title="หมุนซ้าย 15°"
+          >
+            ↺
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange(x, y, width, 0)}
+            className="text-xs tracking-wider uppercase underline font-sans"
+            style={{ color: "var(--gold-dark)" }}
+          >
+            รีเซ็ต
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange(x, y, width, (rotation + 15) % 360)}
+            className="w-6 h-6 text-xs flex items-center justify-center"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            title="หมุนขวา 15°"
+          >
+            ↻
+          </button>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={359}
+        value={rotation}
+        onChange={(e) => onChange(x, y, width, Number(e.target.value))}
         className="w-full"
       />
     </div>
