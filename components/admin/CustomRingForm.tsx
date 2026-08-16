@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import OverlayPositioner from "./OverlayPositioner";
-import { DIAMOND_SHAPES } from "@/lib/customRings";
+import { DIAMOND_SHAPES } from "@/lib/ringShapes";
 import type { CustomRingDetail, GroupKind, GroupWithRing, StoneKind } from "@/lib/customRings";
 
 const GROUP_KIND_OPTIONS: { value: GroupKind; label: string }[] = [

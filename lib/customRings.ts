@@ -7,8 +7,8 @@ const sql = neon(process.env.DATABASE_URL!);
 // always a small round stone, tertiary_power is always a square gemstone.
 export type GroupKind = "generic" | "main_power" | "secondary_power" | "tertiary_power";
 export type StoneKind = "diamond" | "gem";
-export const DIAMOND_SHAPES = ["pear", "emerald", "baguette", "heart", "oval", "round", "princess", "marquise"] as const;
-export type DiamondShape = (typeof DIAMOND_SHAPES)[number];
+export { DIAMOND_SHAPES } from "./ringShapes";
+export type { DiamondShape } from "./ringShapes";
 
 export interface CustomRingChoice {
   id: number;
