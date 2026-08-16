@@ -5,7 +5,10 @@ const sql = neon(process.env.DATABASE_URL!);
 // "Power" groups drive the special ring-stone selection UI: main_power lets the
 // customer pick diamond (any shape) or gemstone (round only), secondary_power is
 // always a small round stone, tertiary_power is always a square gemstone.
-export type GroupKind = "generic" | "main_power" | "secondary_power" | "tertiary_power";
+// "dropdown" renders its choices as a <select> (e.g. ring size) instead of buttons.
+// "text_input" has no choices — the customer types free text (e.g. engraving) and
+// `placeholder`/`priceDelta` on the group configure it.
+export type GroupKind = "generic" | "dropdown" | "text_input" | "main_power" | "secondary_power" | "tertiary_power";
 export type StoneKind = "diamond" | "gem";
 export { DIAMOND_SHAPES } from "./ringShapes";
 export type { DiamondShape } from "./ringShapes";
@@ -30,6 +33,8 @@ export interface CustomRingGroup {
   label: string;
   sortOrder: number;
   kind: GroupKind;
+  placeholder: string;
+  priceDelta: number;
   choices: CustomRingChoice[];
 }
 
@@ -66,6 +71,8 @@ export interface GroupInput {
   label: string;
   sortOrder: number;
   kind: GroupKind;
+  placeholder: string;
+  priceDelta: number;
   choices: ChoiceInput[];
 }
 
@@ -125,6 +132,12 @@ export async function initCustomRingsDB() {
   `;
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS shape TEXT
+  `;
+  await sql`
+    ALTER TABLE custom_ring_groups ADD COLUMN IF NOT EXISTS placeholder TEXT NOT NULL DEFAULT ''
+  `;
+  await sql`
+    ALTER TABLE custom_ring_groups ADD COLUMN IF NOT EXISTS price_delta NUMERIC NOT NULL DEFAULT 0
   `;
 }
 
@@ -195,6 +208,8 @@ export async function getCustomRingById(id: number): Promise<CustomRingDetail | 
     label: g.label,
     sortOrder: g.sort_order,
     kind: (g.kind as GroupKind) ?? "generic",
+    placeholder: g.placeholder ?? "",
+    priceDelta: parseFloat(g.price_delta) || 0,
     choices: choiceRows.filter((c) => c.group_id === g.id).map(toChoice),
   }));
 
@@ -227,6 +242,8 @@ export async function getAllGroupsWithChoices(): Promise<GroupWithRing[]> {
       label: g.label,
       sortOrder: g.sort_order,
       kind: (g.kind as GroupKind) ?? "generic",
+      placeholder: g.placeholder ?? "",
+      priceDelta: parseFloat(g.price_delta) || 0,
       choices: choiceRows.filter((c) => c.group_id === g.id).map(toChoice),
     },
   }));
@@ -266,8 +283,8 @@ export async function replaceCustomRing(
 
   for (const group of groups) {
     const groupRows = await sql`
-      INSERT INTO custom_ring_groups (ring_id, label, sort_order, kind)
-      VALUES (${id}, ${group.label}, ${group.sortOrder}, ${group.kind})
+      INSERT INTO custom_ring_groups (ring_id, label, sort_order, kind, placeholder, price_delta)
+      VALUES (${id}, ${group.label}, ${group.sortOrder}, ${group.kind}, ${group.placeholder}, ${group.priceDelta})
       RETURNING id
     `;
     const groupId = groupRows[0].id;

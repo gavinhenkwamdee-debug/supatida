@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { DIAMOND_SHAPE_LABELS } from "@/lib/ringShapes";
 import type { CustomRingChoice, CustomRingDetail, CustomRingGroup, StoneKind } from "@/lib/customRings";
 
 const THB = (n: number) =>
@@ -9,9 +10,13 @@ const THB = (n: number) =>
 
 const STONE_KIND_LABEL: Record<StoneKind, string> = { diamond: "เพชร", gem: "พลอย" };
 
-function isSizeGroup(label: string) {
-  const l = label.toLowerCase();
-  return l.includes("size") || l.includes("ไซส์") || l.includes("ไซซ์") || l.includes("ขนาด");
+// Diamond choices in a Main Power group are shape variants — show the shape name
+// (Pear/Emerald/…) rather than whatever internal label the admin typed on the choice.
+function choiceLabel(group: CustomRingGroup, choice: CustomRingChoice) {
+  if (group.kind === "main_power" && choice.stoneKind === "diamond" && choice.shape) {
+    return DIAMOND_SHAPE_LABELS[choice.shape] ?? choice.label;
+  }
+  return choice.label;
 }
 
 function GroupSection({
@@ -20,12 +25,16 @@ function GroupSection({
   onToggle,
   stoneKind,
   onStoneKindChange,
+  textValue,
+  onTextChange,
 }: {
   group: CustomRingGroup;
   selectedId: number | undefined;
   onToggle: (choiceId: number) => void;
   stoneKind?: StoneKind;
   onStoneKindChange?: (k: StoneKind) => void;
+  textValue?: string;
+  onTextChange?: (v: string) => void;
 }) {
   const isMainPower = group.kind === "main_power";
   const availableKinds = useMemo(
@@ -34,14 +43,38 @@ function GroupSection({
   );
   const visibleChoices = isMainPower && stoneKind ? group.choices.filter((c) => c.stoneKind === stoneKind) : group.choices;
   const selectedChoice = group.choices.find((c) => c.id === selectedId);
-  const sizeLike = isSizeGroup(group.label);
   const allHaveImages = visibleChoices.length > 0 && visibleChoices.every((c) => c.swatchImage);
+
+  if (group.kind === "text_input") {
+    return (
+      <div className="py-5" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className="flex items-baseline justify-between gap-3 mb-3">
+          <p className="text-xs tracking-[0.25em] uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
+          <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>{textValue?.trim() ? textValue : "None"}</p>
+        </div>
+        <input
+          type="text"
+          value={textValue ?? ""}
+          onChange={(e) => onTextChange?.(e.target.value)}
+          placeholder={group.placeholder || "พิมพ์ข้อความที่ต้องการ"}
+          maxLength={40}
+          className="w-full px-3 py-2.5 text-sm font-sans outline-none"
+          style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
+        />
+        {group.priceDelta > 0 && (
+          <p className="text-xs font-sans mt-1.5" style={{ color: "var(--muted)" }}>+{THB(group.priceDelta)} หากระบุข้อความ</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="py-5" style={{ borderBottom: "1px solid var(--border)" }}>
       <div className="flex items-baseline justify-between gap-3 mb-3">
         <p className="text-xs tracking-[0.25em] uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
-        <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>{selectedChoice?.label ?? "None"}</p>
+        <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>
+          {selectedChoice ? choiceLabel(group, selectedChoice) : "None"}
+        </p>
       </div>
 
       {isMainPower && availableKinds.length > 1 && (
@@ -64,7 +97,7 @@ function GroupSection({
         </div>
       )}
 
-      {sizeLike ? (
+      {group.kind === "dropdown" ? (
         <select
           value={selectedId ?? ""}
           onChange={(e) => onToggle(Number(e.target.value))}
@@ -82,7 +115,7 @@ function GroupSection({
               key={c.id}
               type="button"
               onClick={() => onToggle(c.id)}
-              title={c.label}
+              title={choiceLabel(group, c)}
               className="rounded-full overflow-hidden flex-shrink-0 transition-shadow"
               style={{
                 width: 44,
@@ -92,7 +125,7 @@ function GroupSection({
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={c.swatchImage} alt={c.label} className="w-full h-full object-cover" />
+              <img src={c.swatchImage} alt={choiceLabel(group, c)} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -103,7 +136,7 @@ function GroupSection({
               key={c.id}
               type="button"
               onClick={() => onToggle(c.id)}
-              title={c.label}
+              title={choiceLabel(group, c)}
               className="px-3 py-2.5 text-xs font-sans text-center transition-colors"
               style={{
                 border: selectedId === c.id ? "1.5px solid var(--charcoal)" : "1px solid var(--border)",
@@ -111,7 +144,7 @@ function GroupSection({
                 backgroundColor: "white",
               }}
             >
-              {c.label}
+              {choiceLabel(group, c)}
             </button>
           ))}
         </div>
@@ -136,18 +169,28 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     }
     return initial;
   });
+  const [textValues, setTextValues] = useState<Record<number, string>>({});
 
   const groups = ring.groups;
 
   const selectedChoices = useMemo(
     () =>
       groups
+        .filter((g) => g.kind !== "text_input")
         .map((g) => g.choices.find((c) => c.id === selections[g.id]))
         .filter((c): c is CustomRingChoice => Boolean(c)),
     [groups, selections]
   );
 
-  const totalPrice = ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0);
+  const textInputTotal = useMemo(
+    () =>
+      groups
+        .filter((g) => g.kind === "text_input" && textValues[g.id]?.trim())
+        .reduce((sum, g) => sum + g.priceDelta, 0),
+    [groups, textValues]
+  );
+
+  const totalPrice = ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0) + textInputTotal;
 
   // A choice can replace the whole ring photo (e.g. metal color) instead of
   // just layering a gem on top — last selected group with an override wins.
@@ -200,6 +243,8 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
                 onToggle={(choiceId) => toggleChoice(g.id, choiceId)}
                 stoneKind={powerStoneKind[g.id]}
                 onStoneKindChange={(k) => changeStoneKind(g.id, k)}
+                textValue={textValues[g.id]}
+                onTextChange={(v) => setTextValues((prev) => ({ ...prev, [g.id]: v }))}
               />
             ))}
           </div>

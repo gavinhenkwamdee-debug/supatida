@@ -3,26 +3,17 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import OverlayPositioner from "./OverlayPositioner";
-import { DIAMOND_SHAPES } from "@/lib/ringShapes";
+import { DIAMOND_SHAPES, DIAMOND_SHAPE_LABELS } from "@/lib/ringShapes";
 import type { CustomRingDetail, GroupKind, GroupWithRing, StoneKind } from "@/lib/customRings";
 
 const GROUP_KIND_OPTIONS: { value: GroupKind; label: string }[] = [
-  { value: "generic", label: "ทั่วไป" },
+  { value: "generic", label: "ทั่วไป (ปุ่ม/วงกลม)" },
+  { value: "dropdown", label: "Dropdown (เช่น ไซส์แหวน)" },
+  { value: "text_input", label: "พิมพ์ข้อความเอง (เช่น สลักข้อความ)" },
   { value: "main_power", label: "พลังงานหลัก (Main Power)" },
   { value: "secondary_power", label: "พลังงานรอง (Secondary Power)" },
   { value: "tertiary_power", label: "พลังงานที่สาม (Tertiary Power)" },
 ];
-
-const DIAMOND_SHAPE_LABELS: Record<string, string> = {
-  pear: "ทรงหยดน้ำ (Pear)",
-  emerald: "ทรงมรกต (Emerald)",
-  baguette: "ทรงแบเกตต์ (Baguette)",
-  heart: "ทรงหัวใจ (Heart)",
-  oval: "ทรงไข่ (Oval)",
-  round: "ทรงกลม (Round)",
-  princess: "ทรงเหลี่ยม (Princess)",
-  marquise: "ทรงมาร์คีส์ (Marquise)",
-};
 
 interface ChoiceState {
   key: string;
@@ -42,6 +33,8 @@ interface GroupState {
   key: string;
   label: string;
   kind: GroupKind;
+  placeholder: string;
+  priceDelta: number;
   choices: ChoiceState[];
 }
 
@@ -68,7 +61,7 @@ function emptyChoice(): ChoiceState {
 }
 
 function emptyGroup(): GroupState {
-  return { key: nextKey(), label: "", kind: "generic", choices: [emptyChoice()] };
+  return { key: nextKey(), label: "", kind: "generic", placeholder: "", priceDelta: 0, choices: [emptyChoice()] };
 }
 
 // Positioner's preview box is a fixed max-w-xs (320px) square — used only
@@ -80,11 +73,19 @@ function fmtPx(pct: number) {
 
 type CopiedPosition = { x: number; y: number; width: number };
 
-function cloneGroup(label: string, kind: GroupKind, choices: Omit<ChoiceState, "key">[]): GroupState {
+function cloneGroup(
+  label: string,
+  kind: GroupKind,
+  placeholder: string,
+  priceDelta: number,
+  choices: Omit<ChoiceState, "key">[]
+): GroupState {
   return {
     key: nextKey(),
     label,
     kind,
+    placeholder,
+    priceDelta,
     choices: choices.map((c) => ({ ...c, key: nextKey() })),
   };
 }
@@ -248,6 +249,11 @@ function ChoiceEditor({
           ) : (
             <span className="text-xs font-sans italic" style={{ color: "var(--muted)" }}>ทรงกลมเท่านั้น</span>
           )}
+          {(choice.stoneKind ?? "diamond") === "diamond" && (
+            <span className="w-full text-xs font-sans italic" style={{ color: "var(--muted)" }}>
+              * ลูกค้าจะเห็นตัวเลือกนี้เป็นชื่อทรง ({DIAMOND_SHAPE_LABELS[choice.shape ?? "pear"]}) ไม่ใช่ชื่อที่พิมพ์ด้านล่าง — ชื่อด้านล่างไว้ใช้จำภายในเท่านั้น
+            </span>
+          )}
         </div>
       )}
       {groupKind === "secondary_power" && (
@@ -257,21 +263,25 @@ function ChoiceEditor({
         <p className="text-xs font-sans italic mb-2" style={{ color: "var(--muted)" }}>* บันทึกเป็นพลอยทรงสี่เหลี่ยมจตุรัสอัตโนมัติ</p>
       )}
       <div className="flex gap-3 items-start">
-        <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
-        <ImageUploadBox
-          src={choice.overlayImage || ""}
-          label="+ Gem overlay"
-          size={64}
-          onUploaded={(url) => onChange({ ...choice, overlayImage: url })}
-          onClear={() => onChange({ ...choice, overlayImage: null })}
-        />
-        <ImageUploadBox
-          src={choice.baseImageOverride || ""}
-          label="+ Base (แทนรูปหลัก)"
-          size={64}
-          onUploaded={(url) => onChange({ ...choice, baseImageOverride: url })}
-          onClear={() => onChange({ ...choice, baseImageOverride: null })}
-        />
+        {groupKind !== "dropdown" && (
+          <>
+            <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
+            <ImageUploadBox
+              src={choice.overlayImage || ""}
+              label="+ Gem overlay"
+              size={64}
+              onUploaded={(url) => onChange({ ...choice, overlayImage: url })}
+              onClear={() => onChange({ ...choice, overlayImage: null })}
+            />
+            <ImageUploadBox
+              src={choice.baseImageOverride || ""}
+              label="+ Base (แทนรูปหลัก)"
+              size={64}
+              onUploaded={(url) => onChange({ ...choice, baseImageOverride: url })}
+              onClear={() => onChange({ ...choice, baseImageOverride: null })}
+            />
+          </>
+        )}
 
         <div className="flex-1 min-w-0 space-y-2">
           <input
@@ -419,32 +429,59 @@ function GroupEditor({
         </button>
       </div>
 
-      <div className="space-y-2">
-        {group.choices.map((choice, i) => (
-          <ChoiceEditor
-            key={choice.key}
-            choice={choice}
-            baseImage={baseImage}
-            groupKind={group.kind}
-            onChange={(c) => onChange({ ...group, choices: group.choices.map((x) => (x.key === c.key ? c : x)) })}
-            onRemove={() => onChange({ ...group, choices: group.choices.filter((x) => x.key !== choice.key) })}
-            onMove={(dir) => moveChoice(i, dir)}
-            isFirst={i === 0}
-            isLast={i === group.choices.length - 1}
-            copiedPosition={copiedPosition}
-            onCopyPosition={onCopyPosition}
+      {group.kind === "text_input" ? (
+        <div className="p-3" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
+          <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
+            ลูกค้าจะพิมพ์ข้อความเองในช่องนี้ (เช่น สลักข้อความ) ไม่ต้องเพิ่มตัวเลือก
+          </p>
+          <input
+            value={group.placeholder}
+            onChange={(e) => onChange({ ...group, placeholder: e.target.value })}
+            placeholder="ข้อความ placeholder เช่น พิมพ์ชื่อที่ต้องการสลัก"
+            className="w-full px-2 py-1.5 text-xs font-sans outline-none mb-2"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
           />
-        ))}
-      </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>ราคาเพิ่ม ฿ (ถ้าลูกค้าใส่ข้อความ)</span>
+            <input
+              type="number"
+              value={group.priceDelta}
+              onChange={(e) => onChange({ ...group, priceDelta: Number(e.target.value) || 0 })}
+              className="w-24 px-2 py-1 text-xs font-sans outline-none"
+              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-2">
+            {group.choices.map((choice, i) => (
+              <ChoiceEditor
+                key={choice.key}
+                choice={choice}
+                baseImage={baseImage}
+                groupKind={group.kind}
+                onChange={(c) => onChange({ ...group, choices: group.choices.map((x) => (x.key === c.key ? c : x)) })}
+                onRemove={() => onChange({ ...group, choices: group.choices.filter((x) => x.key !== choice.key) })}
+                onMove={(dir) => moveChoice(i, dir)}
+                isFirst={i === 0}
+                isLast={i === group.choices.length - 1}
+                copiedPosition={copiedPosition}
+                onCopyPosition={onCopyPosition}
+              />
+            ))}
+          </div>
 
-      <button
-        type="button"
-        onClick={() => onChange({ ...group, choices: [...group.choices, emptyChoice()] })}
-        className="mt-3 text-xs tracking-wider uppercase underline font-sans"
-        style={{ color: "var(--gold-dark)" }}
-      >
-        + Add Option
-      </button>
+          <button
+            type="button"
+            onClick={() => onChange({ ...group, choices: [...group.choices, emptyChoice()] })}
+            className="mt-3 text-xs tracking-wider uppercase underline font-sans"
+            style={{ color: "var(--gold-dark)" }}
+          >
+            + Add Option
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -464,6 +501,8 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
           key: nextKey(),
           label: g.label,
           kind: g.kind,
+          placeholder: g.placeholder,
+          priceDelta: g.priceDelta,
           choices: g.choices.map((c) => ({
             key: nextKey(),
             label: c.label,
@@ -504,7 +543,13 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
 
   function duplicateGroup(index: number) {
     const source = groups[index];
-    const copy = cloneGroup(`${source.label} (copy)`, source.kind, source.choices.map(({ key, ...rest }) => rest));
+    const copy = cloneGroup(
+      `${source.label} (copy)`,
+      source.kind,
+      source.placeholder,
+      source.priceDelta,
+      source.choices.map(({ key, ...rest }) => rest)
+    );
     const next = [...groups];
     next.splice(index + 1, 0, copy);
     setGroups(next);
@@ -516,6 +561,8 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
     const copy = cloneGroup(
       found.group.label,
       found.group.kind,
+      found.group.placeholder,
+      found.group.priceDelta,
       found.group.choices.map((c) => ({
         label: c.label,
         swatchImage: c.swatchImage,
@@ -549,7 +596,9 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         .map((g) => ({
           label: g.label.trim(),
           kind: g.kind,
-          choices: g.choices
+          placeholder: g.placeholder,
+          priceDelta: g.priceDelta,
+          choices: g.kind === "text_input" ? [] : g.choices
             .filter((c) => c.label.trim())
             .map((c) => {
               // Power groups enforce their shape/material rule regardless of what's stored in local state.

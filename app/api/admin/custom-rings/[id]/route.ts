@@ -3,7 +3,7 @@ import { deleteCustomRing, getCustomRingById, replaceCustomRing } from "@/lib/cu
 import type { GroupInput, GroupKind, RingFieldsInput, StoneKind } from "@/lib/customRings";
 import { isAdminRequest } from "@/lib/admin-auth";
 
-const GROUP_KINDS: GroupKind[] = ["generic", "main_power", "secondary_power", "tertiary_power"];
+const GROUP_KINDS: GroupKind[] = ["generic", "dropdown", "text_input", "main_power", "secondary_power", "tertiary_power"];
 const STONE_KINDS: StoneKind[] = ["diamond", "gem"];
 
 function parseGroupKind(v: unknown): GroupKind {
@@ -49,24 +49,29 @@ export async function PUT(request: Request, { params }: Params) {
           label: String(group.label ?? "").trim() || "Group",
           sortOrder: gi,
           kind,
-          choices: Array.isArray(group.choices)
-            ? group.choices.map((c: unknown, ci: number) => {
-                const choice = c as Record<string, unknown>;
-                return {
-                  label: String(choice.label ?? "").trim() || "Option",
-                  swatchImage: String(choice.swatchImage ?? ""),
-                  overlayImage: choice.overlayImage ? String(choice.overlayImage) : null,
-                  overlayX: Number(choice.overlayX) || 50,
-                  overlayY: Number(choice.overlayY) || 50,
-                  overlayWidth: Number(choice.overlayWidth) || 20,
-                  baseImageOverride: choice.baseImageOverride ? String(choice.baseImageOverride) : null,
-                  priceDelta: Number(choice.priceDelta) || 0,
-                  sortOrder: ci,
-                  stoneKind: parseStoneKind(choice.stoneKind),
-                  shape: choice.shape ? String(choice.shape) : null,
-                };
-              })
-            : [],
+          placeholder: String(group.placeholder ?? ""),
+          priceDelta: Number(group.priceDelta) || 0,
+          choices:
+            kind === "text_input"
+              ? []
+              : Array.isArray(group.choices)
+              ? group.choices.map((c: unknown, ci: number) => {
+                  const choice = c as Record<string, unknown>;
+                  return {
+                    label: String(choice.label ?? "").trim() || "Option",
+                    swatchImage: String(choice.swatchImage ?? ""),
+                    overlayImage: choice.overlayImage ? String(choice.overlayImage) : null,
+                    overlayX: Number(choice.overlayX) || 50,
+                    overlayY: Number(choice.overlayY) || 50,
+                    overlayWidth: Number(choice.overlayWidth) || 20,
+                    baseImageOverride: choice.baseImageOverride ? String(choice.baseImageOverride) : null,
+                    priceDelta: Number(choice.priceDelta) || 0,
+                    sortOrder: ci,
+                    stoneKind: parseStoneKind(choice.stoneKind),
+                    shape: choice.shape ? String(choice.shape) : null,
+                  };
+                })
+              : [],
         };
       })
     : [];
