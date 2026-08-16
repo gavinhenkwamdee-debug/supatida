@@ -156,15 +156,26 @@ function GroupSection({
 export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetail }) {
   const [selections, setSelections] = useState<Record<number, number | undefined>>(() => {
     const initial: Record<number, number | undefined> = {};
-    for (const g of ring.groups) if (g.choices[0]) initial[g.id] = g.choices[0].id;
+    for (const g of ring.groups) {
+      if (g.kind === "main_power") {
+        // Default Main Power to diamond when the group offers one, regardless of choice order.
+        const preferred = g.choices.some((c) => c.stoneKind === "diamond") ? "diamond" : "gem";
+        const match = g.choices.find((c) => c.stoneKind === preferred);
+        initial[g.id] = match?.id ?? g.choices[0]?.id;
+      } else if (g.choices[0]) {
+        initial[g.id] = g.choices[0].id;
+      }
+    }
     return initial;
   });
   const [powerStoneKind, setPowerStoneKind] = useState<Record<number, StoneKind>>(() => {
     const initial: Record<number, StoneKind> = {};
     for (const g of ring.groups) {
       if (g.kind === "main_power") {
-        const first = g.choices.find((c) => c.stoneKind)?.stoneKind;
-        if (first) initial[g.id] = first;
+        const hasDiamond = g.choices.some((c) => c.stoneKind === "diamond");
+        const hasGem = g.choices.some((c) => c.stoneKind === "gem");
+        if (hasDiamond) initial[g.id] = "diamond";
+        else if (hasGem) initial[g.id] = "gem";
       }
     }
     return initial;
