@@ -11,7 +11,7 @@ const LINE_ICON = (
   </svg>
 );
 
-export default function MothersDayProductCard({ product, promoPrice }: { product: Product; promoPrice: number }) {
+export default function BirthdayProductCard({ product, promoPrice }: { product: Product; promoPrice: number }) {
   const fmt = (n: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
   const firstImage = product.images.find(Boolean) || "";
   const originalPrice = getOriginalPrice(product.id, product.price);
@@ -52,7 +52,7 @@ export default function MothersDayProductCard({ product, promoPrice }: { product
             className="absolute top-2 left-2 px-2 py-1 tracking-wider uppercase font-sans font-bold"
             style={{ fontSize: "10px", backgroundColor: "#0284C7", color: "white" }}
           >
-            -12% Mother&apos;s Day
+            -12% Birthday
           </span>
           {product.soldOut && (
             <div className="absolute inset-0 flex items-center justify-center"

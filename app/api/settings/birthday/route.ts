@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSetting, setSetting } from "@/lib/settings";
-import { DEFAULT_MOTHERSDAY, type MothersDayConfig } from "@/lib/mothersday-config";
+import { DEFAULT_BIRTHDAY, type BirthdayConfig } from "@/lib/birthday-config";
 
 export async function GET() {
-  const config = await getSetting<MothersDayConfig>("mothersday", DEFAULT_MOTHERSDAY);
+  const config = await getSetting<BirthdayConfig>("birthday", DEFAULT_BIRTHDAY);
   return NextResponse.json(config);
 }
 
 export async function PUT(request: Request) {
   const body = await request.json();
-  await setSetting("mothersday", body);
+  await setSetting("birthday", body);
   return NextResponse.json(body);
 }

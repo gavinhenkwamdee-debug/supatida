@@ -21,7 +21,7 @@ const LINE_ICON = (
   </svg>
 );
 
-export default function ProductCard({ product, priority = false, popular = false, mothersDayDiscount = false }: { product: Product; priority?: boolean; popular?: boolean; mothersDayDiscount?: boolean }) {
+export default function ProductCard({ product, priority = false, popular = false, birthdayDiscount = false }: { product: Product; priority?: boolean; popular?: boolean; birthdayDiscount?: boolean }) {
   const images = product.images.filter(Boolean);
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
@@ -31,7 +31,7 @@ export default function ProductCard({ product, priority = false, popular = false
   const priceFormatted = fmt(product.price);
   const originalPrice = getOriginalPrice(product.id, product.price);
   const discountPct = getDiscountPercent(product.id);
-  const mothersDayPrice = Math.round((product.price * 0.95) / 10) * 10;
+  const birthdayPrice = Math.round((product.price * 0.95) / 10) * 10;
 
   function openLine(e: React.MouseEvent) {
     if ((window as any).fbq) {
@@ -223,7 +223,7 @@ export default function ProductCard({ product, priority = false, popular = false
                 -{discountPct}%
               </span>
             </div>
-            {mothersDayDiscount ? (
+            {birthdayDiscount ? (
               <>
                 <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                   <span className="text-xs sm:text-sm font-sans line-through" style={{ color: "var(--muted)" }}>
@@ -234,7 +234,7 @@ export default function ProductCard({ product, priority = false, popular = false
                   </span>
                 </div>
                 <p className="text-sm sm:text-xl font-sans font-light tracking-wide mt-1" style={{ color: "#0284C7" }}>
-                  {fmt(mothersDayPrice)}
+                  {fmt(birthdayPrice)}
                 </p>
               </>
             ) : (

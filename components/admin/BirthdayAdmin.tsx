@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { MothersDayConfig } from "@/lib/mothersday-config";
+import type { BirthdayConfig } from "@/lib/birthday-config";
 import type { Product } from "@/lib/db";
 
 async function compressImage(file: File): Promise<File> {
@@ -30,7 +30,7 @@ async function compressImage(file: File): Promise<File> {
   });
 }
 
-export default function MothersDayAdmin() {
+export default function BirthdayAdmin() {
   const [enabled, setEnabled] = useState(false);
   const [bannerImage, setBannerImage] = useState("");
   const [productIds, setProductIds] = useState<number[]>([]);
@@ -43,9 +43,9 @@ export default function MothersDayAdmin() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch("/api/settings/mothersday")
+    fetch("/api/settings/birthday")
       .then((r) => r.json())
-      .then((d: MothersDayConfig) => {
+      .then((d: BirthdayConfig) => {
         setEnabled(d.enabled);
         setBannerImage(d.bannerImage);
         setProductIds(d.productIds || []);
@@ -59,7 +59,7 @@ export default function MothersDayAdmin() {
 
   async function saveConfig(next: { enabled: boolean; bannerImage: string; productIds: number[] }) {
     setSaving(true);
-    await fetch("/api/settings/mothersday", {
+    await fetch("/api/settings/birthday", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(next),
@@ -140,9 +140,9 @@ export default function MothersDayAdmin() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl tracking-wider" style={{ color: "var(--charcoal)" }}>Mother&apos;s Day Promotion</h1>
+          <h1 className="text-2xl tracking-wider" style={{ color: "var(--charcoal)" }}>Supatida Birthday Promotion</h1>
           <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
-            แท็บโปรโมชั่นวันแม่ พร้อม Hero Banner และรายการสินค้าลด 12%
+            แท็บโปรโมชั่นวันเกิด SUPATIDA พร้อม Hero Banner และรายการสินค้าลด 12%
           </p>
         </div>
         <a href="/admin" className="text-xs tracking-widest uppercase underline font-sans" style={{ color: "var(--muted)" }}>
@@ -154,9 +154,9 @@ export default function MothersDayAdmin() {
       <div className="bg-white p-6 mb-4" style={{ border: "1px solid var(--border)" }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>แสดงแท็บวันแม่</p>
+            <p className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>แสดงแท็บวันเกิด</p>
             <p className="text-xs font-sans mt-0.5" style={{ color: "var(--muted)" }}>
-              เปิด/ปิดแท็บ + หน้าโปรโมชั่นวันแม่บนหน้าเว็บ
+              เปิด/ปิดแท็บ + หน้าโปรโมชั่นวันเกิด SUPATIDA บนหน้าเว็บ
             </p>
           </div>
           <button
@@ -176,7 +176,7 @@ export default function MothersDayAdmin() {
       {/* Banner upload */}
       <div className="bg-white p-6 mb-4" style={{ border: "1px solid var(--border)" }}>
         <h2 className="text-xs tracking-widest uppercase mb-4 font-sans" style={{ color: "var(--muted)" }}>
-          Hero Banner วันแม่
+          Hero Banner วันเกิด
         </h2>
 
         {bannerImage && (

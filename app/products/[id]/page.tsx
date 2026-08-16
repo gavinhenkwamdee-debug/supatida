@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProductById } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
-import { DEFAULT_MOTHERSDAY, isMothersDayDiscountExcluded, type MothersDayConfig } from "@/lib/mothersday-config";
+import { DEFAULT_BIRTHDAY, isBirthdayDiscountExcluded, type BirthdayConfig } from "@/lib/birthday-config";
 import ProductDetailClient from "@/components/ProductDetailClient";
 
 export const dynamic = "force-dynamic";
@@ -54,8 +54,8 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProductById(Number(id));
   if (!product) notFound();
 
-  const mothersDay = await getSetting<MothersDayConfig>("mothersday", DEFAULT_MOTHERSDAY);
-  const mothersDayDiscount = mothersDay.enabled && !(mothersDay.productIds || []).includes(product.id) && !isMothersDayDiscountExcluded(product);
+  const birthday = await getSetting<BirthdayConfig>("birthday", DEFAULT_BIRTHDAY);
+  const birthdayDiscount = birthday.enabled && !(birthday.productIds || []).includes(product.id) && !isBirthdayDiscountExcluded(product);
 
   const priceFormatted = new Intl.NumberFormat("th-TH", {
     style: "currency", currency: "THB", maximumFractionDigits: 0,
@@ -95,7 +95,7 @@ export default async function ProductPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProductDetailClient product={product} mothersDayDiscount={mothersDayDiscount} />
+      <ProductDetailClient product={product} birthdayDiscount={birthdayDiscount} />
     </>
   );
 }

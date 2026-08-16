@@ -21,7 +21,7 @@ export default function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [reviewsEnabled, setReviewsEnabled] = useState(false);
-  const [mothersDayEnabled, setMothersDayEnabled] = useState(false);
+  const [birthdayEnabled, setBirthdayEnabled] = useState(false);
   const [crmEnabled, setCrmEnabled] = useState(false);
   const [googleReviewsConnected, setGoogleReviewsConnected] = useState(false);
 
@@ -30,9 +30,9 @@ export default function Header() {
       .then((r) => r.json())
       .then((d) => setReviewsEnabled(!!d.enabled))
       .catch(() => {});
-    fetch("/api/settings/mothersday")
+    fetch("/api/settings/birthday")
       .then((r) => r.json())
-      .then((d) => setMothersDayEnabled(!!d.enabled))
+      .then((d) => setBirthdayEnabled(!!d.enabled))
       .catch(() => {});
     fetch("/api/settings/crm-enabled")
       .then((r) => r.json())
@@ -105,10 +105,10 @@ export default function Header() {
         className="flex gap-1 px-4 py-2 overflow-x-auto scrollbar-hide"
       >
         <div className="flex gap-1 mx-auto">
-          {/* Mother's Day tab — before Super Sale */}
-          {mothersDayEnabled && (
+          {/* Supatida Birthday tab — before Super Sale */}
+          {birthdayEnabled && (
             <Link
-              href="/mothers-day"
+              href="/birthday"
               className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0 font-bold"
               style={{
                 color: "white",
@@ -116,7 +116,7 @@ export default function Header() {
                 borderBottom: "2px solid #0284C7",
               }}
             >
-              🌷 Mother&apos;s Day
+              🎂 Birthday
             </Link>
           )}
 
