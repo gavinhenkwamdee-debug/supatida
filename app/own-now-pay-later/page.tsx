@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { Noto_Sans_Thai } from "next/font/google";
 import { getAllProducts } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { DEFAULT_PAYLATER, type PayLaterConfig } from "@/lib/paylater-config";
 import PayLaterProductCard from "@/components/PayLaterProductCard";
 
 export const dynamic = "force-dynamic";
+
+const notoSansThai = Noto_Sans_Thai({ subsets: ["thai"], weight: ["500"] });
 
 export default async function OwnNowPayLaterPage() {
   const config = await getSetting<PayLaterConfig>("paylater", DEFAULT_PAYLATER);
@@ -43,10 +46,13 @@ export default async function OwnNowPayLaterPage() {
 
           <div className="text-center mb-10">
             <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#0284C7" }}>Own Now Pay Later</p>
-            <h2 className="text-2xl tracking-[0.1em]" style={{ color: "var(--charcoal)" }}>
-              ผ่อน 0% 3 เดือน ผ่าน Beam Payment ได้แล้ววันนี้ เฉพาะสินค้าที่ร่วมรายการ ตั้งแต่ 17 - 23 สิงหาคมเท่านั้น
+            <h2 className={`text-2xl tracking-normal ${notoSansThai.className}`} style={{ color: "var(--charcoal)" }}>
+              ผ่อน 0% 3 เดือน ผ่าน Beam ได้แล้ววันนี้
             </h2>
-            <p className="text-sm font-sans mt-3" style={{ color: "var(--muted)" }}>
+            <p className="text-sm font-sans mt-2" style={{ color: "var(--charcoal)" }}>
+              เฉพาะสินค้าที่ร่วมรายการ ตั้งแต่ 17 - 23 สิงหาคมเท่านั้น
+            </p>
+            <p className="text-sm font-sans mt-1" style={{ color: "var(--muted)" }}>
               โอกาสพิเศษที่ไม่ได้มีบ่อยๆ
             </p>
             <div className="mx-auto mt-4 w-16 h-px" style={{ backgroundColor: "#0284C7" }} />
