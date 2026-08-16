@@ -43,9 +43,11 @@ export default async function OwnNowPayLaterPage() {
 
           <div className="text-center mb-10">
             <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#0284C7" }}>Own Now Pay Later</p>
-            <h2 className="text-2xl tracking-[0.1em]" style={{ color: "var(--charcoal)" }}>รับของวันนี้ ผ่อนชำระได้ 3 เดือน</h2>
+            <h2 className="text-2xl tracking-[0.1em]" style={{ color: "var(--charcoal)" }}>
+              ผ่อน 0% 3 เดือน ผ่าน Beam Payment ได้แล้ววันนี้ เฉพาะสินค้าที่ร่วมรายการ ตั้งแต่ 17 - 23 สิงหาคมเท่านั้น
+            </h2>
             <p className="text-sm font-sans mt-3" style={{ color: "var(--muted)" }}>
-              สินค้าคัดสรรในแคมเปญนี้ แบ่งชำระได้ 3 เดือน
+              โอกาสพิเศษที่ไม่ได้มีบ่อยๆ
             </p>
             <div className="mx-auto mt-4 w-16 h-px" style={{ backgroundColor: "#0284C7" }} />
           </div>
