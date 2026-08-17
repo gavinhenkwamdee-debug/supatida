@@ -1,19 +1,30 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Noto_Sans_Thai } from "next/font/google";
 import { getAllProducts } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { DEFAULT_PAYLATER, type PayLaterConfig } from "@/lib/paylater-config";
+import { slugify } from "@/lib/slugify";
 import PayLaterProductCard from "@/components/PayLaterProductCard";
 
 export const dynamic = "force-dynamic";
 
 const notoSansThai = Noto_Sans_Thai({ subsets: ["thai"], weight: ["500"] });
 
-export default async function OwnNowPayLaterPage() {
+export default async function CampaignPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const saved = await getSetting<PayLaterConfig>("paylater", DEFAULT_PAYLATER);
   // Old saved configs predate the copy fields — fall back per-field rather
   // than trusting the whole object shape.
   const config = { ...DEFAULT_PAYLATER, ...saved };
+
+  // The URL follows the campaign name — if the name changed since this link
+  // was shared, send visitors to the current URL instead of a dead page.
+  const expectedSlug = slugify(config.campaignName);
+  if (config.enabled && slug !== expectedSlug) {
+    redirect(`/campaign/${expectedSlug}`);
+  }
+
   const allProducts = await getAllProducts();
   const productIds = config.productIds || [];
 

@@ -4,6 +4,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import SlidingBanner from "./SlidingBanner";
+import { slugify } from "@/lib/slugify";
 
 const CATEGORIES = ["All", "Rings", "Necklaces", "Earrings", "Bracelets", "Pendants"];
 
@@ -112,7 +113,7 @@ export default function Header() {
           {/* Promo campaign tab — before Super Sale, name is admin-editable */}
           {payLaterEnabled && (
             <Link
-              href="/own-now-pay-later"
+              href={`/campaign/${slugify(payLaterName)}`}
               className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0 font-bold"
               style={{
                 color: "white",
