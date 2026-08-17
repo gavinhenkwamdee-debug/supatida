@@ -16,7 +16,6 @@ export default function PayLaterProductCard({ product }: { product: Product }) {
   const firstImage = product.images.find(Boolean) || "";
   const originalPrice = getOriginalPrice(product.id, product.price);
   const originalDiscountPct = getDiscountPercent(product.id);
-  const monthlyInstallment = Math.ceil(product.price / 3 / 10) * 10;
 
   function handleLineClick() {
     if ((window as any).fbq) {
@@ -49,12 +48,6 @@ export default function PayLaterProductCard({ product }: { product: Product }) {
           >
             {product.category}
           </span>
-          <span
-            className="absolute top-2 left-2 px-2 py-1 tracking-wider uppercase font-sans font-bold"
-            style={{ fontSize: "10px", backgroundColor: "#0284C7", color: "white" }}
-          >
-            ผ่อน 3 เดือน
-          </span>
           {product.soldOut && (
             <div className="absolute inset-0 flex items-center justify-center"
               style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
@@ -83,9 +76,6 @@ export default function PayLaterProductCard({ product }: { product: Product }) {
               </span>
             </div>
             <p className="text-sm sm:text-xl font-sans font-light tracking-wide mt-1" style={{ color: "var(--charcoal)" }}>{fmt(product.price)}</p>
-            <p className="text-xs sm:text-sm font-sans mt-1" style={{ color: "#0284C7" }}>
-              ผ่อน 3 เดือน x <span className="font-bold">{fmt(monthlyInstallment)}</span>/เดือน
-            </p>
           </div>
         )}
 

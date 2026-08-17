@@ -21,7 +21,7 @@ const LINE_ICON = (
   </svg>
 );
 
-export default function ProductCard({ product, priority = false, popular = false, payLaterEligible = false }: { product: Product; priority?: boolean; popular?: boolean; payLaterEligible?: boolean }) {
+export default function ProductCard({ product, priority = false, popular = false }: { product: Product; priority?: boolean; popular?: boolean }) {
   const images = product.images.filter(Boolean);
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
@@ -31,7 +31,6 @@ export default function ProductCard({ product, priority = false, popular = false
   const priceFormatted = fmt(product.price);
   const originalPrice = getOriginalPrice(product.id, product.price);
   const discountPct = getDiscountPercent(product.id);
-  const monthlyInstallment = Math.ceil(product.price / 3 / 10) * 10;
 
   function openLine(e: React.MouseEvent) {
     if ((window as any).fbq) {
@@ -226,11 +225,6 @@ export default function ProductCard({ product, priority = false, popular = false
             <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "var(--gold)" }}>
               {priceFormatted}
             </p>
-            {payLaterEligible && (
-              <p className="text-xs sm:text-sm font-sans mt-1" style={{ color: "#0284C7" }}>
-                ผ่อน 3 เดือน x <span className="font-bold">{fmt(monthlyInstallment)}</span>/เดือน
-              </p>
-            )}
           </div>
         )}
 

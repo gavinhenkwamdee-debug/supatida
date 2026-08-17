@@ -63,7 +63,7 @@ function LineButton({ product }: { product: Product }) {
   );
 }
 
-export default function ProductDetailClient({ product, payLaterEligible = false }: { product: Product; payLaterEligible?: boolean }) {
+export default function ProductDetailClient({ product }: { product: Product }) {
   const [activeImg, setActiveImg] = useState(0);
   const images = product.images.filter(Boolean);
 
@@ -185,7 +185,6 @@ export default function ProductDetailClient({ product, payLaterEligible = false 
               const fmt = (n: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
               const originalPrice = getOriginalPrice(product.id, product.price);
               const discountPct = getDiscountPercent(product.id);
-              const monthlyInstallment = Math.ceil(product.price / 3 / 10) * 10;
               return (
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -193,11 +192,6 @@ export default function ProductDetailClient({ product, payLaterEligible = false 
                     <span className="text-xs font-sans font-bold px-2 py-0.5" style={{ backgroundColor: "#C0392B", color: "white" }}>-{discountPct}%</span>
                   </div>
                   <p className="text-3xl font-sans font-light" style={{ color: "var(--gold)" }}>{fmt(product.price)}</p>
-                  {payLaterEligible && (
-                    <p className="text-sm font-sans mt-1" style={{ color: "#0284C7" }}>
-                      💳 ผ่อน 3 เดือน x <span className="font-bold">{fmt(monthlyInstallment)}</span>/เดือน
-                    </p>
-                  )}
                 </div>
               );
             })()}
