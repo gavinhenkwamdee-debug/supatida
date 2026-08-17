@@ -30,15 +30,20 @@ async function compressImage(file: File): Promise<File> {
   });
 }
 
+type CopyFields = { campaignName: string; headline: string; subtext: string; tagline: string };
+
 export default function PayLaterAdmin() {
   const [enabled, setEnabled] = useState(false);
   const [bannerImage, setBannerImage] = useState("");
   const [productIds, setProductIds] = useState<number[]>([]);
+  const [copy, setCopy] = useState<CopyFields>({ campaignName: "", headline: "", subtext: "", tagline: "" });
+  const [copyDraft, setCopyDraft] = useState<CopyFields>({ campaignName: "", headline: "", subtext: "", tagline: "" });
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [copySaved, setCopySaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +54,14 @@ export default function PayLaterAdmin() {
         setEnabled(d.enabled);
         setBannerImage(d.bannerImage);
         setProductIds(d.productIds || []);
+        const loadedCopy = {
+          campaignName: d.campaignName || "",
+          headline: d.headline || "",
+          subtext: d.subtext || "",
+          tagline: d.tagline || "",
+        };
+        setCopy(loadedCopy);
+        setCopyDraft(loadedCopy);
         setLoading(false);
       });
     fetch("/api/products?category=All")
@@ -57,15 +70,28 @@ export default function PayLaterAdmin() {
       .catch(() => {});
   }, []);
 
-  async function saveConfig(next: { enabled: boolean; bannerImage: string; productIds: number[] }) {
+  async function saveConfig(next: { enabled: boolean; bannerImage: string; productIds: number[] } & Partial<CopyFields>) {
     setSaving(true);
     await fetch("/api/settings/paylater", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(next),
+      body: JSON.stringify({ ...copy, ...next }),
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+    setSaving(false);
+  }
+
+  async function saveCopy() {
+    setCopy(copyDraft);
+    setSaving(true);
+    await fetch("/api/settings/paylater", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled, bannerImage, productIds, ...copyDraft }),
+    });
+    setCopySaved(true);
+    setTimeout(() => setCopySaved(false), 2000);
     setSaving(false);
   }
 
@@ -132,6 +158,10 @@ export default function PayLaterAdmin() {
   const THB = (n: number) =>
     new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
 
+  const copyDirty = JSON.stringify(copy) !== JSON.stringify(copyDraft);
+  const inputClass = "w-full px-3 py-2 text-sm font-sans outline-none";
+  const inputStyle = { border: "1px solid var(--border)", color: "var(--charcoal)" };
+
   if (loading) return (
     <div className="p-8 text-sm font-sans" style={{ color: "var(--muted)" }}>Loading…</div>
   );
@@ -140,9 +170,10 @@ export default function PayLaterAdmin() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl tracking-wider" style={{ color: "var(--charcoal)" }}>Own Now Pay Later</h1>
+          <h1 className="text-2xl tracking-wider" style={{ color: "var(--charcoal)" }}>แคมเปญโปรโมชั่น</h1>
           <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
-            แท็บโปรโมชั่นผ่อนชำระ 3 เดือน พร้อม Hero Banner และรายการสินค้าที่ร่วมรายการ
+            ใช้จัดโปรโมชั่นแบบมีกำหนดช่วงเวลา พร้อมสินค้าที่เลือกเอง — เปลี่ยนชื่อและข้อความได้เองทุกครั้งโดยไม่ต้องแก้โค้ด
+            {copy.campaignName && <> · กำลังใช้งาน: <strong style={{ color: "var(--charcoal)" }}>{copy.campaignName}</strong></>}
           </p>
         </div>
         <a href="/admin" className="text-xs tracking-widest uppercase underline font-sans" style={{ color: "var(--muted)" }}>
@@ -154,9 +185,9 @@ export default function PayLaterAdmin() {
       <div className="bg-white p-6 mb-4" style={{ border: "1px solid var(--border)" }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>แสดงแท็บ Own Now Pay Later</p>
+            <p className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>แสดงแท็บแคมเปญ</p>
             <p className="text-xs font-sans mt-0.5" style={{ color: "var(--muted)" }}>
-              เปิด/ปิดแท็บ + หน้าโปรโมชั่น Own Now Pay Later บนหน้าเว็บ
+              เปิด/ปิดแท็บ + หน้าโปรโมชั่นบนหน้าเว็บ
             </p>
           </div>
           <button
@@ -173,10 +204,77 @@ export default function PayLaterAdmin() {
         </div>
       </div>
 
+      {/* Copy / text */}
+      <div className="bg-white p-6 mb-4" style={{ border: "1px solid var(--border)" }}>
+        <h2 className="text-xs tracking-widest uppercase mb-1 font-sans" style={{ color: "var(--muted)" }}>
+          ชื่อแคมเปญและข้อความ
+        </h2>
+        <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
+          แสดงบนแท็บเมนูและหน้าโปรโมชั่น
+        </p>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>ชื่อแคมเปญ (โชว์บนแท็บเมนู + หัวหน้าโปรโมชั่น)</label>
+            <input
+              value={copyDraft.campaignName}
+              onChange={(e) => setCopyDraft({ ...copyDraft, campaignName: e.target.value })}
+              placeholder="เช่น Own Now Pay Later, Flash Sale, New Year Sale"
+              className={inputClass}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>หัวข้อหลัก (ตัวใหญ่สุด)</label>
+            <textarea
+              value={copyDraft.headline}
+              onChange={(e) => setCopyDraft({ ...copyDraft, headline: e.target.value })}
+              placeholder="เช่น ผ่อน 0% 3 เดือน ผ่าน Beam ได้แล้ววันนี้"
+              rows={2}
+              className={inputClass}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>บรรทัดเงื่อนไข (เช่น ช่วงวันที่, สินค้าที่ร่วมรายการ)</label>
+            <input
+              value={copyDraft.subtext}
+              onChange={(e) => setCopyDraft({ ...copyDraft, subtext: e.target.value })}
+              placeholder="เช่น เฉพาะสินค้าที่ร่วมรายการ ตั้งแต่ 17 - 23 สิงหาคมเท่านั้น"
+              className={inputClass}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>บรรทัดเล็ก (ตัวจาง ด้านล่างสุด)</label>
+            <input
+              value={copyDraft.tagline}
+              onChange={(e) => setCopyDraft({ ...copyDraft, tagline: e.target.value })}
+              placeholder="เช่น โอกาสพิเศษที่ไม่ได้มีบ่อยๆ"
+              className={inputClass}
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 mt-4">
+          <button
+            type="button"
+            onClick={saveCopy}
+            disabled={saving || !copyDirty}
+            className="px-5 py-2.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80 disabled:opacity-50"
+            style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
+          >
+            {saving ? "กำลังบันทึก…" : "บันทึกข้อความ"}
+          </button>
+          {copySaved && <span className="text-xs font-sans" style={{ color: "#0284C7" }}>บันทึกแล้ว ✓</span>}
+        </div>
+      </div>
+
       {/* Banner upload */}
       <div className="bg-white p-6 mb-4" style={{ border: "1px solid var(--border)" }}>
         <h2 className="text-xs tracking-widest uppercase mb-4 font-sans" style={{ color: "var(--muted)" }}>
-          Hero Banner Own Now Pay Later
+          Hero Banner
         </h2>
 
         {bannerImage && (
@@ -207,7 +305,7 @@ export default function PayLaterAdmin() {
           สินค้าที่ร่วมโปรโมชั่น ({selectedProducts.length})
         </h2>
         <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
-          ผ่อนชำระได้ 3 เดือน ทุกชิ้นที่เลือกไว้ (ราคาปกติ ไม่ใช่ส่วนลด) · {saved ? "✓ บันทึกแล้ว" : "บันทึกอัตโนมัติเมื่อเพิ่ม/ลบ"}
+          {saved ? "✓ บันทึกแล้ว" : "บันทึกอัตโนมัติเมื่อเพิ่ม/ลบ"}
         </p>
 
         <div className="relative mb-3">

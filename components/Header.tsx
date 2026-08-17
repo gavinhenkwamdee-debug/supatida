@@ -22,6 +22,7 @@ export default function Header() {
   const searchParams = useSearchParams();
   const [reviewsEnabled, setReviewsEnabled] = useState(false);
   const [payLaterEnabled, setPayLaterEnabled] = useState(false);
+  const [payLaterName, setPayLaterName] = useState("Pay Later");
   const [crmEnabled, setCrmEnabled] = useState(false);
   const [googleReviewsConnected, setGoogleReviewsConnected] = useState(false);
 
@@ -32,7 +33,10 @@ export default function Header() {
       .catch(() => {});
     fetch("/api/settings/paylater")
       .then((r) => r.json())
-      .then((d) => setPayLaterEnabled(!!d.enabled))
+      .then((d) => {
+        setPayLaterEnabled(!!d.enabled);
+        if (d.campaignName) setPayLaterName(d.campaignName);
+      })
       .catch(() => {});
     fetch("/api/settings/crm-enabled")
       .then((r) => r.json())
@@ -105,7 +109,7 @@ export default function Header() {
         className="flex gap-1 px-4 py-2 overflow-x-auto scrollbar-hide"
       >
         <div className="flex gap-1 mx-auto">
-          {/* Own Now Pay Later tab — before Super Sale */}
+          {/* Promo campaign tab — before Super Sale, name is admin-editable */}
           {payLaterEnabled && (
             <Link
               href="/own-now-pay-later"
@@ -116,7 +120,7 @@ export default function Header() {
                 borderBottom: "2px solid #0284C7",
               }}
             >
-              💳 Pay Later
+              💳 {payLaterName}
             </Link>
           )}
 

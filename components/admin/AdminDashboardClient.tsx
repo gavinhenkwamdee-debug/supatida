@@ -325,7 +325,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
           <Link href="/admin/paylater"
             className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
             style={{ backgroundColor: "#0284C7", color: "white" }}>
-            💳 Pay Later
+            💳 Campaign
           </Link>
           <Link href="/admin/hero-banner"
             className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"

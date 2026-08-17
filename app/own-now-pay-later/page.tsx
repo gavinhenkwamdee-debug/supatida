@@ -10,7 +10,10 @@ export const dynamic = "force-dynamic";
 const notoSansThai = Noto_Sans_Thai({ subsets: ["thai"], weight: ["500"] });
 
 export default async function OwnNowPayLaterPage() {
-  const config = await getSetting<PayLaterConfig>("paylater", DEFAULT_PAYLATER);
+  const saved = await getSetting<PayLaterConfig>("paylater", DEFAULT_PAYLATER);
+  // Old saved configs predate the copy fields — fall back per-field rather
+  // than trusting the whole object shape.
+  const config = { ...DEFAULT_PAYLATER, ...saved };
   const allProducts = await getAllProducts();
   const productIds = config.productIds || [];
 
@@ -40,21 +43,25 @@ export default async function OwnNowPayLaterPage() {
           {config.bannerImage && (
             <div className="relative w-full mb-8 overflow-hidden" style={{ aspectRatio: "3/1", backgroundColor: "var(--img-bg)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={config.bannerImage} alt="Own Now Pay Later" className="w-full h-full object-cover" />
+              <img src={config.bannerImage} alt={config.campaignName} className="w-full h-full object-cover" />
             </div>
           )}
 
           <div className="text-center mb-10">
-            <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#0284C7" }}>Own Now Pay Later</p>
+            <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#0284C7" }}>{config.campaignName}</p>
             <h2 className={`text-2xl tracking-normal ${notoSansThai.className}`} style={{ color: "var(--charcoal)" }}>
-              ผ่อน 0% 3 เดือน ผ่าน Beam ได้แล้ววันนี้
+              {config.headline}
             </h2>
-            <p className="text-sm font-sans mt-2" style={{ color: "var(--charcoal)" }}>
-              เฉพาะสินค้าที่ร่วมรายการ ตั้งแต่ 17 - 23 สิงหาคมเท่านั้น
-            </p>
-            <p className="text-sm font-sans mt-1" style={{ color: "var(--muted)" }}>
-              โอกาสพิเศษที่ไม่ได้มีบ่อยๆ
-            </p>
+            {config.subtext && (
+              <p className="text-sm font-sans mt-2" style={{ color: "var(--charcoal)" }}>
+                {config.subtext}
+              </p>
+            )}
+            {config.tagline && (
+              <p className="text-sm font-sans mt-1" style={{ color: "var(--muted)" }}>
+                {config.tagline}
+              </p>
+            )}
             <div className="mx-auto mt-4 w-16 h-px" style={{ backgroundColor: "#0284C7" }} />
           </div>
 
