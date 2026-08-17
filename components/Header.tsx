@@ -121,7 +121,7 @@ export default function Header() {
                 borderBottom: "2px solid #0284C7",
               }}
             >
-              💳 {payLaterName}
+              ⭐ {payLaterName}
             </Link>
           )}
 
