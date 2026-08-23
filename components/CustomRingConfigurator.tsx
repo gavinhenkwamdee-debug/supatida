@@ -49,7 +49,7 @@ function GroupSection({
     return (
       <div className="py-5" style={{ borderBottom: "1px solid var(--border)" }}>
         <div className="flex items-baseline justify-between gap-3 mb-3">
-          <p className="text-xs tracking-[0.25em] uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
+          <p className="text-xs tracking-wide uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
           <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>{textValue?.trim() ? textValue : "None"}</p>
         </div>
         <input
@@ -71,7 +71,7 @@ function GroupSection({
   return (
     <div className="py-5" style={{ borderBottom: "1px solid var(--border)" }}>
       <div className="flex items-baseline justify-between gap-3 mb-3">
-        <p className="text-xs tracking-[0.25em] uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
+        <p className="text-xs tracking-wide uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
         <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>
           {selectedChoice ? choiceLabel(group, selectedChoice) : "None"}
         </p>
