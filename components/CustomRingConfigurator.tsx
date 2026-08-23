@@ -30,10 +30,31 @@ const THB = (n: number) =>
 
 const STONE_KIND_LABEL: Record<StoneKind, string> = { diamond: "เพชร", gem: "พลอย" };
 
-// Diamond choices in a Main Power group are shape variants — show the shape name
-// (Pear/Emerald/…) rather than whatever internal label the admin typed on the choice.
+function isMeaningGroup(group: CustomRingGroup) {
+  return POWER_KIND_TO_MEANING_CATEGORY[group.kind] !== undefined;
+}
+
+// Meaning groups match choices to a Meaning by POSITION (1st choice = 1st
+// meaning in that category, etc.), not by the choice's typed label — the
+// admin can freely rename a choice's Thai text from the admin panel (e.g.
+// "ความสัมพันธ์" -> "ความรัก") without breaking the gemstone-name display or
+// the generated summary sentence, as long as the 6 choices stay in the same
+// order as lib/gemstoneMeanings.ts. Reordering/adding/removing choices will
+// throw the mapping off.
+function meaningForChoice(group: CustomRingGroup, choice: CustomRingChoice) {
+  const category = POWER_KIND_TO_MEANING_CATEGORY[group.kind];
+  if (!category) return undefined;
+  const index = group.choices.findIndex((c) => c.id === choice.id);
+  return MEANINGS_BY_CATEGORY[category][index];
+}
+
+// Diamond choices in a plain (non-meaning) Main Power group are shape
+// variants — show the shape name (Pear/Emerald/…) instead of whatever
+// internal label the admin typed. Meaning groups skip this: the admin's
+// typed label is always what customers see there, and shape-picking is
+// handled separately by the dedicated diamond-shape sub-picker.
 function choiceLabel(group: CustomRingGroup, choice: CustomRingChoice) {
-  if (group.kind === "main_power" && choice.stoneKind === "diamond" && choice.shape) {
+  if (!isMeaningGroup(group) && group.kind === "main_power" && choice.stoneKind === "diamond" && choice.shape) {
     return DIAMOND_SHAPE_LABELS[choice.shape] ?? choice.label;
   }
   return choice.label;
@@ -43,21 +64,21 @@ function choiceLabel(group: CustomRingGroup, choice: CustomRingChoice) {
 // room — the full meaning phrase (e.g. "ความก้าวหน้าในงาน") wraps and runs
 // off the edge there, so show the shorter gemstone name instead.
 function selectedIndicatorLabel(group: CustomRingGroup, choice: CustomRingChoice) {
-  const category = POWER_KIND_TO_MEANING_CATEGORY[group.kind];
-  const meaning = category && MEANINGS_BY_CATEGORY[category].find((m) => m.labelTh === choice.label);
+  const meaning = meaningForChoice(group, choice);
   return meaning ? meaning.gemstone : choiceLabel(group, choice);
 }
 
 const THAI_CHARS = /[฀-๿]/;
+const LABEL_SEPARATOR = /\s[-—–]\s/;
 
 // Wide letter-spacing looks right on the English part of a group label
 // ("YOUR WISH") but wraps Thai text ("สิ่งที่อยากให้เกิดขึ้น") onto an
-// extra line — split at the em dash so only the English side gets it.
+// extra line — split at the dash (-, – or —) so only the English side gets it.
 function GroupLabelText({ label }: { label: string }) {
-  const sepIndex = label.indexOf(" — ");
-  if (sepIndex !== -1) {
-    const eng = label.slice(0, sepIndex);
-    const rest = label.slice(sepIndex);
+  const match = label.match(LABEL_SEPARATOR);
+  if (match?.index !== undefined) {
+    const eng = label.slice(0, match.index);
+    const rest = label.slice(match.index);
     return (
       <>
         <span className="tracking-[0.25em] uppercase">{eng}</span>
@@ -86,7 +107,10 @@ function GroupSection({
   textValue?: string;
   onTextChange?: (v: string) => void;
 }) {
-  const isMainPower = group.kind === "main_power";
+  // The diamond/gem toggle only makes sense for a plain "pick your stone"
+  // group — a meaning group always shows all 6 meanings together regardless
+  // of which ones happen to be flagged diamond vs gem internally.
+  const isMainPower = group.kind === "main_power" && !isMeaningGroup(group);
   const availableKinds = useMemo(
     () => (isMainPower ? Array.from(new Set(group.choices.map((c) => c.stoneKind).filter((k): k is StoneKind => Boolean(k)))) : []),
     [isMainPower, group.choices]
@@ -218,7 +242,7 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
   const [selections, setSelections] = useState<Record<number, number | undefined>>(() => {
     const initial: Record<number, number | undefined> = {};
     for (const g of ring.groups) {
-      if (g.kind === "main_power") {
+      if (g.kind === "main_power" && !isMeaningGroup(g)) {
         // Default Main Power to diamond when the group offers one, regardless of choice order.
         const preferred = g.choices.some((c) => c.stoneKind === "diamond") ? "diamond" : "gem";
         const match = g.choices.find((c) => c.stoneKind === preferred);
@@ -247,14 +271,15 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
   const groups = ring.groups;
 
   // Read the meaning selection straight off whichever choice is picked in
-  // each power group, matching by its Thai label — no separate state needed.
+  // each power group (matched by position — see meaningForChoice) — no
+  // separate state needed.
   const meaningSelection = useMemo(() => {
     const sel: MeaningSelection = {};
     for (const g of groups) {
       const category = POWER_KIND_TO_MEANING_CATEGORY[g.kind];
       if (!category) continue;
       const choice = g.choices.find((c) => c.id === selections[g.id]);
-      const meaning = choice && MEANINGS_BY_CATEGORY[category].find((m) => m.labelTh === choice.label);
+      const meaning = choice && meaningForChoice(g, choice);
       if (meaning) sel[category] = meaning.key;
     }
     return sel;
@@ -265,10 +290,8 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
   // gemstone is literally "Diamond" — that's the one case where the
   // customer also gets to pick which diamond shape they want.
   function isDiamondMeaning(g: CustomRingGroup): boolean {
-    const category = POWER_KIND_TO_MEANING_CATEGORY[g.kind];
-    if (!category) return false;
     const choice = g.choices.find((c) => c.id === selections[g.id]);
-    const meaning = choice && MEANINGS_BY_CATEGORY[category].find((m) => m.labelTh === choice.label);
+    const meaning = choice && meaningForChoice(g, choice);
     return meaning?.gemstone === "Diamond";
   }
 

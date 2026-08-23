@@ -251,11 +251,9 @@ function ChoiceEditor({
           ) : (
             <span className="text-xs font-sans italic" style={{ color: "var(--muted)" }}>ทรงกลมเท่านั้น</span>
           )}
-          {(choice.stoneKind ?? "diamond") === "diamond" && (
-            <span className="w-full text-xs font-sans italic" style={{ color: "var(--muted)" }}>
-              * ลูกค้าจะเห็นตัวเลือกนี้เป็นชื่อทรง ({DIAMOND_SHAPE_LABELS[choice.shape ?? "pear"]}) ไม่ใช่ชื่อที่พิมพ์ด้านล่าง — ชื่อด้านล่างไว้ใช้จำภายในเท่านั้น
-            </span>
-          )}
+          <span className="w-full text-xs font-sans italic" style={{ color: "var(--muted)" }}>
+            * ลูกค้าจะเห็น <strong>ชื่อที่พิมพ์ด้านล่าง</strong> เสมอ ไม่ใช่ชื่อทรง — ถ้าอยากให้ลูกค้าเลือกทรงเพชรเอง ใช้ตัวเลือก &quot;ความสำเร็จ&quot; ใน YOUR WISH ซึ่งมีตัวเลือกทรงแยกให้ที่หน้าเว็บอัตโนมัติอยู่แล้ว
+          </span>
         </div>
       )}
       {groupKind === "secondary_power" && (
@@ -437,6 +435,13 @@ function GroupEditor({
           ลบหมวด
         </button>
       </div>
+
+      {(group.kind === "main_power" || group.kind === "secondary_power" || group.kind === "tertiary_power") && (
+        <p className="text-xs font-sans italic mb-3 px-1" style={{ color: "var(--gold-dark)" }}>
+          * หมวด YOUR WISH / STRENGTH / BALANCE จับคู่ตัวเลือกกับความหมายตาม<strong>ลำดับ</strong> (ตัวที่ 1, 2, 3…) ไม่ใช่ชื่อที่พิมพ์ —
+          แก้ชื่อได้อิสระ แต่ห้ามสลับลำดับ/เพิ่ม/ลบตัวเลือก ต้องมี 6 ตัวเลือกเรียงลำดับเดิมเสมอ
+        </p>
+      )}
 
       {group.kind === "text_input" ? (
         <div className="p-3" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
