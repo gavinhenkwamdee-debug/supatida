@@ -4,6 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { DIAMOND_SHAPE_LABELS } from "@/lib/ringShapes";
 import type { CustomRingChoice, CustomRingDetail, CustomRingGroup, StoneKind } from "@/lib/customRings";
+import {
+  MEANINGS_BY_CATEGORY,
+  CATEGORY_LABEL,
+  buildMeaningSummary,
+  type MeaningCategory,
+  type MeaningSelection,
+} from "@/lib/gemstoneMeanings";
 
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
@@ -153,6 +160,85 @@ function GroupSection({
   );
 }
 
+const MEANING_CATEGORIES: MeaningCategory[] = ["wish", "strength", "balance"];
+
+// Symbolic gemstone-meaning picker — separate from the ring-building groups
+// above (no price/photo effect), so it gets its own small self-contained UI.
+function MeaningSection({
+  selection,
+  onToggle,
+}: {
+  selection: MeaningSelection;
+  onToggle: (category: MeaningCategory, key: string) => void;
+}) {
+  const summary = useMemo(() => buildMeaningSummary(selection), [selection]);
+
+  return (
+    <div className="py-5" style={{ borderTop: "1px solid var(--border)" }}>
+      <p className="text-xs tracking-[0.25em] uppercase font-sans mb-1" style={{ color: "var(--muted)" }}>
+        ความหมายของคุณ
+      </p>
+      <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
+        เลือกได้ 1–3 หมวด เพื่อสร้างความหมายเฉพาะตัวให้กับเครื่องประดับชิ้นนี้
+      </p>
+
+      {MEANING_CATEGORIES.map((category) => (
+        <div key={category} className="mb-5">
+          <p className="text-xs tracking-[0.15em] uppercase font-sans mb-2" style={{ color: "var(--charcoal)" }}>
+            {CATEGORY_LABEL[category]}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {MEANINGS_BY_CATEGORY[category].map((m) => {
+              const isSelected = selection[category] === m.key;
+              return (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => onToggle(category, m.key)}
+                  title={`${m.labelTh} — ${m.gemstone}`}
+                  className="flex flex-col items-center gap-1.5"
+                  style={{ width: 56 }}
+                >
+                  <span
+                    className="rounded-full flex-shrink-0 transition-shadow"
+                    style={{
+                      width: 36,
+                      height: 36,
+                      backgroundColor: m.swatchColor,
+                      border: isSelected ? "2px solid var(--charcoal)" : "1px solid var(--border)",
+                      boxShadow: isSelected ? "0 0 0 2px white inset" : undefined,
+                    }}
+                  />
+                  <span
+                    className="text-[10px] font-sans text-center leading-tight"
+                    style={{ color: isSelected ? "var(--charcoal)" : "var(--muted)" }}
+                  >
+                    {m.labelTh}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {summary && (
+        <div className="mt-2 p-4" style={{ backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
+          <p className="text-xs tracking-[0.2em] uppercase font-sans mb-2" style={{ color: "var(--gold)" }}>
+            สรุปความหมายของคุณ
+          </p>
+          <p className="text-sm font-sans leading-relaxed mb-3" style={{ color: "var(--charcoal)" }}>
+            {summary.generatedSummary}
+          </p>
+          <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>
+            อัญมณี: {summary.selectedGemstones.join(" · ")}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetail }) {
   const [selections, setSelections] = useState<Record<number, number | undefined>>(() => {
     const initial: Record<number, number | undefined> = {};
@@ -181,8 +267,14 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     return initial;
   });
   const [textValues, setTextValues] = useState<Record<number, string>>({});
+  const [meaningSelection, setMeaningSelection] = useState<MeaningSelection>({});
 
   const groups = ring.groups;
+  const meaningSummary = useMemo(() => buildMeaningSummary(meaningSelection), [meaningSelection]);
+
+  function toggleMeaning(category: MeaningCategory, key: string) {
+    setMeaningSelection((prev) => (prev[category] === key ? { ...prev, [category]: undefined } : { ...prev, [category]: key }));
+  }
 
   const selectedChoices = useMemo(
     () =>
@@ -259,6 +351,8 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
               />
             ))}
           </div>
+
+          <MeaningSection selection={meaningSelection} onToggle={toggleMeaning} />
         </aside>
 
         {/* Image + purchase action */}
@@ -287,6 +381,17 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
               ) : null
             )}
           </div>
+
+          {meaningSummary && (
+            <div className="w-full max-w-xs mb-6 p-4 text-center" style={{ backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
+              <p className="text-xs tracking-[0.2em] uppercase font-sans mb-2" style={{ color: "var(--gold)" }}>
+                ความหมายที่คุณเลือก
+              </p>
+              <p className="text-sm font-sans leading-relaxed" style={{ color: "var(--charcoal)" }}>
+                {meaningSummary.generatedSummary}
+              </p>
+            </div>
+          )}
 
           <a
             href="https://lin.ee/U9D2iyG"
