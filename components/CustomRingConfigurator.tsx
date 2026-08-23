@@ -35,6 +35,15 @@ function choiceLabel(group: CustomRingGroup, choice: CustomRingChoice) {
   return choice.label;
 }
 
+// The "selected: X" indicator next to a meaning group's title has little
+// room — the full meaning phrase (e.g. "ความก้าวหน้าในงาน") wraps and runs
+// off the edge there, so show the shorter gemstone name instead.
+function selectedIndicatorLabel(group: CustomRingGroup, choice: CustomRingChoice) {
+  const category = POWER_KIND_TO_MEANING_CATEGORY[group.kind];
+  const meaning = category && MEANINGS_BY_CATEGORY[category].find((m) => m.labelTh === choice.label);
+  return meaning ? meaning.gemstone : choiceLabel(group, choice);
+}
+
 function GroupSection({
   group,
   selectedId,
@@ -89,7 +98,7 @@ function GroupSection({
       <div className="flex items-baseline justify-between gap-3 mb-3">
         <p className="text-xs tracking-[0.25em] uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
         <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>
-          {selectedChoice ? choiceLabel(group, selectedChoice) : "None"}
+          {selectedChoice ? selectedIndicatorLabel(group, selectedChoice) : "None"}
         </p>
       </div>
 
@@ -125,23 +134,34 @@ function GroupSection({
           ))}
         </select>
       ) : allHaveImages ? (
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-x-5 gap-y-3">
           {visibleChoices.map((c) => (
             <button
               key={c.id}
               type="button"
               onClick={() => onToggle(c.id)}
               title={choiceLabel(group, c)}
-              className="rounded-full overflow-hidden flex-shrink-0 transition-shadow"
-              style={{
-                width: 44,
-                height: 44,
-                border: selectedId === c.id ? "2px solid var(--charcoal)" : "1px solid var(--border)",
-                backgroundColor: "var(--img-bg)",
-              }}
+              className="flex flex-col items-center gap-1.5"
+              style={{ width: 56 }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={c.swatchImage} alt={choiceLabel(group, c)} className="w-full h-full object-cover" />
+              <span
+                className="rounded-full overflow-hidden flex-shrink-0 transition-shadow"
+                style={{
+                  width: 44,
+                  height: 44,
+                  border: selectedId === c.id ? "2px solid #344EAD" : "1px solid var(--border)",
+                  backgroundColor: "var(--img-bg)",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={c.swatchImage} alt={choiceLabel(group, c)} className="w-full h-full object-cover" />
+              </span>
+              <span
+                className="text-[10px] font-sans text-center leading-tight"
+                style={{ color: selectedId === c.id ? "#344EAD" : "var(--muted)" }}
+              >
+                {choiceLabel(group, c)}
+              </span>
             </button>
           ))}
         </div>
