@@ -200,7 +200,7 @@ function MeaningSection({
                   style={{ width: 56 }}
                 >
                   <span
-                    className="rounded-full flex-shrink-0 transition-shadow"
+                    className="rounded-full overflow-hidden flex-shrink-0 transition-shadow"
                     style={{
                       width: 36,
                       height: 36,
@@ -208,7 +208,10 @@ function MeaningSection({
                       border: isSelected ? "2px solid var(--charcoal)" : "1px solid var(--border)",
                       boxShadow: isSelected ? "0 0 0 2px white inset" : undefined,
                     }}
-                  />
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.swatchImage} alt={m.gemstone} className="w-full h-full object-cover" />
+                  </span>
                   <span
                     className="text-[10px] font-sans text-center leading-tight"
                     style={{ color: isSelected ? "var(--charcoal)" : "var(--muted)" }}
