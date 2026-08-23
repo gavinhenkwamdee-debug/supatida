@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag } from "next/cache";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -103,9 +103,20 @@ export const getAllProducts = unstable_cache(_getAllProducts, ["all-products"], 
   tags: ["products"],
 });
 
-export async function getProductById(id: number): Promise<Product | undefined> {
+async function _getProductById(id: number): Promise<Product | undefined> {
   const rows = await sql`SELECT * FROM products WHERE id = ${id}`;
   return rows[0] ? toProduct(rows[0]) : undefined;
+}
+
+// Product detail pages are force-dynamic and get hit by every visitor and
+// crawler — cache the read for 60s (same window as getAllProducts) instead
+// of hitting Postgres on every single page view.
+export async function getProductById(id: number): Promise<Product | undefined> {
+  const cached = unstable_cache(() => _getProductById(id), ["product", String(id)], {
+    revalidate: 60,
+    tags: ["products", `product-${id}`],
+  });
+  return cached();
 }
 
 export async function createProduct(
@@ -127,6 +138,7 @@ export async function createProduct(
     )
     RETURNING *
   `;
+  revalidateTag("products", { expire: 0 });
   return toProduct(rows[0]);
 }
 
@@ -154,11 +166,15 @@ export async function updateProduct(
   if ("badge" in data) {
     await sql`UPDATE products SET badge = ${data.badge} WHERE id = ${id}`;
   }
+  revalidateTag("products", { expire: 0 });
+  revalidateTag(`product-${id}`, { expire: 0 });
   return rows[0] ? toProduct(rows[0]) : null;
 }
 
 export async function deleteProduct(id: number): Promise<boolean> {
   const rows = await sql`DELETE FROM products WHERE id = ${id} RETURNING id`;
+  revalidateTag("products", { expire: 0 });
+  revalidateTag(`product-${id}`, { expire: 0 });
   return rows.length > 0;
 }
 
