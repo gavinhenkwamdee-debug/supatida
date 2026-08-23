@@ -48,6 +48,27 @@ function selectedIndicatorLabel(group: CustomRingGroup, choice: CustomRingChoice
   return meaning ? meaning.gemstone : choiceLabel(group, choice);
 }
 
+const THAI_CHARS = /[฀-๿]/;
+
+// Wide letter-spacing looks right on the English part of a group label
+// ("YOUR WISH") but wraps Thai text ("สิ่งที่อยากให้เกิดขึ้น") onto an
+// extra line — split at the em dash so only the English side gets it.
+function GroupLabelText({ label }: { label: string }) {
+  const sepIndex = label.indexOf(" — ");
+  if (sepIndex !== -1) {
+    const eng = label.slice(0, sepIndex);
+    const rest = label.slice(sepIndex);
+    return (
+      <>
+        <span className="tracking-[0.25em] uppercase">{eng}</span>
+        {rest}
+      </>
+    );
+  }
+  if (THAI_CHARS.test(label)) return <>{label}</>;
+  return <span className="tracking-[0.25em] uppercase">{label}</span>;
+}
+
 function GroupSection({
   group,
   selectedId,
@@ -78,7 +99,7 @@ function GroupSection({
     return (
       <div className="py-5" style={{ borderBottom: "1px solid var(--border)" }}>
         <div className="flex items-baseline justify-between gap-3 mb-3">
-          <p className="text-xs tracking-[0.25em] uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
+          <p className="text-xs font-sans" style={{ color: "var(--muted)" }}><GroupLabelText label={group.label} /></p>
           <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>{textValue?.trim() ? textValue : "None"}</p>
         </div>
         <input
@@ -100,7 +121,7 @@ function GroupSection({
   return (
     <div className="py-5" style={{ borderBottom: "1px solid var(--border)" }}>
       <div className="flex items-baseline justify-between gap-3 mb-3">
-        <p className="text-xs tracking-[0.25em] uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
+        <p className="text-xs font-sans" style={{ color: "var(--muted)" }}><GroupLabelText label={group.label} /></p>
         <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>
           {selectedChoice ? selectedIndicatorLabel(group, selectedChoice) : "None"}
         </p>
