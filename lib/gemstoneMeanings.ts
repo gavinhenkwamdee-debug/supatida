@@ -24,6 +24,16 @@ const DIAMOND_PEAR = `${R2}ring-1786867808642.png`;
 const DIAMOND_PRINCESS = `${R2}ring-1786867836873.png`;
 const DIAMOND_OVAL = `${R2}ring-1786872125244.png`;
 
+// Swatch+overlay pairs for the diamond-shape sub-picker shown when a
+// meaning's gemstone is "Diamond" (currently just ACHIEVEMENT) — only these
+// 4 shapes have real photography uploaded so far.
+export const DIAMOND_SHAPE_IMAGES: Record<string, { swatchImage: string; overlayImage: string }> = {
+  round: { swatchImage: DIAMOND_ROUND, overlayImage: `${R2}ring-1786867856563.png` },
+  pear: { swatchImage: DIAMOND_PEAR, overlayImage: `${R2}ring-1786867813995.png` },
+  princess: { swatchImage: DIAMOND_PRINCESS, overlayImage: `${R2}ring-1786867839830.png` },
+  oval: { swatchImage: DIAMOND_OVAL, overlayImage: `${R2}ring-1786872131424.png` },
+};
+
 export interface Meaning {
   key: string;
   category: MeaningCategory;

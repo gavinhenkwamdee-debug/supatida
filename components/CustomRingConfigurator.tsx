@@ -7,10 +7,14 @@ import type { CustomRingChoice, CustomRingDetail, CustomRingGroup, StoneKind } f
 import {
   MEANINGS_BY_CATEGORY,
   buildMeaningSummary,
+  DIAMOND_SHAPE_IMAGES,
   type MeaningCategory,
   type MeaningSelection,
 } from "@/lib/gemstoneMeanings";
 import type { GroupKind } from "@/lib/customRings";
+
+// Only these 4 shapes have real photography uploaded so far.
+const DIAMOND_SHAPE_OPTIONS = ["round", "pear", "princess", "oval"] as const;
 
 // The ring's own "power" groups double as the meaning picker — main_power is
 // YOUR WISH, secondary_power is YOUR STRENGTH, tertiary_power is YOUR
@@ -217,6 +221,7 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     return initial;
   });
   const [textValues, setTextValues] = useState<Record<number, string>>({});
+  const [diamondShapes, setDiamondShapes] = useState<Record<number, string>>({});
 
   const groups = ring.groups;
 
@@ -235,13 +240,33 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
   }, [groups, selections]);
   const meaningSummary = useMemo(() => buildMeaningSummary(meaningSelection), [meaningSelection]);
 
+  // Whether the currently-selected choice in a group is a meaning whose
+  // gemstone is literally "Diamond" — that's the one case where the
+  // customer also gets to pick which diamond shape they want.
+  function isDiamondMeaning(g: CustomRingGroup): boolean {
+    const category = POWER_KIND_TO_MEANING_CATEGORY[g.kind];
+    if (!category) return false;
+    const choice = g.choices.find((c) => c.id === selections[g.id]);
+    const meaning = choice && MEANINGS_BY_CATEGORY[category].find((m) => m.labelTh === choice.label);
+    return meaning?.gemstone === "Diamond";
+  }
+
   const selectedChoices = useMemo(
     () =>
       groups
         .filter((g) => g.kind !== "text_input")
-        .map((g) => g.choices.find((c) => c.id === selections[g.id]))
+        .map((g) => {
+          const choice = g.choices.find((c) => c.id === selections[g.id]);
+          if (!choice) return undefined;
+          if (isDiamondMeaning(g)) {
+            const images = DIAMOND_SHAPE_IMAGES[diamondShapes[g.id] ?? "round"];
+            if (images) return { ...choice, swatchImage: images.swatchImage, overlayImage: images.overlayImage };
+          }
+          return choice;
+        })
         .filter((c): c is CustomRingChoice => Boolean(c)),
-    [groups, selections]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groups, selections, diamondShapes]
   );
 
   const textInputTotal = useMemo(
@@ -298,16 +323,60 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
 
           <div>
             {groups.map((g) => (
-              <GroupSection
-                key={g.id}
-                group={g}
-                selectedId={selections[g.id]}
-                onToggle={(choiceId) => toggleChoice(g.id, choiceId)}
-                stoneKind={powerStoneKind[g.id]}
-                onStoneKindChange={(k) => changeStoneKind(g.id, k)}
-                textValue={textValues[g.id]}
-                onTextChange={(v) => setTextValues((prev) => ({ ...prev, [g.id]: v }))}
-              />
+              <div key={g.id}>
+                <GroupSection
+                  group={g}
+                  selectedId={selections[g.id]}
+                  onToggle={(choiceId) => toggleChoice(g.id, choiceId)}
+                  stoneKind={powerStoneKind[g.id]}
+                  onStoneKindChange={(k) => changeStoneKind(g.id, k)}
+                  textValue={textValues[g.id]}
+                  onTextChange={(v) => setTextValues((prev) => ({ ...prev, [g.id]: v }))}
+                />
+                {isDiamondMeaning(g) && (
+                  <div className="pb-5">
+                    <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>เลือกทรงเพชร</p>
+                    <div className="flex flex-wrap gap-x-5 gap-y-3">
+                      {DIAMOND_SHAPE_OPTIONS.map((shape) => {
+                        const selected = (diamondShapes[g.id] ?? "round") === shape;
+                        return (
+                          <button
+                            key={shape}
+                            type="button"
+                            onClick={() => setDiamondShapes((prev) => ({ ...prev, [g.id]: shape }))}
+                            title={DIAMOND_SHAPE_LABELS[shape]}
+                            className="flex flex-col items-center gap-1.5"
+                            style={{ width: 56 }}
+                          >
+                            <span
+                              className="rounded-full overflow-hidden flex-shrink-0"
+                              style={{
+                                width: 40,
+                                height: 40,
+                                border: selected ? "2px solid #344EAD" : "1px solid var(--border)",
+                                backgroundColor: "var(--img-bg)",
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={DIAMOND_SHAPE_IMAGES[shape].swatchImage}
+                                alt={DIAMOND_SHAPE_LABELS[shape]}
+                                className="w-full h-full object-cover"
+                              />
+                            </span>
+                            <span
+                              className="text-[10px] font-sans text-center leading-tight"
+                              style={{ color: selected ? "#344EAD" : "var(--muted)" }}
+                            >
+                              {DIAMOND_SHAPE_LABELS[shape]}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </aside>
