@@ -28,19 +28,6 @@ const POWER_KIND_TO_MEANING_CATEGORY: Partial<Record<GroupKind, MeaningCategory>
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
 
-// Makes a flat gem-overlay photo read as set into a carved channel rather
-// than pasted on top — drop-shadow (unlike box-shadow) follows the image's
-// actual alpha silhouette, so this works for any cut (round/princess/
-// baguette/pear) without needing a shape-specific mask. A tight dark shadow
-// stands in for the groove wall, a softer wider one for the overall recess,
-// and a faint highlight on the opposite edge catches the "light" like a
-// bezel rim would.
-const GEM_SET_SHADOW =
-  "drop-shadow(0 0 1px rgba(0,0,0,0.9)) " +
-  "drop-shadow(0 1px 1.5px rgba(0,0,0,0.8)) " +
-  "drop-shadow(0 2px 3px rgba(0,0,0,0.5)) " +
-  "drop-shadow(0 -0.5px 0.5px rgba(255,255,255,0.6))";
-
 const STONE_KIND_LABEL: Record<StoneKind, string> = { diamond: "เพชร", gem: "พลอย" };
 
 function isMeaningGroup(group: CustomRingGroup) {
@@ -473,7 +460,6 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
                     top: `${c.overlayY}%`,
                     width: `${c.overlayWidth}%`,
                     transform: `translate(-50%, -50%) rotate(${c.overlayRotation}deg)`,
-                    filter: GEM_SET_SHADOW,
                   }}
                 />
               ) : null
