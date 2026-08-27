@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import OverlayPositioner from "./OverlayPositioner";
 import { DIAMOND_SHAPES, DIAMOND_SHAPE_LABELS } from "@/lib/ringShapes";
@@ -20,6 +20,8 @@ interface ChoiceState {
   label: string;
   swatchImage: string;
   swatchZoom: number;
+  swatchOffsetX: number;
+  swatchOffsetY: number;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -52,6 +54,8 @@ function emptyChoice(): ChoiceState {
     label: "",
     swatchImage: "",
     swatchZoom: 1,
+    swatchOffsetX: 0,
+    swatchOffsetY: 0,
     overlayImage: null,
     overlayX: 50,
     overlayY: 50,
@@ -214,6 +218,7 @@ function ChoiceEditor({
   isLast: boolean;
 }) {
   const [positioning, setPositioning] = useState(false);
+  const [swatchPositioning, setSwatchPositioning] = useState(false);
 
   return (
     <div className="p-3" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
@@ -267,40 +272,7 @@ function ChoiceEditor({
       <div className="flex gap-3 items-start">
         {groupKind !== "dropdown" && (
           <>
-            <div className="flex-shrink-0" style={{ width: 64 }}>
-              <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
-              {choice.swatchImage && (
-                <div className="mt-1.5">
-                  <div
-                    className="rounded-full overflow-hidden mx-auto"
-                    style={{ width: 44, height: 44, border: "1px solid var(--border)", backgroundColor: "var(--img-bg)" }}
-                    title="ตัวอย่างที่ลูกค้าจะเห็น"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={choice.swatchImage}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      style={{ transform: `scale(${choice.swatchZoom || 1})` }}
-                    />
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="6"
-                    step="0.1"
-                    value={choice.swatchZoom || 1}
-                    onChange={(e) => onChange({ ...choice, swatchZoom: Number(e.target.value) })}
-                    className="w-full mt-1"
-                    style={{ height: 14 }}
-                    title={`ขยาย ${(choice.swatchZoom || 1).toFixed(1)}x`}
-                  />
-                  <p className="text-[10px] font-sans text-center" style={{ color: "var(--muted)" }}>
-                    ขยาย {(choice.swatchZoom || 1).toFixed(1)}x
-                  </p>
-                </div>
-              )}
-            </div>
+            <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
             <ImageUploadBox
               src={choice.overlayImage || ""}
               label="+ Gem overlay"
@@ -340,6 +312,11 @@ function ChoiceEditor({
             {choice.overlayImage && baseImage && (
               <button type="button" onClick={() => setPositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
                 {positioning ? "ปิดตำแหน่ง" : "จัดตำแหน่ง"}
+              </button>
+            )}
+            {choice.swatchImage && (
+              <button type="button" onClick={() => setSwatchPositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
+                {swatchPositioning ? "ปิดจัด Swatch" : "ขยาย/จัด Swatch"}
               </button>
             )}
             {choice.overlayImage && (
@@ -410,6 +387,117 @@ function ChoiceEditor({
           />
         </div>
       )}
+
+      {swatchPositioning && choice.swatchImage && (
+        <div className="mt-3">
+          <SwatchPositioner
+            swatchImage={choice.swatchImage}
+            zoom={choice.swatchZoom || 1}
+            offsetX={choice.swatchOffsetX || 0}
+            offsetY={choice.swatchOffsetY || 0}
+            onZoomChange={(z) => onChange({ ...choice, swatchZoom: z })}
+            onOffsetChange={(x, y) => onChange({ ...choice, swatchOffsetX: x, swatchOffsetY: y })}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Drag-to-pan preview for a swatch image — many source photos have the gem
+// centered in a mostly-empty frame, so this lets the admin zoom in and nudge
+// the crop until the gem fills the circle, without touching the stored file.
+function SwatchPositioner({
+  swatchImage,
+  zoom,
+  offsetX,
+  offsetY,
+  onZoomChange,
+  onOffsetChange,
+}: {
+  swatchImage: string;
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+  onZoomChange: (zoom: number) => void;
+  onOffsetChange: (x: number, y: number) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragStart = useRef<{ clientX: number; clientY: number; offsetX: number; offsetY: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
+
+  function handleDown(clientX: number, clientY: number) {
+    dragStart.current = { clientX, clientY, offsetX, offsetY };
+    setDragging(true);
+  }
+  function handleMove(clientX: number, clientY: number) {
+    const start = dragStart.current;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!start || !rect) return;
+    const dx = ((clientX - start.clientX) / rect.width) * 100;
+    const dy = ((clientY - start.clientY) / rect.height) * 100;
+    onOffsetChange(start.offsetX + dx, start.offsetY + dy);
+  }
+  function handleUp() {
+    dragStart.current = null;
+    setDragging(false);
+  }
+
+  return (
+    <div className="max-w-[220px]">
+      <div
+        ref={containerRef}
+        onMouseDown={(e) => { e.preventDefault(); handleDown(e.clientX, e.clientY); }}
+        onMouseMove={(e) => dragging && handleMove(e.clientX, e.clientY)}
+        onMouseUp={handleUp}
+        onMouseLeave={handleUp}
+        onTouchStart={(e) => { const t = e.touches[0]; if (t) handleDown(t.clientX, t.clientY); }}
+        onTouchMove={(e) => { const t = e.touches[0]; if (t) handleMove(t.clientX, t.clientY); }}
+        onTouchEnd={handleUp}
+        className="rounded-full overflow-hidden select-none mx-auto"
+        style={{
+          width: 140,
+          height: 140,
+          border: "1px solid var(--border)",
+          backgroundColor: "var(--img-bg)",
+          cursor: dragging ? "grabbing" : "grab",
+          touchAction: "none",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={swatchImage}
+          alt=""
+          draggable={false}
+          className="w-full h-full object-cover pointer-events-none"
+          style={{ transform: `translate(${offsetX}%, ${offsetY}%) scale(${zoom})` }}
+        />
+      </div>
+      <p className="text-[10px] font-sans text-center mt-1" style={{ color: "var(--muted)" }}>
+        ลากรูปเพื่อจัดตำแหน่งให้พลอยอยู่ตรงกลาง
+      </p>
+
+      <label className="text-xs font-sans block mt-2 mb-1" style={{ color: "var(--muted)" }}>
+        ขยาย ({zoom.toFixed(1)}x)
+      </label>
+      <input
+        type="range"
+        min="1"
+        max="6"
+        step="0.1"
+        value={zoom}
+        onChange={(e) => onZoomChange(Number(e.target.value))}
+        className="w-full"
+      />
+
+      <button
+        type="button"
+        onClick={() => { onZoomChange(1); onOffsetChange(0, 0); }}
+        className="text-xs tracking-wider uppercase underline font-sans mt-2"
+        style={{ color: "var(--gold-dark)" }}
+      >
+        รีเซ็ต
+      </button>
     </div>
   );
 }
@@ -557,6 +645,8 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             label: c.label,
             swatchImage: c.swatchImage,
             swatchZoom: c.swatchZoom,
+            swatchOffsetX: c.swatchOffsetX,
+            swatchOffsetY: c.swatchOffsetY,
             overlayImage: c.overlayImage,
             overlayX: c.overlayX,
             overlayY: c.overlayY,
@@ -618,6 +708,8 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         label: c.label,
         swatchImage: c.swatchImage,
         swatchZoom: c.swatchZoom,
+        swatchOffsetX: c.swatchOffsetX,
+        swatchOffsetY: c.swatchOffsetY,
         overlayImage: c.overlayImage,
         overlayX: c.overlayX,
         overlayY: c.overlayY,
@@ -673,6 +765,8 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
                 label: c.label.trim(),
                 swatchImage: c.swatchImage,
                 swatchZoom: c.swatchZoom || 1,
+                swatchOffsetX: c.swatchOffsetX || 0,
+                swatchOffsetY: c.swatchOffsetY || 0,
                 overlayImage: c.overlayImage,
                 overlayX: c.overlayX,
                 overlayY: c.overlayY,

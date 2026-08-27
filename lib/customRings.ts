@@ -21,6 +21,10 @@ export interface CustomRingChoice {
   // zooms just the on-site swatch/overlay display (never the stored file)
   // so it fills its circle. 1 = no zoom, admin-tunable per choice.
   swatchZoom: number;
+  // Pan offset (% of the swatch's own rendered size) so an off-center gem
+  // can be centered after zooming in — 0,0 is untouched/original position.
+  swatchOffsetX: number;
+  swatchOffsetY: number;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -62,6 +66,8 @@ export interface ChoiceInput {
   label: string;
   swatchImage: string;
   swatchZoom: number;
+  swatchOffsetX: number;
+  swatchOffsetY: number;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -152,6 +158,12 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS swatch_zoom NUMERIC NOT NULL DEFAULT 1
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS swatch_offset_x NUMERIC NOT NULL DEFAULT 0
+  `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS swatch_offset_y NUMERIC NOT NULL DEFAULT 0
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -176,6 +188,8 @@ function toChoice(row: any): CustomRingChoice {
     label: row.label,
     swatchImage: row.swatch_image,
     swatchZoom: parseFloat(row.swatch_zoom) || 1,
+    swatchOffsetX: parseFloat(row.swatch_offset_x) || 0,
+    swatchOffsetY: parseFloat(row.swatch_offset_y) || 0,
     overlayImage: row.overlay_image ?? null,
     overlayX: parseFloat(row.overlay_x),
     overlayY: parseFloat(row.overlay_y),
@@ -306,9 +320,9 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, swatch_zoom, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
         VALUES (
-          ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom},
+          ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY},
           ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )

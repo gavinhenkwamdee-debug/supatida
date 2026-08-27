@@ -60,6 +60,15 @@ function choiceLabel(group: CustomRingGroup, choice: CustomRingChoice) {
   return choice.label;
 }
 
+// Zooms in on (and re-centers) a swatch photo whose subject sits small in a
+// mostly-empty frame — admin-tunable per choice, display-only.
+function swatchTransform(choice: CustomRingChoice) {
+  const zoom = choice.swatchZoom || 1;
+  const x = choice.swatchOffsetX || 0;
+  const y = choice.swatchOffsetY || 0;
+  return `translate(${x}%, ${y}%) scale(${zoom})`;
+}
+
 // The "selected: X" indicator next to a meaning group's title has little
 // room — the full meaning phrase (e.g. "ความก้าวหน้าในงาน") wraps and runs
 // off the edge there, so show the shorter gemstone name instead.
@@ -207,7 +216,7 @@ function GroupSection({
                   src={c.swatchImage}
                   alt={choiceLabel(group, c)}
                   className="w-full h-full object-cover"
-                  style={c.swatchZoom && c.swatchZoom !== 1 ? { transform: `scale(${c.swatchZoom})` } : undefined}
+                  style={{ transform: swatchTransform(c) }}
                 />
               </span>
               <span
