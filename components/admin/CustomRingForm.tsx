@@ -19,6 +19,7 @@ interface ChoiceState {
   key: string;
   label: string;
   swatchImage: string;
+  swatchZoom: number;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -50,6 +51,7 @@ function emptyChoice(): ChoiceState {
     key: nextKey(),
     label: "",
     swatchImage: "",
+    swatchZoom: 1,
     overlayImage: null,
     overlayX: 50,
     overlayY: 50,
@@ -265,7 +267,40 @@ function ChoiceEditor({
       <div className="flex gap-3 items-start">
         {groupKind !== "dropdown" && (
           <>
-            <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
+            <div className="flex-shrink-0" style={{ width: 64 }}>
+              <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
+              {choice.swatchImage && (
+                <div className="mt-1.5">
+                  <div
+                    className="rounded-full overflow-hidden mx-auto"
+                    style={{ width: 44, height: 44, border: "1px solid var(--border)", backgroundColor: "var(--img-bg)" }}
+                    title="ตัวอย่างที่ลูกค้าจะเห็น"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={choice.swatchImage}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      style={{ transform: `scale(${choice.swatchZoom || 1})` }}
+                    />
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="6"
+                    step="0.1"
+                    value={choice.swatchZoom || 1}
+                    onChange={(e) => onChange({ ...choice, swatchZoom: Number(e.target.value) })}
+                    className="w-full mt-1"
+                    style={{ height: 14 }}
+                    title={`ขยาย ${(choice.swatchZoom || 1).toFixed(1)}x`}
+                  />
+                  <p className="text-[10px] font-sans text-center" style={{ color: "var(--muted)" }}>
+                    ขยาย {(choice.swatchZoom || 1).toFixed(1)}x
+                  </p>
+                </div>
+              )}
+            </div>
             <ImageUploadBox
               src={choice.overlayImage || ""}
               label="+ Gem overlay"
@@ -521,6 +556,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             key: nextKey(),
             label: c.label,
             swatchImage: c.swatchImage,
+            swatchZoom: c.swatchZoom,
             overlayImage: c.overlayImage,
             overlayX: c.overlayX,
             overlayY: c.overlayY,
@@ -581,6 +617,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
       found.group.choices.map((c) => ({
         label: c.label,
         swatchImage: c.swatchImage,
+        swatchZoom: c.swatchZoom,
         overlayImage: c.overlayImage,
         overlayX: c.overlayX,
         overlayY: c.overlayY,
@@ -635,6 +672,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
               return {
                 label: c.label.trim(),
                 swatchImage: c.swatchImage,
+                swatchZoom: c.swatchZoom || 1,
                 overlayImage: c.overlayImage,
                 overlayX: c.overlayX,
                 overlayY: c.overlayY,

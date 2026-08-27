@@ -17,6 +17,10 @@ export interface CustomRingChoice {
   id: number;
   label: string;
   swatchImage: string;
+  // Many source photos have the gem centered in a mostly-empty frame — this
+  // zooms just the on-site swatch/overlay display (never the stored file)
+  // so it fills its circle. 1 = no zoom, admin-tunable per choice.
+  swatchZoom: number;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -57,6 +61,7 @@ export interface CustomRingDetail extends CustomRing {
 export interface ChoiceInput {
   label: string;
   swatchImage: string;
+  swatchZoom: number;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -144,6 +149,9 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS overlay_rotation NUMERIC NOT NULL DEFAULT 0
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS swatch_zoom NUMERIC NOT NULL DEFAULT 1
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -167,6 +175,7 @@ function toChoice(row: any): CustomRingChoice {
     id: row.id,
     label: row.label,
     swatchImage: row.swatch_image,
+    swatchZoom: parseFloat(row.swatch_zoom) || 1,
     overlayImage: row.overlay_image ?? null,
     overlayX: parseFloat(row.overlay_x),
     overlayY: parseFloat(row.overlay_y),
@@ -297,10 +306,10 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, swatch_zoom, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
         VALUES (
-          ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.overlayImage},
-          ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder},
+          ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom},
+          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )
       `;

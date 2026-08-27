@@ -203,7 +203,12 @@ function GroupSection({
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={c.swatchImage} alt={choiceLabel(group, c)} className="w-full h-full object-cover" />
+                <img
+                  src={c.swatchImage}
+                  alt={choiceLabel(group, c)}
+                  className="w-full h-full object-cover"
+                  style={c.swatchZoom && c.swatchZoom !== 1 ? { transform: `scale(${c.swatchZoom})` } : undefined}
+                />
               </span>
               <span
                 className="text-[10px] font-sans text-center leading-tight"

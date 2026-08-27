@@ -60,6 +60,7 @@ export async function PUT(request: Request, { params }: Params) {
                   return {
                     label: String(choice.label ?? "").trim() || "Option",
                     swatchImage: String(choice.swatchImage ?? ""),
+                    swatchZoom: Number(choice.swatchZoom) || 1,
                     overlayImage: choice.overlayImage ? String(choice.overlayImage) : null,
                     overlayX: Number(choice.overlayX) || 50,
                     overlayY: Number(choice.overlayY) || 50,
