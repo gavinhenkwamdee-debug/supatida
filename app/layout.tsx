@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { millerBanner, graphie, louella } from "@/lib/fonts";
 
 const SITE_URL = "https://www.supatidajewelry.com";
 
@@ -44,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${millerBanner.variable} ${graphie.variable} ${louella.variable}`}>
       <head>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-P8FCWRLNZ7" />
         <script

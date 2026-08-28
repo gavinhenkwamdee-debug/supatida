@@ -26,12 +26,18 @@
 body {
   background-color: var(--ivory);
   color: var(--charcoal);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-miller-banner), Georgia, "Times New Roman", serif;
   -webkit-font-smoothing: antialiased;
 }
 
 .font-sans {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-graphie), system-ui, -apple-system, sans-serif;
+}
+
+/* Brand script accent — use sparingly, for a single decorative flourish
+   rather than running text. */
+.font-accent {
+  font-family: var(--font-louella), cursive;
 }
 
 /* Thin gold scrollbar */
