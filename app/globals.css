@@ -26,12 +26,16 @@
 body {
   background-color: var(--ivory);
   color: var(--charcoal);
-  font-family: var(--font-miller-banner), Georgia, "Times New Roman", serif;
+  /* --role-heading-font/--role-body-font are set inline on <html> in
+     app/layout.tsx from the admin-editable Typography setting (see
+     /admin/typography) — the var() fallback here only applies if that
+     inline style is ever missing. */
+  font-family: var(--role-heading-font, var(--font-miller-banner), Georgia, "Times New Roman", serif);
   -webkit-font-smoothing: antialiased;
 }
 
 .font-sans {
-  font-family: var(--font-graphie), system-ui, -apple-system, sans-serif;
+  font-family: var(--role-body-font, var(--font-graphie), system-ui, -apple-system, sans-serif);
 }
 
 /* Brand script accent — use sparingly, for a single decorative flourish

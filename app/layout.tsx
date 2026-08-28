@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { millerBanner, graphie, louella } from "@/lib/fonts";
+import { getSetting } from "@/lib/settings";
+import { DEFAULT_TYPOGRAPHY, FONT_STACK, type TypographyConfig } from "@/lib/typography-config";
 
 const SITE_URL = "https://www.supatidajewelry.com";
 
@@ -39,13 +41,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const typography = await getSetting<TypographyConfig>("typography", DEFAULT_TYPOGRAPHY);
+  const rootStyle = {
+    "--role-heading-font": FONT_STACK[typography.headingFont] ?? FONT_STACK.millerBanner,
+    "--role-body-font": FONT_STACK[typography.bodyFont] ?? FONT_STACK.system,
+  } as React.CSSProperties;
+
   return (
-    <html lang="en" className={`${millerBanner.variable} ${graphie.variable} ${louella.variable}`}>
+    <html
+      lang="en"
+      className={`${millerBanner.variable} ${graphie.variable} ${louella.variable}`}
+      style={rootStyle}
+    >
       <head>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-P8FCWRLNZ7" />
         <script

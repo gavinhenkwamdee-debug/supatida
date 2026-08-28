@@ -357,6 +357,11 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             style={{ backgroundColor: "#B8455C", color: "white" }}>
             🎁 CRM / Points
           </Link>
+          <Link href="/admin/typography"
+            className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
+            style={{ backgroundColor: "#374151", color: "white" }}>
+            🔤 Typography
+          </Link>
           <Link href="/admin/products/new"
             className="px-5 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80"
             style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}>
