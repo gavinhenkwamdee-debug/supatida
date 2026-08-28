@@ -154,11 +154,13 @@ function GroupSection({
 
   return (
     <div className="py-5" style={{ borderBottom: "1px solid var(--border)" }}>
-      <div className="flex items-baseline justify-between gap-3 mb-3">
+      <div className="mb-3">
         <p className="text-xs font-sans" style={{ color: "var(--muted)" }}><GroupLabelText label={group.label} /></p>
-        <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>
-          {selectedChoice ? selectedIndicatorLabel(group, selectedChoice) : "None"}
-        </p>
+        {selectedChoice && (
+          <p className="text-sm font-sans font-semibold mt-1" style={{ color: "#344EAD" }}>
+            เลือกแล้ว: {selectedIndicatorLabel(group, selectedChoice)}
+          </p>
+        )}
       </div>
 
       {isMainPower && availableKinds.length > 1 && (
