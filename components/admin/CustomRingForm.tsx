@@ -22,6 +22,7 @@ interface ChoiceState {
   swatchZoom: number;
   swatchOffsetX: number;
   swatchOffsetY: number;
+  swatchRotation: number;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -56,6 +57,7 @@ function emptyChoice(): ChoiceState {
     swatchZoom: 1,
     swatchOffsetX: 0,
     swatchOffsetY: 0,
+    swatchRotation: 0,
     overlayImage: null,
     overlayX: 50,
     overlayY: 50,
@@ -395,8 +397,10 @@ function ChoiceEditor({
             zoom={choice.swatchZoom || 1}
             offsetX={choice.swatchOffsetX || 0}
             offsetY={choice.swatchOffsetY || 0}
+            rotation={choice.swatchRotation || 0}
             onZoomChange={(z) => onChange({ ...choice, swatchZoom: z })}
             onOffsetChange={(x, y) => onChange({ ...choice, swatchOffsetX: x, swatchOffsetY: y })}
+            onRotationChange={(r) => onChange({ ...choice, swatchRotation: r })}
           />
         </div>
       )}
@@ -412,15 +416,19 @@ function SwatchPositioner({
   zoom,
   offsetX,
   offsetY,
+  rotation,
   onZoomChange,
   onOffsetChange,
+  onRotationChange,
 }: {
   swatchImage: string;
   zoom: number;
   offsetX: number;
   offsetY: number;
+  rotation: number;
   onZoomChange: (zoom: number) => void;
   onOffsetChange: (x: number, y: number) => void;
+  onRotationChange: (rotation: number) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef<{ clientX: number; clientY: number; offsetX: number; offsetY: number } | null>(null);
@@ -470,7 +478,7 @@ function SwatchPositioner({
           alt=""
           draggable={false}
           className="w-full h-full object-cover pointer-events-none"
-          style={{ transform: `translate(${offsetX}%, ${offsetY}%) scale(${zoom})` }}
+          style={{ transform: `translate(${offsetX}%, ${offsetY}%) rotate(${rotation}deg) scale(${zoom})` }}
         />
       </div>
       <p className="text-[10px] font-sans text-center mt-1" style={{ color: "var(--muted)" }}>
@@ -490,9 +498,44 @@ function SwatchPositioner({
         className="w-full"
       />
 
+      <div className="flex items-center justify-between mt-2 mb-1">
+        <label className="text-xs font-sans" style={{ color: "var(--muted)" }}>
+          หมุน ({Math.round(rotation)}°)
+        </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onRotationChange(((rotation - 15) % 360 + 360) % 360)}
+            className="w-6 h-6 text-xs flex items-center justify-center"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            title="หมุนซ้าย 15°"
+          >
+            ↺
+          </button>
+          <button
+            type="button"
+            onClick={() => onRotationChange((rotation + 15) % 360)}
+            className="w-6 h-6 text-xs flex items-center justify-center"
+            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            title="หมุนขวา 15°"
+          >
+            ↻
+          </button>
+        </div>
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="359"
+        step="1"
+        value={rotation}
+        onChange={(e) => onRotationChange(Number(e.target.value))}
+        className="w-full"
+      />
+
       <button
         type="button"
-        onClick={() => { onZoomChange(1); onOffsetChange(0, 0); }}
+        onClick={() => { onZoomChange(1); onOffsetChange(0, 0); onRotationChange(0); }}
         className="text-xs tracking-wider uppercase underline font-sans mt-2"
         style={{ color: "var(--gold-dark)" }}
       >
@@ -647,6 +690,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             swatchZoom: c.swatchZoom,
             swatchOffsetX: c.swatchOffsetX,
             swatchOffsetY: c.swatchOffsetY,
+            swatchRotation: c.swatchRotation,
             overlayImage: c.overlayImage,
             overlayX: c.overlayX,
             overlayY: c.overlayY,
@@ -710,6 +754,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         swatchZoom: c.swatchZoom,
         swatchOffsetX: c.swatchOffsetX,
         swatchOffsetY: c.swatchOffsetY,
+        swatchRotation: c.swatchRotation,
         overlayImage: c.overlayImage,
         overlayX: c.overlayX,
         overlayY: c.overlayY,
@@ -767,6 +812,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
                 swatchZoom: c.swatchZoom || 1,
                 swatchOffsetX: c.swatchOffsetX || 0,
                 swatchOffsetY: c.swatchOffsetY || 0,
+                swatchRotation: c.swatchRotation || 0,
                 overlayImage: c.overlayImage,
                 overlayX: c.overlayX,
                 overlayY: c.overlayY,

@@ -25,6 +25,8 @@ export interface CustomRingChoice {
   // can be centered after zooming in — 0,0 is untouched/original position.
   swatchOffsetX: number;
   swatchOffsetY: number;
+  // Straightens a crooked source photo — degrees, 0 = untouched.
+  swatchRotation: number;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -68,6 +70,7 @@ export interface ChoiceInput {
   swatchZoom: number;
   swatchOffsetX: number;
   swatchOffsetY: number;
+  swatchRotation: number;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -164,6 +167,9 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS swatch_offset_y NUMERIC NOT NULL DEFAULT 0
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS swatch_rotation NUMERIC NOT NULL DEFAULT 0
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -190,6 +196,7 @@ function toChoice(row: any): CustomRingChoice {
     swatchZoom: parseFloat(row.swatch_zoom) || 1,
     swatchOffsetX: parseFloat(row.swatch_offset_x) || 0,
     swatchOffsetY: parseFloat(row.swatch_offset_y) || 0,
+    swatchRotation: parseFloat(row.swatch_rotation) || 0,
     overlayImage: row.overlay_image ?? null,
     overlayX: parseFloat(row.overlay_x),
     overlayY: parseFloat(row.overlay_y),
@@ -320,9 +327,9 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
         VALUES (
-          ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY},
+          ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY}, ${choice.swatchRotation},
           ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )

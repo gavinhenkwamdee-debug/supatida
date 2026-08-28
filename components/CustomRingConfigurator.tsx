@@ -66,7 +66,8 @@ function swatchTransform(choice: CustomRingChoice) {
   const zoom = choice.swatchZoom || 1;
   const x = choice.swatchOffsetX || 0;
   const y = choice.swatchOffsetY || 0;
-  return `translate(${x}%, ${y}%) scale(${zoom})`;
+  const rotation = choice.swatchRotation || 0;
+  return `translate(${x}%, ${y}%) rotate(${rotation}deg) scale(${zoom})`;
 }
 
 // The "selected: X" indicator next to a meaning group's title has little
