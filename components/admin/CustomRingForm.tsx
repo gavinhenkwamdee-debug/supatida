@@ -15,6 +15,19 @@ const GROUP_KIND_OPTIONS: { value: GroupKind; label: string }[] = [
   { value: "tertiary_power", label: "พลังงานที่สาม (Tertiary Power)" },
 ];
 
+// Quick-fill presets for a "metal color" choice's colorFilter — CSS filter()
+// tint layered on the ring's base photo (assumes the photo is neutral
+// white/silver metal to start; the sepia+hue-rotate combo is the standard
+// trick for pushing a neutral photo toward gold/rose tones). Admin can still
+// hand-edit the raw value below for a closer match to a specific photo.
+const COLOR_TINT_PRESETS: { label: string; value: string }[] = [
+  { label: "— ไม่ใช่ตัวเลือกสี (ว่างไว้) —", value: "" },
+  { label: "White Gold (สีเดิม ไม่ปรับโทน)", value: "none" },
+  { label: "Yellow Gold", value: "sepia(0.6) saturate(3) hue-rotate(0deg) brightness(1.05)" },
+  { label: "Rose Gold", value: "sepia(0.5) saturate(2.5) hue-rotate(-20deg) brightness(1.05)" },
+  { label: "Vanilla Gold", value: "sepia(0.35) saturate(1.8) hue-rotate(5deg) brightness(1.08)" },
+];
+
 interface ChoiceState {
   key: string;
   label: string;
@@ -23,6 +36,7 @@ interface ChoiceState {
   swatchOffsetX: number;
   swatchOffsetY: number;
   swatchRotation: number;
+  colorFilter: string | null;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -58,6 +72,7 @@ function emptyChoice(): ChoiceState {
     swatchOffsetX: 0,
     swatchOffsetY: 0,
     swatchRotation: 0,
+    colorFilter: null,
     overlayImage: null,
     overlayX: 50,
     overlayY: 50,
@@ -307,6 +322,29 @@ function ChoiceEditor({
               value={choice.priceDelta}
               onChange={(e) => onChange({ ...choice, priceDelta: Number(e.target.value) || 0 })}
               className="w-24 px-2 py-1 text-xs font-sans outline-none"
+              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            />
+          </div>
+          <div>
+            <span className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>
+              โทนสีตัวเรือน (ใช้กับตัวเลือก &quot;สี&quot; เท่านั้น — ปรับโทนรูปแหวนหลัก ไม่ใช่รูป swatch)
+            </span>
+            <select
+              value={COLOR_TINT_PRESETS.some((p) => p.value === (choice.colorFilter ?? "")) ? (choice.colorFilter ?? "") : "__custom__"}
+              onChange={(e) => onChange({ ...choice, colorFilter: e.target.value || null })}
+              className="w-full px-2 py-1.5 text-xs font-sans outline-none mb-1"
+              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            >
+              {COLOR_TINT_PRESETS.map((p) => (
+                <option key={p.label} value={p.value}>{p.label}</option>
+              ))}
+              <option value="__custom__" disabled>— กำหนดเองด้านล่าง —</option>
+            </select>
+            <input
+              value={choice.colorFilter ?? ""}
+              onChange={(e) => onChange({ ...choice, colorFilter: e.target.value || null })}
+              placeholder="เช่น sepia(0.5) saturate(2) hue-rotate(-10deg)"
+              className="w-full px-2 py-1.5 text-xs font-sans outline-none"
               style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
             />
           </div>
@@ -691,6 +729,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             swatchOffsetX: c.swatchOffsetX,
             swatchOffsetY: c.swatchOffsetY,
             swatchRotation: c.swatchRotation,
+            colorFilter: c.colorFilter,
             overlayImage: c.overlayImage,
             overlayX: c.overlayX,
             overlayY: c.overlayY,
@@ -755,6 +794,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         swatchOffsetX: c.swatchOffsetX,
         swatchOffsetY: c.swatchOffsetY,
         swatchRotation: c.swatchRotation,
+        colorFilter: c.colorFilter,
         overlayImage: c.overlayImage,
         overlayX: c.overlayX,
         overlayY: c.overlayY,
@@ -813,6 +853,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
                 swatchOffsetX: c.swatchOffsetX || 0,
                 swatchOffsetY: c.swatchOffsetY || 0,
                 swatchRotation: c.swatchRotation || 0,
+                colorFilter: c.colorFilter || null,
                 overlayImage: c.overlayImage,
                 overlayX: c.overlayX,
                 overlayY: c.overlayY,

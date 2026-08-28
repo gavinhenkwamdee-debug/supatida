@@ -27,6 +27,13 @@ export interface CustomRingChoice {
   swatchOffsetY: number;
   // Straightens a crooked source photo — degrees, 0 = untouched.
   swatchRotation: number;
+  // CSS filter() string (e.g. "sepia(.5) saturate(2) hue-rotate(-10deg)")
+  // applied to the ring's base photo when this choice is selected — a metal
+  // color tint layered on top of one neutral photo instead of swapping to a
+  // separate photo per color. Null/empty = no tint. Only ever set on
+  // "color" choices; unrelated to baseImageOverride, which fully replaces
+  // the photo (e.g. for a different ring design).
+  colorFilter: string | null;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -71,6 +78,7 @@ export interface ChoiceInput {
   swatchOffsetX: number;
   swatchOffsetY: number;
   swatchRotation: number;
+  colorFilter: string | null;
   overlayImage: string | null;
   overlayX: number;
   overlayY: number;
@@ -170,6 +178,9 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS swatch_rotation NUMERIC NOT NULL DEFAULT 0
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS color_filter TEXT
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -197,6 +208,7 @@ function toChoice(row: any): CustomRingChoice {
     swatchOffsetX: parseFloat(row.swatch_offset_x) || 0,
     swatchOffsetY: parseFloat(row.swatch_offset_y) || 0,
     swatchRotation: parseFloat(row.swatch_rotation) || 0,
+    colorFilter: row.color_filter ?? null,
     overlayImage: row.overlay_image ?? null,
     overlayX: parseFloat(row.overlay_x),
     overlayY: parseFloat(row.overlay_y),
@@ -327,9 +339,9 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
         VALUES (
-          ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY}, ${choice.swatchRotation},
+          ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY}, ${choice.swatchRotation}, ${choice.colorFilter},
           ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )

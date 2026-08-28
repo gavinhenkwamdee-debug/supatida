@@ -64,6 +64,7 @@ export async function PUT(request: Request, { params }: Params) {
                     swatchOffsetX: Number(choice.swatchOffsetX) || 0,
                     swatchOffsetY: Number(choice.swatchOffsetY) || 0,
                     swatchRotation: Number(choice.swatchRotation) || 0,
+                    colorFilter: choice.colorFilter ? String(choice.colorFilter) : null,
                     overlayImage: choice.overlayImage ? String(choice.overlayImage) : null,
                     overlayX: Number(choice.overlayX) || 50,
                     overlayY: Number(choice.overlayY) || 50,

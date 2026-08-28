@@ -264,6 +264,9 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
         const preferred = g.choices.some((c) => c.stoneKind === "diamond") ? "diamond" : "gem";
         const match = g.choices.find((c) => c.stoneKind === preferred);
         initial[g.id] = match?.id ?? g.choices[0]?.id;
+      } else if (isMeaningGroup(g)) {
+        // WISH/STRENGTH/BALANCE start with nothing picked — customers
+        // aren't required to fill all 3; "None" is just one of the choices.
       } else if (g.choices[0]) {
         initial[g.id] = g.choices[0].id;
       }
@@ -340,12 +343,22 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
 
   const totalPrice = ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0) + textInputTotal;
 
-  // A choice can replace the whole ring photo (e.g. metal color) instead of
-  // just layering a gem on top — last selected group with an override wins.
+  // A choice can replace the whole ring photo (e.g. a different base ring
+  // design) instead of just layering a gem on top — last selected group
+  // with an override wins.
   const effectiveBaseImage = useMemo(() => {
     const override = [...selectedChoices].reverse().find((c) => c.baseImageOverride);
     return override?.baseImageOverride || ring.baseImage;
   }, [selectedChoices, ring.baseImage]);
+
+  // Metal color is a CSS tint layered on top of whichever base photo is
+  // showing, not a separate photo per color — only color choices ever set
+  // colorFilter, so finding any selected one is enough regardless of which
+  // group it came from.
+  const effectiveColorFilter = useMemo(
+    () => selectedChoices.find((c) => c.colorFilter)?.colorFilter || undefined,
+    [selectedChoices]
+  );
 
   function toggleChoice(groupId: number, choiceId: number) {
     setSelections((prev) => (prev[groupId] === choiceId ? { ...prev, [groupId]: undefined } : { ...prev, [groupId]: choiceId }));
@@ -447,7 +460,12 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
           <div className="relative w-full max-w-lg mb-8" style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
             {effectiveBaseImage && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={effectiveBaseImage} alt={ring.name} className="absolute inset-0 w-full h-full object-contain" />
+              <img
+                src={effectiveBaseImage}
+                alt={ring.name}
+                className="absolute inset-0 w-full h-full object-contain"
+                style={effectiveColorFilter ? { filter: effectiveColorFilter } : undefined}
+              />
             )}
             {selectedChoices.map((c) =>
               c.overlayImage ? (
