@@ -2,22 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { DIAMOND_SHAPE_LABELS } from "@/lib/ringShapes";
 import type { CustomRingChoice, CustomRingDetail, CustomRingGroup, StoneKind } from "@/lib/customRings";
 
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
 
 const STONE_KIND_LABEL: Record<StoneKind, string> = { diamond: "เพชร", gem: "พลอย" };
-
-// Diamond choices in a Main Power group are shape variants — show the shape name
-// (Pear/Emerald/…) rather than whatever internal label the admin typed on the choice.
-function choiceLabel(group: CustomRingGroup, choice: CustomRingChoice) {
-  if (group.kind === "main_power" && choice.stoneKind === "diamond" && choice.shape) {
-    return DIAMOND_SHAPE_LABELS[choice.shape] ?? choice.label;
-  }
-  return choice.label;
-}
 
 function GroupSection({
   group,
@@ -73,7 +63,7 @@ function GroupSection({
       <div className="flex items-baseline justify-between gap-3 mb-3">
         <p className="text-xs tracking-wide uppercase font-sans" style={{ color: "var(--muted)" }}>{group.label}</p>
         <p className="text-xs font-sans text-right" style={{ color: "var(--charcoal)" }}>
-          {selectedChoice ? choiceLabel(group, selectedChoice) : "None"}
+          {selectedChoice ? selectedChoice.label : "None"}
         </p>
       </div>
 
@@ -115,7 +105,7 @@ function GroupSection({
               key={c.id}
               type="button"
               onClick={() => onToggle(c.id)}
-              title={choiceLabel(group, c)}
+              title={c.label}
               className="rounded-full overflow-hidden flex-shrink-0 transition-shadow"
               style={{
                 width: 44,
@@ -125,7 +115,7 @@ function GroupSection({
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={c.swatchImage} alt={choiceLabel(group, c)} className="w-full h-full object-cover" />
+              <img src={c.swatchImage} alt={c.label} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -136,7 +126,7 @@ function GroupSection({
               key={c.id}
               type="button"
               onClick={() => onToggle(c.id)}
-              title={choiceLabel(group, c)}
+              title={c.label}
               className="px-3 py-2.5 text-xs font-sans text-center transition-colors"
               style={{
                 border: selectedId === c.id ? "1.5px solid var(--charcoal)" : "1px solid var(--border)",
@@ -144,7 +134,7 @@ function GroupSection({
                 backgroundColor: "white",
               }}
             >
-              {choiceLabel(group, c)}
+              {c.label}
             </button>
           ))}
         </div>

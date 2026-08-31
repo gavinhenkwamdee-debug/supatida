@@ -253,7 +253,7 @@ function ChoiceEditor({
           )}
           {(choice.stoneKind ?? "diamond") === "diamond" && (
             <span className="w-full text-xs font-sans italic" style={{ color: "var(--muted)" }}>
-              * ลูกค้าจะเห็นตัวเลือกนี้เป็นชื่อทรง ({DIAMOND_SHAPE_LABELS[choice.shape ?? "pear"]}) ไม่ใช่ชื่อที่พิมพ์ด้านล่าง — ชื่อด้านล่างไว้ใช้จำภายในเท่านั้น
+              * ทรงด้านบนไว้ใช้จำภายในเท่านั้น ลูกค้าจะเห็นชื่อที่พิมพ์ในช่อง &quot;ชื่อตัวเลือก&quot; ด้านล่าง
             </span>
           )}
         </div>
@@ -289,7 +289,7 @@ function ChoiceEditor({
           <input
             value={choice.label}
             onChange={(e) => onChange({ ...choice, label: e.target.value })}
-            placeholder="ชื่อตัวเลือก เช่น Garnet (January)"
+            placeholder="ชื่อพลอยที่ลูกค้าจะเห็น เช่น พลอยโกเมน (Garnet)"
             className="w-full px-2 py-1.5 text-xs font-sans outline-none"
             style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
           />
