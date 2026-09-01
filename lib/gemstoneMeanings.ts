@@ -111,7 +111,7 @@ export const STRENGTH_MEANINGS: Meaning[] = [
   },
   {
     key: "BRAVE", category: "strength", labelTh: "กล้าหาญ", labelEn: "BRAVE",
-    gemstone: "Green Tourmaline", swatchColor: "#4F8A5B", swatchImage: GEM_GREEN,
+    gemstone: "Violette Sapphire", swatchColor: "#4F8A5B", swatchImage: GEM_GREEN,
     standalone: "กล้าที่จะเผชิญสิ่งใหม่และก้าวผ่านความไม่แน่นอน",
     connector: "ด้วยความกล้าที่จะก้าวต่อ",
   },
