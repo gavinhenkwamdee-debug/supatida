@@ -141,10 +141,11 @@ function GroupSection({
           value={textValue ?? ""}
           onChange={(e) => onTextChange?.(e.target.value)}
           placeholder={group.placeholder || "พิมพ์ข้อความที่ต้องการ"}
-          maxLength={40}
+          maxLength={10}
           className="w-full px-3 py-2.5 text-sm font-sans outline-none"
           style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
         />
+        <p className="text-xs font-sans mt-1 text-right" style={{ color: "var(--muted)" }}>{(textValue ?? "").length}/10</p>
         {group.priceDelta > 0 && (
           <p className="text-xs font-sans mt-1.5" style={{ color: "var(--muted)" }}>+{THB(group.priceDelta)} หากระบุข้อความ</p>
         )}
