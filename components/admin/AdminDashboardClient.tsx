@@ -100,8 +100,13 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
     setTogglingIgi(false);
   }
 
-  // Copies everything (images, specs, toggles included) so an admin adding a
-  // near-identical product only has to swap the photos, not retype the rest.
+  // Copies everything except images (specs, toggles included) so an admin
+  // adding a near-identical product only has to retype the photo, not the
+  // rest. Images are deliberately left blank rather than pointing at the
+  // same R2 files as the source: /api/upload deletes whatever file
+  // currently occupies a slot when it's replaced, so two products sharing
+  // an image URL means uploading a new photo on one silently breaks the
+  // other's.
   async function handleDuplicate() {
     setDuplicating(true);
     try {
@@ -123,7 +128,6 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          images: product.images,
           soldOut: product.soldOut,
           hidden: product.hidden,
           bestSeller: product.bestSeller,
