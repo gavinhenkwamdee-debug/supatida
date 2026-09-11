@@ -47,6 +47,7 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
   const [togglingHide, setTogglingHide] = useState(false);
   const [savingBadge, setSavingBadge] = useState(false);
   const [togglingIgi, setTogglingIgi] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`ลบ "${product.name}"? ไม่สามารถกู้คืนได้`)) return;
@@ -97,6 +98,46 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
     });
     if (res.ok) { const updated = await res.json(); onUpdated(updated); }
     setTogglingIgi(false);
+  }
+
+  // Copies everything (images, specs, toggles included) so an admin adding a
+  // near-identical product only has to swap the photos, not retype the rest.
+  async function handleDuplicate() {
+    setDuplicating(true);
+    try {
+      const createRes = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${product.name} (copy)`,
+          price: product.price,
+          category: product.category,
+          description: product.description,
+          specifications: product.specifications,
+        }),
+      });
+      if (!createRes.ok) throw new Error();
+      const created = await createRes.json();
+
+      const updateRes = await fetch(`/api/products/${created.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          images: product.images,
+          soldOut: product.soldOut,
+          hidden: product.hidden,
+          bestSeller: product.bestSeller,
+          badge: product.badge,
+          igi: product.igi,
+        }),
+      });
+      if (!updateRes.ok) throw new Error();
+
+      router.push(`/admin/products/${created.id}/edit`);
+    } catch {
+      alert("Duplicate ไม่สำเร็จ");
+      setDuplicating(false);
+    }
   }
 
   return (
@@ -151,6 +192,7 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
             backgroundColor: product.badge === "hot-item" ? "#B8922A"
               : product.badge === "best-deal" ? "#2E7D32"
               : product.badge === "super-sale" ? "#C0392B"
+              : product.badge === "new" ? "#2563EB"
               : "white",
             color: product.badge ? "white" : "var(--muted)",
             borderRadius: "3px",
@@ -160,6 +202,7 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
           <option value="hot-item" style={{ background: "white", color: "#B8922A" }}>🔥 Hot Item</option>
           <option value="best-deal" style={{ background: "white", color: "#2E7D32" }}>💚 Best Deal</option>
           <option value="super-sale" style={{ background: "white", color: "#C0392B" }}>🔴 Super Sale</option>
+          <option value="new" style={{ background: "white", color: "#2563EB" }}>🆕 New</option>
         </select>
       </td>
 
@@ -235,6 +278,10 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
             className="text-xs tracking-wider uppercase underline" style={{ color: "var(--gold-dark)" }}>
             Edit
           </Link>
+          <button onClick={handleDuplicate} disabled={duplicating}
+            className="text-xs tracking-wider uppercase underline disabled:opacity-50" style={{ color: "var(--muted)" }}>
+            {duplicating ? "Duplicating…" : "Duplicate"}
+          </button>
           <button onClick={handleDelete}
             className="text-xs tracking-wider uppercase underline" style={{ color: "#C0392B" }}>
             Delete
