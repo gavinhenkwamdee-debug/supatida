@@ -678,19 +678,23 @@ function BaseImagePositioner({
           alt=""
           draggable={false}
           className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-          style={{ opacity: 0.35 }}
         />
+        {/* Product photos have opaque white backgrounds, so plain opacity just
+            washes the top layer to white and hides the reference underneath.
+            "multiply" blending makes white areas of the top photo act as if
+            transparent (white × anything = anything) while the ring itself
+            still darkens/shows against whatever is underneath. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image}
           alt=""
           draggable={false}
           className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-          style={{ transform: `translate(${offsetX}%, ${offsetY}%) scale(${zoom})` }}
+          style={{ transform: `translate(${offsetX}%, ${offsetY}%) scale(${zoom})`, mixBlendMode: "multiply" }}
         />
       </div>
       <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
-        รูปจางคือรูปแหวนหลักของแหวนวงนี้ (เอาไว้เทียบ) — ลาก/ซูมรูปนี้ให้แหวนซ้อนทับตำแหน่งเดียวกัน
+        รูปแหวนหลักของแหวนวงนี้ซ้อนอยู่ด้านล่าง (พื้นหลังขาวจะโปร่งอัตโนมัติ) — ลาก/ซูมรูปนี้ให้แหวนซ้อนทับตำแหน่งเดียวกัน
       </p>
 
       <label className="text-xs font-sans block mt-2 mb-1" style={{ color: "var(--muted)" }}>
