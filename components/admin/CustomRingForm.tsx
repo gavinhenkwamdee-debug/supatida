@@ -43,6 +43,9 @@ interface ChoiceState {
   overlayWidth: number;
   overlayRotation: number;
   baseImageOverride: string | null;
+  baseImageZoom: number;
+  baseImageOffsetX: number;
+  baseImageOffsetY: number;
   priceDelta: number;
   stoneKind: StoneKind | null;
   shape: string | null;
@@ -79,6 +82,9 @@ function emptyChoice(): ChoiceState {
     overlayWidth: 20,
     overlayRotation: 0,
     baseImageOverride: null,
+    baseImageZoom: 1,
+    baseImageOffsetX: 0,
+    baseImageOffsetY: 0,
     priceDelta: 0,
     stoneKind: null,
     shape: null,
@@ -236,6 +242,7 @@ function ChoiceEditor({
 }) {
   const [positioning, setPositioning] = useState(false);
   const [swatchPositioning, setSwatchPositioning] = useState(false);
+  const [basePositioning, setBasePositioning] = useState(false);
 
   return (
     <div className="p-3" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
@@ -359,6 +366,11 @@ function ChoiceEditor({
                 {swatchPositioning ? "ปิดจัด Swatch" : "ขยาย/จัด Swatch"}
               </button>
             )}
+            {choice.baseImageOverride && (
+              <button type="button" onClick={() => setBasePositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
+                {basePositioning ? "ปิดจัดตำแหน่งรูปแหวน" : "จัดตำแหน่งรูปแหวน"}
+              </button>
+            )}
             {choice.overlayImage && (
               <button
                 type="button"
@@ -439,6 +451,20 @@ function ChoiceEditor({
             onZoomChange={(z) => onChange({ ...choice, swatchZoom: z })}
             onOffsetChange={(x, y) => onChange({ ...choice, swatchOffsetX: x, swatchOffsetY: y })}
             onRotationChange={(r) => onChange({ ...choice, swatchRotation: r })}
+          />
+        </div>
+      )}
+
+      {basePositioning && choice.baseImageOverride && baseImage && (
+        <div className="mt-3 max-w-xs">
+          <BaseImagePositioner
+            referenceImage={baseImage}
+            image={choice.baseImageOverride}
+            zoom={choice.baseImageZoom || 1}
+            offsetX={choice.baseImageOffsetX || 0}
+            offsetY={choice.baseImageOffsetY || 0}
+            onZoomChange={(z) => onChange({ ...choice, baseImageZoom: z })}
+            onOffsetChange={(x, y) => onChange({ ...choice, baseImageOffsetX: x, baseImageOffsetY: y })}
           />
         </div>
       )}
@@ -574,6 +600,115 @@ function SwatchPositioner({
       <button
         type="button"
         onClick={() => { onZoomChange(1); onOffsetChange(0, 0); onRotationChange(0); }}
+        className="text-xs tracking-wider uppercase underline font-sans mt-2"
+        style={{ color: "var(--gold-dark)" }}
+      >
+        รีเซ็ต
+      </button>
+    </div>
+  );
+}
+
+// Aligns a baseImageOverride photo (a separate shoot, often framed
+// differently) against the ring's default base photo, shown as a faint
+// ghost, so switching between "Base" choices on the live site doesn't
+// visibly shift the ring — which would throw off any gem overlay positions
+// calibrated against one fixed spot.
+function BaseImagePositioner({
+  referenceImage,
+  image,
+  zoom,
+  offsetX,
+  offsetY,
+  onZoomChange,
+  onOffsetChange,
+}: {
+  referenceImage: string;
+  image: string;
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+  onZoomChange: (zoom: number) => void;
+  onOffsetChange: (x: number, y: number) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragStart = useRef<{ clientX: number; clientY: number; offsetX: number; offsetY: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
+
+  function handleDown(clientX: number, clientY: number) {
+    dragStart.current = { clientX, clientY, offsetX, offsetY };
+    setDragging(true);
+  }
+  function handleMove(clientX: number, clientY: number) {
+    const start = dragStart.current;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!start || !rect) return;
+    const dx = ((clientX - start.clientX) / rect.width) * 100;
+    const dy = ((clientY - start.clientY) / rect.height) * 100;
+    onOffsetChange(start.offsetX + dx, start.offsetY + dy);
+  }
+  function handleUp() {
+    dragStart.current = null;
+    setDragging(false);
+  }
+
+  return (
+    <div>
+      <div
+        ref={containerRef}
+        onMouseDown={(e) => { e.preventDefault(); handleDown(e.clientX, e.clientY); }}
+        onMouseMove={(e) => dragging && handleMove(e.clientX, e.clientY)}
+        onMouseUp={handleUp}
+        onMouseLeave={handleUp}
+        onTouchStart={(e) => { const t = e.touches[0]; if (t) handleDown(t.clientX, t.clientY); }}
+        onTouchMove={(e) => { const t = e.touches[0]; if (t) handleMove(t.clientX, t.clientY); }}
+        onTouchEnd={handleUp}
+        className="relative w-full overflow-hidden select-none"
+        style={{
+          aspectRatio: "1/1",
+          backgroundColor: "var(--img-bg)",
+          border: "1px solid var(--border)",
+          cursor: dragging ? "grabbing" : "grab",
+          touchAction: "none",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={referenceImage}
+          alt=""
+          draggable={false}
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          style={{ opacity: 0.35 }}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image}
+          alt=""
+          draggable={false}
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          style={{ transform: `translate(${offsetX}%, ${offsetY}%) scale(${zoom})` }}
+        />
+      </div>
+      <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
+        รูปจางคือรูปแหวนหลักของแหวนวงนี้ (เอาไว้เทียบ) — ลาก/ซูมรูปนี้ให้แหวนซ้อนทับตำแหน่งเดียวกัน
+      </p>
+
+      <label className="text-xs font-sans block mt-2 mb-1" style={{ color: "var(--muted)" }}>
+        ขยาย ({zoom.toFixed(2)}x)
+      </label>
+      <input
+        type="range"
+        min="0.5"
+        max="2"
+        step="0.01"
+        value={zoom}
+        onChange={(e) => onZoomChange(Number(e.target.value))}
+        className="w-full"
+      />
+
+      <button
+        type="button"
+        onClick={() => { onZoomChange(1); onOffsetChange(0, 0); }}
         className="text-xs tracking-wider uppercase underline font-sans mt-2"
         style={{ color: "var(--gold-dark)" }}
       >
@@ -736,6 +871,9 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             overlayWidth: c.overlayWidth,
             overlayRotation: c.overlayRotation,
             baseImageOverride: c.baseImageOverride,
+            baseImageZoom: c.baseImageZoom,
+            baseImageOffsetX: c.baseImageOffsetX,
+            baseImageOffsetY: c.baseImageOffsetY,
             priceDelta: c.priceDelta,
             stoneKind: c.stoneKind,
             shape: c.shape,
@@ -801,6 +939,9 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         overlayWidth: c.overlayWidth,
         overlayRotation: c.overlayRotation,
         baseImageOverride: c.baseImageOverride,
+        baseImageZoom: c.baseImageZoom,
+        baseImageOffsetX: c.baseImageOffsetX,
+        baseImageOffsetY: c.baseImageOffsetY,
         priceDelta: c.priceDelta,
         stoneKind: c.stoneKind,
         shape: c.shape,
@@ -860,6 +1001,9 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
                 overlayWidth: c.overlayWidth,
                 overlayRotation: c.overlayRotation,
                 baseImageOverride: c.baseImageOverride,
+                baseImageZoom: c.baseImageZoom || 1,
+                baseImageOffsetX: c.baseImageOffsetX || 0,
+                baseImageOffsetY: c.baseImageOffsetY || 0,
                 priceDelta: c.priceDelta,
                 stoneKind,
                 shape,
