@@ -26,7 +26,13 @@ export interface AboutConfig {
   appointment: AboutAppointmentSection;
 }
 
-export const ABOUT_PAGES: { slug: keyof AboutConfig; label: string }[] = [
+// The 4 content-page keys of AboutConfig — deliberately narrower than
+// `keyof AboutConfig` (which also includes "enabled") so admin code can
+// safely index/spread `config[activeTab]` without TypeScript widening that
+// value to include the `enabled: boolean` member.
+export type AboutPageSlug = "owner" | "concept" | "location" | "appointment";
+
+export const ABOUT_PAGES: { slug: AboutPageSlug; label: string }[] = [
   { slug: "owner", label: "Get to know the owner" },
   { slug: "concept", label: "Concept ร้าน" },
   { slug: "location", label: "Our Location" },

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ABOUT_PAGES, DEFAULT_ABOUT, type AboutConfig, type AboutSection } from "@/lib/about-config";
+import { ABOUT_PAGES, DEFAULT_ABOUT, type AboutConfig, type AboutPageSlug, type AboutSection } from "@/lib/about-config";
 
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
@@ -88,7 +88,7 @@ export default function AboutAdmin() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState<keyof AboutConfig>("owner");
+  const [activeTab, setActiveTab] = useState<AboutPageSlug>("owner");
 
   useEffect(() => {
     fetch("/api/settings/about")
