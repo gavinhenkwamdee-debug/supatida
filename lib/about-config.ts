@@ -15,6 +15,11 @@ export interface AboutAppointmentSection extends AboutSection {
 }
 
 export interface AboutConfig {
+  // Whether the "About Us" nav dropdown shows up for customers — lets an
+  // admin fill in content over time without linking to it until they're
+  // ready. The /about/* pages themselves stay reachable by direct URL
+  // regardless, so an admin can preview a page while this is off.
+  enabled: boolean;
   owner: AboutSection;
   concept: AboutSection;
   location: AboutLocationSection;
@@ -29,6 +34,7 @@ export const ABOUT_PAGES: { slug: keyof AboutConfig; label: string }[] = [
 ];
 
 export const DEFAULT_ABOUT: AboutConfig = {
+  enabled: false,
   owner: { title: "Get to Know the Owner", body: "", image: "" },
   concept: { title: "Concept ร้าน", body: "", image: "" },
   location: { title: "Our Location", body: "", image: "", address: "", hours: "", mapEmbedUrl: "" },

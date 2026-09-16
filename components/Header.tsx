@@ -26,6 +26,7 @@ export default function Header() {
   const [payLaterEnabled, setPayLaterEnabled] = useState(false);
   const [payLaterName, setPayLaterName] = useState("Pay Later");
   const [googleReviewsConnected, setGoogleReviewsConnected] = useState(false);
+  const [aboutEnabled, setAboutEnabled] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
 
   useEffect(() => {
@@ -43,6 +44,10 @@ export default function Header() {
     fetch("/api/settings/google-reviews")
       .then((r) => r.json())
       .then((d) => setGoogleReviewsConnected(!!d.connected))
+      .catch(() => {});
+    fetch("/api/settings/about")
+      .then((r) => r.json())
+      .then((d) => setAboutEnabled(!!d.enabled))
       .catch(() => {});
   }, []);
 
@@ -188,50 +193,52 @@ export default function Header() {
             </Link>
           )}
 
-          <div className="relative flex-shrink-0">
-            <button
-              onClick={() => setAboutOpen((v) => !v)}
-              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
-              style={{
-                color: "var(--muted)",
-                borderBottom: "2px solid transparent",
-                background: "none",
-                cursor: "pointer",
-              }}
-            >
-              About Us ▾
-            </button>
+          {aboutEnabled && (
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => setAboutOpen((v) => !v)}
+                className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
+                style={{
+                  color: "var(--muted)",
+                  borderBottom: "2px solid transparent",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                About Us ▾
+              </button>
 
-            {aboutOpen && (
-              <>
-                <button
-                  aria-label="Close menu"
-                  onClick={() => setAboutOpen(false)}
-                  className="fixed inset-0 z-40"
-                  style={{ background: "transparent" }}
-                />
-                <div
-                  className="absolute left-0 top-full z-50 bg-white"
-                  style={{ border: "1px solid var(--border)", minWidth: 220, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-                >
-                  {ABOUT_PAGES.map((p, i) => (
-                    <Link
-                      key={p.slug}
-                      href={`/about/${p.slug}`}
-                      onClick={() => setAboutOpen(false)}
-                      className="block px-4 py-2.5 text-xs font-sans whitespace-nowrap transition-colors hover:opacity-70"
-                      style={{
-                        color: "var(--charcoal)",
-                        borderBottom: i < ABOUT_PAGES.length - 1 ? "1px solid var(--border)" : undefined,
-                      }}
-                    >
-                      {p.label}
-                    </Link>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+              {aboutOpen && (
+                <>
+                  <button
+                    aria-label="Close menu"
+                    onClick={() => setAboutOpen(false)}
+                    className="fixed inset-0 z-40"
+                    style={{ background: "transparent" }}
+                  />
+                  <div
+                    className="absolute left-0 top-full z-50 bg-white"
+                    style={{ border: "1px solid var(--border)", minWidth: 220, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                  >
+                    {ABOUT_PAGES.map((p, i) => (
+                      <Link
+                        key={p.slug}
+                        href={`/about/${p.slug}`}
+                        onClick={() => setAboutOpen(false)}
+                        className="block px-4 py-2.5 text-xs font-sans whitespace-nowrap transition-colors hover:opacity-70"
+                        style={{
+                          color: "var(--charcoal)",
+                          borderBottom: i < ABOUT_PAGES.length - 1 ? "1px solid var(--border)" : undefined,
+                        }}
+                      >
+                        {p.label}
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </nav>
 
