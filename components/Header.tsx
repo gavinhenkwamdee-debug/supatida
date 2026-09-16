@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import SlidingBanner from "./SlidingBanner";
 import { slugify } from "@/lib/slugify";
@@ -28,6 +28,28 @@ export default function Header() {
   const [googleReviewsConnected, setGoogleReviewsConnected] = useState(false);
   const [aboutEnabled, setAboutEnabled] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [aboutMenuPos, setAboutMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const aboutButtonRef = useRef<HTMLButtonElement>(null);
+
+  // The dropdown panel used to be position:absolute inside the horizontally
+  // scrolling nav row — setting overflow-x on that row implicitly forces
+  // overflow-y to "auto" too, so the panel was getting clipped at the nav's
+  // bottom edge instead of floating over the page. position:fixed (placed
+  // from the button's actual screen position) escapes that clipping.
+  function toggleAboutMenu() {
+    if (!aboutOpen && aboutButtonRef.current) {
+      const rect = aboutButtonRef.current.getBoundingClientRect();
+      setAboutMenuPos({ top: rect.bottom, left: rect.left });
+    }
+    setAboutOpen((v) => !v);
+  }
+
+  useEffect(() => {
+    if (!aboutOpen) return;
+    const close = () => setAboutOpen(false);
+    window.addEventListener("scroll", close, { passive: true });
+    return () => window.removeEventListener("scroll", close);
+  }, [aboutOpen]);
 
   useEffect(() => {
     fetch("/api/settings/reviews")
@@ -194,10 +216,11 @@ export default function Header() {
           )}
 
           {aboutEnabled && (
-            <div className="relative flex-shrink-0">
+            <div className="flex-shrink-0">
               <button
-                onClick={() => setAboutOpen((v) => !v)}
-                className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
+                ref={aboutButtonRef}
+                onClick={toggleAboutMenu}
+                className="flex items-center gap-1 px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
                 style={{
                   color: "var(--muted)",
                   borderBottom: "2px solid transparent",
@@ -205,10 +228,16 @@ export default function Header() {
                   cursor: "pointer",
                 }}
               >
-                About Us ▾
+                About Us
+                <svg
+                  width="10" height="10" viewBox="0 0 10 10" fill="none"
+                  style={{ transform: aboutOpen ? "rotate(180deg)" : undefined, transition: "transform 0.15s", flexShrink: 0 }}
+                >
+                  <path d="M1.5 3.5L5 7L8.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
 
-              {aboutOpen && (
+              {aboutOpen && aboutMenuPos && (
                 <>
                   <button
                     aria-label="Close menu"
@@ -217,8 +246,14 @@ export default function Header() {
                     style={{ background: "transparent" }}
                   />
                   <div
-                    className="absolute left-0 top-full z-50 bg-white"
-                    style={{ border: "1px solid var(--border)", minWidth: 220, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                    className="fixed z-50 bg-white"
+                    style={{
+                      top: aboutMenuPos.top,
+                      left: aboutMenuPos.left,
+                      border: "1px solid var(--border)",
+                      minWidth: 220,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    }}
                   >
                     {ABOUT_PAGES.map((p, i) => (
                       <Link
