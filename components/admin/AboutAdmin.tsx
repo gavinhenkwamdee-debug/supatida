@@ -96,12 +96,12 @@ export default function AboutAdmin() {
       .then((d) => { setConfig(d); setLoading(false); });
   }, []);
 
-  async function save() {
+  async function save(next?: AboutConfig) {
     setSaving(true);
     const res = await fetch("/api/settings/about", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(config),
+      body: JSON.stringify(next ?? config),
     });
     if (res.ok) {
       const data = await res.json();
@@ -110,6 +110,12 @@ export default function AboutAdmin() {
       setTimeout(() => setSaved(false), 2000);
     }
     setSaving(false);
+  }
+
+  function toggleEnabled() {
+    const next = { ...config, enabled: !config.enabled };
+    setConfig(next);
+    save(next);
   }
 
   if (loading) return (
@@ -137,6 +143,30 @@ export default function AboutAdmin() {
         <a href="/admin" className="text-xs tracking-widest uppercase underline font-sans" style={{ color: "var(--muted)" }}>
           ← Back
         </a>
+      </div>
+
+      {/* Show/hide toggle */}
+      <div className="bg-white p-6 mb-6" style={{ border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>แสดงเมนู About Us</p>
+            <p className="text-xs font-sans mt-0.5" style={{ color: "var(--muted)" }}>
+              ปิดไว้ได้ระหว่างที่ยังแก้ไขเนื้อหาไม่เสร็จ — ลูกค้าจะยังไม่เห็นเมนูนี้บนเว็บ
+              (แต่ยังเข้าหน้า About Us ได้ตรงๆ ผ่านลิงก์ ถ้ามีคนรู้ URL)
+            </p>
+          </div>
+          <button
+            onClick={toggleEnabled}
+            disabled={saving}
+            className="relative w-14 h-7 rounded-full transition-colors duration-200 disabled:opacity-50 flex-shrink-0"
+            style={{ backgroundColor: config.enabled ? "var(--gold)" : "#D1D5DB" }}
+          >
+            <span
+              className="absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+              style={{ left: config.enabled ? "30px" : "4px" }}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Section tabs */}
