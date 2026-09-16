@@ -267,7 +267,7 @@ export default function AboutAdmin() {
       </div>
 
       <button
-        onClick={save}
+        onClick={() => save()}
         disabled={saving}
         className="w-full py-3 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80 disabled:opacity-50"
         style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
