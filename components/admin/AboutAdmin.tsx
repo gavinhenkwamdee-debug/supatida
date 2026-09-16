@@ -131,6 +131,15 @@ export default function AboutAdmin() {
     setConfig((c) => ({ ...c, [activeTab]: { ...c[activeTab], ...patch } }) as AboutConfig);
   }
 
+  // Image changes save immediately (like the enabled toggle) instead of
+  // waiting for "Save Changes" — losing an upload because the admin didn't
+  // notice it still needed a manual save is the worse failure mode here.
+  function updateFieldAndSave(patch: Partial<AboutSection>) {
+    const next = { ...config, [activeTab]: { ...config[activeTab], ...patch } } as AboutConfig;
+    setConfig(next);
+    save(next);
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-8">
@@ -212,8 +221,8 @@ export default function AboutAdmin() {
 
         <ImageField
           image={section.image}
-          onUploaded={(url) => updateField({ image: url })}
-          onClear={() => updateField({ image: "" })}
+          onUploaded={(url) => updateFieldAndSave({ image: url })}
+          onClear={() => updateFieldAndSave({ image: "" })}
         />
 
         {activeTab === "location" && (
