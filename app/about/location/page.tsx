@@ -24,17 +24,19 @@ export default async function AboutLocationPage() {
         <div className="bg-white p-8" style={{ border: "1px solid var(--border)" }}>
           <h2 className="text-lg tracking-wide mb-4" style={{ color: "var(--charcoal)" }}>{section.title}</h2>
 
-          {section.image && (
-            <div className="relative w-full mb-6 overflow-hidden" style={{ aspectRatio: "4/3", backgroundColor: "var(--img-bg)" }}>
-              <Image src={section.image} alt={section.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 672px" />
-            </div>
-          )}
+          <div className={section.image ? "flex flex-col sm:flex-row gap-6 mb-5" : "mb-5"}>
+            {section.image && (
+              <div className="relative w-full sm:w-2/5 flex-shrink-0 overflow-hidden" style={{ aspectRatio: "4/3", backgroundColor: "var(--img-bg)" }}>
+                <Image src={section.image} alt={section.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 269px" />
+              </div>
+            )}
 
-          {section.body && (
-            <p className="text-sm font-sans whitespace-pre-line leading-relaxed mb-5" style={{ color: "var(--charcoal)" }}>
-              {section.body}
-            </p>
-          )}
+            {section.body && (
+              <p className="text-sm font-sans whitespace-pre-line leading-relaxed flex-1" style={{ color: "var(--charcoal)" }}>
+                {section.body}
+              </p>
+            )}
+          </div>
 
           {(section.address || section.hours) && (
             <div className="mb-5 space-y-2 text-sm font-sans" style={{ color: "var(--charcoal)" }}>
