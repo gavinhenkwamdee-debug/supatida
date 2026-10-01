@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { CustomRing } from "@/lib/customRings";
+import { useRouter } from "next/navigation";
+import type { CustomRing, CustomRingDetail } from "@/lib/customRings";
 
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
 
 export default function CustomRingsAdmin() {
+  const router = useRouter();
   const [rings, setRings] = useState<CustomRing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [duplicatingId, setDuplicatingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/custom-rings").then((r) => r.json()).then((d) => { setRings(d); setLoading(false); });
@@ -20,6 +23,46 @@ export default function CustomRingsAdmin() {
     const res = await fetch(`/api/admin/custom-rings/${ring.id}`, { method: "DELETE" });
     if (res.ok) setRings((prev) => prev.filter((r) => r.id !== ring.id));
     else alert("ลบไม่สำเร็จ");
+  }
+
+  // Copies the whole ring — groups, choices, images, hand-tuned overlay/swatch
+  // positions included. Unlike product photos, /api/upload-custom-ring never
+  // deletes the file a slot previously pointed at when it's replaced, so two
+  // rings sharing an image URL after duplicating is safe.
+  async function handleDuplicate(ring: CustomRing) {
+    setDuplicatingId(ring.id);
+    try {
+      const detailRes = await fetch(`/api/admin/custom-rings/${ring.id}`);
+      if (!detailRes.ok) throw new Error();
+      const detail: CustomRingDetail = await detailRes.json();
+
+      const createRes = await fetch("/api/admin/custom-rings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: `${detail.name} (copy)`, basePrice: detail.basePrice }),
+      });
+      if (!createRes.ok) throw new Error();
+      const created = await createRes.json();
+
+      const putRes = await fetch(`/api/admin/custom-rings/${created.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${detail.name} (copy)`,
+          description: detail.description,
+          basePrice: detail.basePrice,
+          baseImage: detail.baseImage,
+          enabled: detail.enabled,
+          groups: detail.groups,
+        }),
+      });
+      if (!putRes.ok) throw new Error();
+
+      router.push(`/admin/custom-rings/${created.id}/edit`);
+    } catch {
+      alert("Duplicate ไม่สำเร็จ");
+      setDuplicatingId(null);
+    }
   }
 
   if (loading) return <div className="p-8 text-sm font-sans" style={{ color: "var(--muted)" }}>Loading…</div>;
@@ -68,6 +111,9 @@ export default function CustomRingsAdmin() {
               <div className="flex gap-3 flex-shrink-0">
                 <Link href={`/custom-rings/${ring.id}`} target="_blank" className="text-xs tracking-wider uppercase underline" style={{ color: "var(--muted)" }}>View ↗</Link>
                 <Link href={`/admin/custom-rings/${ring.id}/edit`} className="text-xs tracking-wider uppercase underline" style={{ color: "var(--gold-dark)" }}>Edit</Link>
+                <button onClick={() => handleDuplicate(ring)} disabled={duplicatingId === ring.id} className="text-xs tracking-wider uppercase underline disabled:opacity-50" style={{ color: "var(--muted)" }}>
+                  {duplicatingId === ring.id ? "Duplicating…" : "Duplicate"}
+                </button>
                 <button onClick={() => handleDelete(ring)} className="text-xs tracking-wider uppercase underline" style={{ color: "#C0392B" }}>Delete</button>
               </div>
             </div>
