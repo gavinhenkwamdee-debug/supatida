@@ -26,6 +26,7 @@ export default function Header() {
   const [payLaterName, setPayLaterName] = useState("Pay Later");
   const [crmEnabled, setCrmEnabled] = useState(false);
   const [googleReviewsConnected, setGoogleReviewsConnected] = useState(false);
+  const [silverEnabled, setSilverEnabled] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/reviews")
@@ -46,6 +47,10 @@ export default function Header() {
     fetch("/api/settings/google-reviews")
       .then((r) => r.json())
       .then((d) => setGoogleReviewsConnected(!!d.connected))
+      .catch(() => {});
+    fetch("/api/settings/silver-enabled")
+      .then((r) => r.json())
+      .then((d) => setSilverEnabled(!!d.enabled))
       .catch(() => {});
   }, []);
 
@@ -122,6 +127,21 @@ export default function Header() {
               }}
             >
               ⭐ {payLaterName}
+            </Link>
+          )}
+
+          {/* Premium Silver tab — special styling, links to the standalone section */}
+          {silverEnabled && (
+            <Link
+              href="/silver-jewelry"
+              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0 font-bold"
+              style={{
+                color: "white",
+                background: "#1B2A4A",
+                borderBottom: "2px solid #1B2A4A",
+              }}
+            >
+              🔷 Premium Silver
             </Link>
           )}
 
