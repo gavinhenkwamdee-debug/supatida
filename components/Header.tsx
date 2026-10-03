@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import SlidingBanner from "./SlidingBanner";
 import { slugify } from "@/lib/slugify";
+import { ABOUT_PAGES } from "@/lib/about-config";
 
 const CATEGORIES = ["All", "Rings", "Necklaces", "Earrings", "Bracelets", "Pendants"];
 
@@ -24,9 +25,32 @@ export default function Header() {
   const [reviewsEnabled, setReviewsEnabled] = useState(false);
   const [payLaterEnabled, setPayLaterEnabled] = useState(false);
   const [payLaterName, setPayLaterName] = useState("Pay Later");
-  const [crmEnabled, setCrmEnabled] = useState(false);
   const [googleReviewsConnected, setGoogleReviewsConnected] = useState(false);
   const [silverEnabled, setSilverEnabled] = useState(false);
+  const [aboutEnabled, setAboutEnabled] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [aboutMenuPos, setAboutMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const aboutButtonRef = useRef<HTMLButtonElement>(null);
+
+  // The dropdown panel used to be position:absolute inside the horizontally
+  // scrolling nav row — setting overflow-x on that row implicitly forces
+  // overflow-y to "auto" too, so the panel was getting clipped at the nav's
+  // bottom edge instead of floating over the page. position:fixed (placed
+  // from the button's actual screen position) escapes that clipping.
+  function toggleAboutMenu() {
+    if (!aboutOpen && aboutButtonRef.current) {
+      const rect = aboutButtonRef.current.getBoundingClientRect();
+      setAboutMenuPos({ top: rect.bottom, left: rect.left });
+    }
+    setAboutOpen((v) => !v);
+  }
+
+  useEffect(() => {
+    if (!aboutOpen) return;
+    const close = () => setAboutOpen(false);
+    window.addEventListener("scroll", close, { passive: true });
+    return () => window.removeEventListener("scroll", close);
+  }, [aboutOpen]);
 
   useEffect(() => {
     fetch("/api/settings/reviews")
@@ -40,10 +64,6 @@ export default function Header() {
         if (d.campaignName) setPayLaterName(d.campaignName);
       })
       .catch(() => {});
-    fetch("/api/settings/crm-enabled")
-      .then((r) => r.json())
-      .then((d) => setCrmEnabled(!!d.enabled))
-      .catch(() => {});
     fetch("/api/settings/google-reviews")
       .then((r) => r.json())
       .then((d) => setGoogleReviewsConnected(!!d.connected))
@@ -51,6 +71,10 @@ export default function Header() {
     fetch("/api/settings/silver-enabled")
       .then((r) => r.json())
       .then((d) => setSilverEnabled(!!d.enabled))
+      .catch(() => {});
+    fetch("/api/settings/about")
+      .then((r) => r.json())
+      .then((d) => setAboutEnabled(!!d.enabled))
       .catch(() => {});
   }, []);
 
@@ -211,19 +235,64 @@ export default function Header() {
             </Link>
           )}
 
-          {crmEnabled && (
-            <Link
-              href="/account"
-              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
-              style={{
-                color: "var(--muted)",
-                borderBottom: "2px solid transparent",
-                background: "none",
-                cursor: "pointer",
-              }}
-            >
-              👤 บัญชีของฉัน
-            </Link>
+          {aboutEnabled && (
+            <div className="flex-shrink-0">
+              <button
+                ref={aboutButtonRef}
+                onClick={toggleAboutMenu}
+                className="flex items-center gap-1 px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0"
+                style={{
+                  color: "var(--muted)",
+                  borderBottom: "2px solid transparent",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                About Us
+                <svg
+                  width="10" height="10" viewBox="0 0 10 10" fill="none"
+                  style={{ transform: aboutOpen ? "rotate(180deg)" : undefined, transition: "transform 0.15s", flexShrink: 0 }}
+                >
+                  <path d="M1.5 3.5L5 7L8.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              {aboutOpen && aboutMenuPos && (
+                <>
+                  <button
+                    aria-label="Close menu"
+                    onClick={() => setAboutOpen(false)}
+                    className="fixed inset-0 z-40"
+                    style={{ background: "transparent" }}
+                  />
+                  <div
+                    className="fixed z-50 bg-white"
+                    style={{
+                      top: aboutMenuPos.top,
+                      left: aboutMenuPos.left,
+                      border: "1px solid var(--border)",
+                      minWidth: 220,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    }}
+                  >
+                    {ABOUT_PAGES.map((p, i) => (
+                      <Link
+                        key={p.slug}
+                        href={`/about/${p.slug}`}
+                        onClick={() => setAboutOpen(false)}
+                        className="block px-4 py-2.5 text-xs font-sans whitespace-nowrap transition-colors hover:opacity-70"
+                        style={{
+                          color: "var(--charcoal)",
+                          borderBottom: i < ABOUT_PAGES.length - 1 ? "1px solid var(--border)" : undefined,
+                        }}
+                      >
+                        {p.label}
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </nav>

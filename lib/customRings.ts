@@ -40,6 +40,15 @@ export interface CustomRingChoice {
   overlayWidth: number;
   overlayRotation: number;
   baseImageOverride: string | null;
+  // baseImageOverride photos come from separate shoots and often frame the
+  // ring at a different size/position within the square — these nudge the
+  // photo (translate %/scale) at display time so switching between
+  // baseImageOverride choices doesn't visibly shift the ring, keeping any
+  // gem overlays aligned. 1/0/0 = untouched. Unrelated to swatchZoom/Offset,
+  // which only affects the small option swatch, not the big product photo.
+  baseImageZoom: number;
+  baseImageOffsetX: number;
+  baseImageOffsetY: number;
   priceDelta: number;
   sortOrder: number;
   stoneKind: StoneKind | null;
@@ -85,6 +94,9 @@ export interface ChoiceInput {
   overlayWidth: number;
   overlayRotation: number;
   baseImageOverride: string | null;
+  baseImageZoom: number;
+  baseImageOffsetX: number;
+  baseImageOffsetY: number;
   priceDelta: number;
   sortOrder: number;
   stoneKind: StoneKind | null;
@@ -181,6 +193,15 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS color_filter TEXT
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS base_image_zoom NUMERIC NOT NULL DEFAULT 1
+  `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS base_image_offset_x NUMERIC NOT NULL DEFAULT 0
+  `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS base_image_offset_y NUMERIC NOT NULL DEFAULT 0
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -215,6 +236,9 @@ function toChoice(row: any): CustomRingChoice {
     overlayWidth: parseFloat(row.overlay_width),
     overlayRotation: parseFloat(row.overlay_rotation) || 0,
     baseImageOverride: row.base_image_override ?? null,
+    baseImageZoom: parseFloat(row.base_image_zoom) || 1,
+    baseImageOffsetX: parseFloat(row.base_image_offset_x) || 0,
+    baseImageOffsetY: parseFloat(row.base_image_offset_y) || 0,
     priceDelta: parseFloat(row.price_delta),
     sortOrder: row.sort_order,
     stoneKind: (row.stone_kind as StoneKind | null) ?? null,
@@ -339,10 +363,10 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, price_delta, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, base_image_zoom, base_image_offset_x, base_image_offset_y, price_delta, sort_order, stone_kind, shape)
         VALUES (
           ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY}, ${choice.swatchRotation}, ${choice.colorFilter},
-          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.priceDelta}, ${choice.sortOrder},
+          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.baseImageZoom}, ${choice.baseImageOffsetX}, ${choice.baseImageOffsetY}, ${choice.priceDelta}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )
       `;

@@ -141,10 +141,11 @@ function GroupSection({
           value={textValue ?? ""}
           onChange={(e) => onTextChange?.(e.target.value)}
           placeholder={group.placeholder || "พิมพ์ข้อความที่ต้องการ"}
-          maxLength={40}
+          maxLength={10}
           className="w-full px-3 py-2.5 text-sm font-sans outline-none"
           style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
         />
+        <p className="text-xs font-sans mt-1 text-right" style={{ color: "var(--muted)" }}>{(textValue ?? "").length}/10</p>
         {group.priceDelta > 0 && (
           <p className="text-xs font-sans mt-1.5" style={{ color: "var(--muted)" }}>+{THB(group.priceDelta)} หากระบุข้อความ</p>
         )}
@@ -346,10 +347,24 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
   // A choice can replace the whole ring photo (e.g. a different base ring
   // design) instead of just layering a gem on top — last selected group
   // with an override wins.
-  const effectiveBaseImage = useMemo(() => {
-    const override = [...selectedChoices].reverse().find((c) => c.baseImageOverride);
-    return override?.baseImageOverride || ring.baseImage;
-  }, [selectedChoices, ring.baseImage]);
+  const baseImageChoice = useMemo(
+    () => [...selectedChoices].reverse().find((c) => c.baseImageOverride),
+    [selectedChoices]
+  );
+  const effectiveBaseImage = baseImageChoice?.baseImageOverride || ring.baseImage;
+
+  // baseImageOverride photos come from separate shoots and often frame the
+  // ring differently — this admin-tuned pan/zoom (set in the admin's "จัด
+  // ตำแหน่งรูปแหวน" tool) keeps the ring visually in place when switching
+  // between them, so any gem overlay positions stay aligned.
+  const baseImageTransform = useMemo(() => {
+    if (!baseImageChoice) return undefined;
+    const zoom = baseImageChoice.baseImageZoom || 1;
+    const x = baseImageChoice.baseImageOffsetX || 0;
+    const y = baseImageChoice.baseImageOffsetY || 0;
+    if (zoom === 1 && x === 0 && y === 0) return undefined;
+    return `translate(${x}%, ${y}%) scale(${zoom})`;
+  }, [baseImageChoice]);
 
   // Metal color is a CSS tint layered on top of whichever base photo is
   // showing, not a separate photo per color — only color choices ever set
@@ -464,7 +479,10 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
                 src={effectiveBaseImage}
                 alt={ring.name}
                 className="absolute inset-0 w-full h-full object-contain"
-                style={effectiveColorFilter ? { filter: effectiveColorFilter } : undefined}
+                style={{
+                  ...(effectiveColorFilter ? { filter: effectiveColorFilter } : {}),
+                  ...(baseImageTransform ? { transform: baseImageTransform } : {}),
+                }}
               />
             )}
             {selectedChoices.map((c) =>

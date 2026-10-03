@@ -129,6 +129,7 @@ export default function ProductCard({ product, priority = false, popular = false
               "hot-item":   { label: "Hot Item",   bg: "#B8922A" },
               "best-deal":  { label: "Best Deal",  bg: "#2E7D32" },
               "super-sale": { label: "Super Sale", bg: "#C0392B" },
+              "new":        { label: "New",        bg: "#2563EB" },
             };
             const c = cfg[product.badge];
             if (!c) return null;
