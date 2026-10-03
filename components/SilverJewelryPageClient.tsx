@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { SilverSectionConfig, SilverProduct, SilverTier } from "@/lib/silverJewelryTypes";
 import { SILVER_TIERS } from "@/lib/silverJewelryTypes";
@@ -20,6 +21,18 @@ export default function SilverJewelryPageClient({
   products: SilverProduct[];
 }) {
   const banner = config.banner;
+
+  const availableTiers = useMemo(
+    () =>
+      SILVER_TIERS.filter(
+        (tier) => config.tiers[tier].enabled && products.some((p) => p.tier === tier)
+      ),
+    [config.tiers, products]
+  );
+
+  const [selectedTier, setSelectedTier] = useState<SilverTier | null>(null);
+  const activeTier = selectedTier && availableTiers.includes(selectedTier) ? selectedTier : availableTiers[0];
+  const activeProducts = activeTier ? products.filter((p) => p.tier === activeTier) : [];
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#E7E9EC" }}>
@@ -56,34 +69,41 @@ export default function SilverJewelryPageClient({
         </p>
       </div>
 
-      {/* Tiers */}
-      {SILVER_TIERS.map((tier) => {
-        const tierConfig = config.tiers[tier];
-        if (!tierConfig.enabled) return null;
-        const tierProducts = products.filter((p) => p.tier === tier);
-        if (tierProducts.length === 0) return null;
-
-        return (
-          <section key={tier} className="max-w-6xl mx-auto px-6 pb-16">
-            <div className="flex items-center gap-4 mb-6">
-              <span
-                className="text-xs tracking-[0.3em] uppercase font-sans px-4 py-2"
-                style={{ backgroundColor: TIER_ACCENT[tier], color: "#F3F4F6" }}
-              >
-                {tierConfig.label}
-              </span>
-              {tierConfig.tagline && (
-                <span className="text-xs font-sans" style={{ color: "#6B7686" }}>{tierConfig.tagline}</span>
-              )}
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {tierProducts.map((p) => (
-                <SilverProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      {/* Tier tabs */}
+      {activeTier && (
+        <section className="max-w-6xl mx-auto px-6 pb-16">
+          <div className="flex items-center gap-2 mb-2 border-b" style={{ borderColor: "#D4D8DD" }}>
+            {availableTiers.map((tier) => {
+              const isActive = tier === activeTier;
+              return (
+                <button
+                  key={tier}
+                  onClick={() => setSelectedTier(tier)}
+                  className="px-5 py-3 text-xs tracking-[0.3em] uppercase font-sans transition-colors"
+                  style={{
+                    color: isActive ? TIER_ACCENT[tier] : "#9AA2AF",
+                    borderBottom: isActive ? `2px solid ${TIER_ACCENT[tier]}` : "2px solid transparent",
+                    marginBottom: -1,
+                    fontWeight: isActive ? 700 : 400,
+                  }}
+                >
+                  {config.tiers[tier].label}
+                </button>
+              );
+            })}
+          </div>
+          {config.tiers[activeTier].tagline && (
+            <p className="text-xs font-sans mt-4" style={{ color: "#6B7686" }}>
+              {config.tiers[activeTier].tagline}
+            </p>
+          )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+            {activeProducts.map((p) => (
+              <SilverProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <SilverJewelryPopup config={config.popup} />
     </div>
