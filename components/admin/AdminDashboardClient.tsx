@@ -47,6 +47,7 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
   const [togglingHide, setTogglingHide] = useState(false);
   const [savingBadge, setSavingBadge] = useState(false);
   const [togglingIgi, setTogglingIgi] = useState(false);
+  const [togglingGci, setTogglingGci] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
 
   async function handleDelete() {
@@ -100,6 +101,17 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
     setTogglingIgi(false);
   }
 
+  async function toggleGci() {
+    setTogglingGci(true);
+    const res = await fetch(`/api/products/${product.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gci: !product.gci }),
+    });
+    if (res.ok) { const updated = await res.json(); onUpdated(updated); }
+    setTogglingGci(false);
+  }
+
   // Copies everything except images (specs, toggles included) so an admin
   // adding a near-identical product only has to retype the photo, not the
   // rest. Images are deliberately left blank rather than pointing at the
@@ -133,6 +145,7 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
           bestSeller: product.bestSeller,
           badge: product.badge,
           igi: product.igi,
+          gci: product.gci,
         }),
       });
       if (!updateRes.ok) throw new Error();
@@ -258,6 +271,23 @@ function AdminRow({ product, onDeleted, onUpdated }: { product: Product; onDelet
           }}
         >
           {product.igi ? "💎 IGI" : "—"}
+        </button>
+      </td>
+
+      {/* GCI toggle */}
+      <td className="px-4 py-3">
+        <button
+          onClick={toggleGci}
+          disabled={togglingGci}
+          className="text-xs px-2 py-1 rounded font-sans transition-all disabled:opacity-50"
+          style={{
+            backgroundColor: product.gci ? "#8C5E2A" : "#F5F0E8",
+            color: product.gci ? "white" : "var(--muted)",
+            border: "1px solid",
+            borderColor: product.gci ? "#8C5E2A" : "var(--border)",
+          }}
+        >
+          {product.gci ? "📄 GCI" : "—"}
         </button>
       </td>
 
@@ -495,7 +525,7 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#FAF8F4" }}>
-                  {["Product", "Category", "Price", "Images", "Best Seller", "Status", "Visibility", "IGI", "Views", "LINE Clicks", "Actions"].map((h) => (
+                  {["Product", "Category", "Price", "Images", "Best Seller", "Status", "Visibility", "IGI", "GCI", "Views", "LINE Clicks", "Actions"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs tracking-widest uppercase"
                       style={{ color: "var(--muted)" }}>
                       {h}

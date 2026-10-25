@@ -156,11 +156,17 @@ export default function ProductCard({ product, priority = false, popular = false
             );
           })()}
 
-          {/* IGI badge */}
-          {product.igi && (
-            <div className="absolute bottom-2 left-2 pointer-events-none">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/igi-logo.png" alt="IGI" style={{ width: "36px", opacity: 0.9 }} />
+          {/* IGI / GCI badges */}
+          {(product.igi || product.gci) && (
+            <div className="absolute bottom-2 left-2 flex items-end gap-1 pointer-events-none">
+              {product.igi && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/igi-logo.png" alt="IGI" style={{ width: "36px", opacity: 0.9 }} />
+              )}
+              {product.gci && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/gci-logo.jpg" alt="GCI" style={{ width: "36px", opacity: 0.9 }} />
+              )}
             </div>
           )}
 

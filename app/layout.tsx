@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s | Supatida",
   },
   description:
-    "Supatida จำหน่ายเครื่องประดับเพชรแล็บกรอน (Lab Grown Diamond) คุณภาพสูง แหวน สร้อยคอ ต่างหู กำไล รับรองมาตรฐาน IGI ราคาสมเหตุสมผล",
+    "Supatida จำหน่ายเครื่องประดับเพชรแล็บกรอน (Lab Grown Diamond) คุณภาพสูง แหวน สร้อยคอ ต่างหู กำไล รับรองมาตรฐาน IGI พร้อมบริการออกแบบแหวนเฉพาะคุณ ราคาสมเหตุสมผล ตั้งแต่ปี 2022",
   keywords: ["lab grown diamond", "เพชรแล็บกรอน", "เครื่องประดับเพชร", "แหวนเพชร", "สร้อยคอเพชร", "supatida", "IGI certified"],
   authors: [{ name: "Supatida Jewelry" }],
   creator: "Supatida Jewelry",

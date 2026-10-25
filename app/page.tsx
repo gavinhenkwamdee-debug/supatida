@@ -74,6 +74,17 @@ export default async function CatalogPage({ searchParams }: PageProps) {
     <div style={{ backgroundColor: "var(--ivory)" }} className="flex flex-col min-h-screen">
       <CatalogClient>
         <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
+          {/* Google often ignores the <meta name="description"> for branded
+              searches ("supatida") and pulls a snippet from visible page
+              text instead — without this, the first text it finds is the
+              header's nav/category labels strung together into a run-on
+              fragment. A short, well-formed sentence here gives it a
+              coherent fallback that still matches the meta description. */}
+          <p className="text-center text-xs font-sans mb-10 max-w-xl mx-auto leading-relaxed" style={{ color: "var(--muted)" }}>
+            Supatida จำหน่ายเครื่องประดับเพชรแล็บกรอน (Lab Grown Diamond) คุณภาพสูง ดีไซน์ร่วมสมัย
+            ทั้งแหวน สร้อยคอ ต่างหู และกำไล รับรองมาตรฐาน IGI พร้อมบริการออกแบบแหวนเฉพาะคุณ ราคาสมเหตุสมผล ตั้งแต่ปี 2022
+          </p>
+
           <div className="text-center mb-10">
             <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "var(--gold)" }}>
               {sp.category && sp.category !== "All" ? sp.category : "Collections"}
