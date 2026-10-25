@@ -20,6 +20,7 @@ export interface Product {
   bestSeller: boolean;
   badge: string | null;
   igi: boolean;
+  gci: boolean;
   views: number;
   lineClicks: number;
   createdAt: string;
@@ -62,6 +63,9 @@ export async function initDB() {
     ALTER TABLE products ADD COLUMN IF NOT EXISTS igi BOOLEAN NOT NULL DEFAULT FALSE
   `;
   await sql`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS gci BOOLEAN NOT NULL DEFAULT FALSE
+  `;
+  await sql`
     ALTER TABLE products ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0
   `;
   await sql`
@@ -85,6 +89,7 @@ function toProduct(row: any): Product {
     bestSeller: row.best_seller ?? false,
     badge: row.badge ?? null,
     igi: row.igi ?? false,
+    gci: row.gci ?? false,
     views: row.views ?? 0,
     lineClicks: row.line_clicks ?? 0,
     createdAt: row.created_at,
@@ -158,6 +163,7 @@ export async function updateProduct(
       hidden        = COALESCE(${data.hidden ?? null}, hidden),
       best_seller   = COALESCE(${data.bestSeller ?? null}, best_seller),
       igi           = COALESCE(${data.igi ?? null}, igi),
+      gci           = COALESCE(${data.gci ?? null}, gci),
       updated_at    = NOW()
     WHERE id = ${id}
     RETURNING *
