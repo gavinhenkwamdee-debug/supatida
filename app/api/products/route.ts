@@ -45,6 +45,7 @@ export async function POST(request: Request) {
       bestSeller: false,
       badge: null,
       igi: false,
+      gci: false,
     });
 
     revalidateTag("products", "default");

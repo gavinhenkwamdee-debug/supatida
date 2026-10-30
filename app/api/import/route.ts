@@ -21,6 +21,7 @@ export async function POST(request: Request) {
         bestSeller: false,
         badge: null,
         igi: false,
+        gci: false,
       });
       created.push(product);
     }

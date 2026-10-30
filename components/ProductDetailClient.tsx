@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import SlidingBanner from "./SlidingBanner";
-import IgiLogo from "./IgiLogo";
+import CertLogos from "./CertLogos";
 import PopupBanner from "./PopupBanner";
 import { getOriginalPrice, getDiscountPercent } from "@/lib/pricing";
 import type { Product } from "@/lib/db";
@@ -244,7 +244,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         className="text-center py-8 mt-16 text-xs tracking-widest uppercase font-sans">
         © {new Date().getFullYear()} Supatida · Lab Grown Diamond Jewelry
       </footer>
-      {product.igi && <IgiLogo />}
+      <CertLogos igi={product.igi} gci={product.gci} />
       <PopupBanner page="product" />
     </div>
   );
