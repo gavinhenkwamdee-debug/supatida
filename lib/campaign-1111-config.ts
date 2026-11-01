@@ -17,13 +17,21 @@ export interface CampaignTierConfig {
   description: string;
 }
 
+// A product's assignment is either one of the three real discount tiers, or
+// "none" — explicitly opted out of the campaign entirely (full price, not
+// listed on any /1111 tab). "extra" is never stored (see assignments below),
+// so in practice a stored value is "wishlist" | "mixmatch" | "none".
+export type StoredAssignment = Exclude<CampaignTierKey, "extra"> | "none";
+export type AssignedTier = CampaignTierKey | "none";
+
 export interface Campaign1111Config {
   enabled: boolean;
   bannerImage: string;
   tiers: Record<CampaignTierKey, CampaignTierConfig>;
-  // productId -> tier. A product has exactly one value (mutually exclusive);
-  // anything absent is DEFAULT_TIER, so every product lands in exactly one tier.
-  assignments: Record<string, CampaignTierKey>;
+  // productId -> assignment. A product has at most one value; anything
+  // absent defaults to DEFAULT_TIER ("extra"), and "none" opts a product out
+  // of the campaign entirely instead of falling into that default.
+  assignments: Record<string, StoredAssignment>;
 }
 
 export const DEFAULT_CAMPAIGN_1111: Campaign1111Config = {
@@ -56,7 +64,7 @@ export function fillPercent(text: string, percent: number): string {
   return text.replace(/\{percent\}/g, String(percent));
 }
 
-export function tierOf(config: Campaign1111Config, productId: number): CampaignTierKey {
+export function tierOf(config: Campaign1111Config, productId: number): AssignedTier {
   return config.assignments[String(productId)] ?? DEFAULT_TIER;
 }
 
@@ -84,9 +92,11 @@ export function productCampaign(
   config: Campaign1111Config | null,
   product: { id: number; price: number; soldOut: boolean }
 ): ProductCampaign | null {
-  // Sold-out pieces aren't part of the campaign (same rule as /1111).
+  // Sold-out pieces, and products explicitly opted out, aren't part of the
+  // campaign (same rule as /1111).
   if (!config || !config.enabled || product.soldOut) return null;
   const tier = tierOf(config, product.id);
+  if (tier === "none") return null;
   const percent = config.tiers[tier].percent;
   if (tier === "mixmatch") return { kind: "mixmatch", percent };
   return { kind: "discount", percent, price: campaignPrice(product.price, percent) };
@@ -118,9 +128,9 @@ export function normalizeCampaign1111(raw: unknown): Campaign1111Config {
     };
   }
 
-  const assignments: Record<string, CampaignTierKey> = {};
+  const assignments: Record<string, StoredAssignment> = {};
   for (const [id, tier] of Object.entries(src.assignments ?? {})) {
-    if (/^\d+$/.test(id) && (tier === "wishlist" || tier === "mixmatch")) assignments[id] = tier;
+    if (/^\d+$/.test(id) && (tier === "wishlist" || tier === "mixmatch" || tier === "none")) assignments[id] = tier;
   }
 
   return {
