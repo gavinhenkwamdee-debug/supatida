@@ -16,6 +16,16 @@ const THB = (n: number) =>
 
 const NONE_LABEL = "ไม่ร่วมรายการ";
 
+// <input type="datetime-local"> wants/returns local wall-clock time with no
+// timezone — Date's getters/setters already work in the browser's local
+// timezone, so round-tripping through them is all that's needed.
+function toDatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 // "none" (opted out entirely) sits alongside the three real discount tiers
 // everywhere products get assigned or filtered, but it has no entry in
 // config.tiers — there's no percent/copy to edit for "no discount".
@@ -226,6 +236,25 @@ export default function Campaign1111Admin() {
             <span className="absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200" style={{ left: config.enabled ? "30px" : "4px" }} />
           </button>
         </div>
+      </div>
+
+      {/* Countdown + urgency note */}
+      <div className={cardClass} style={cardStyle}>
+        <h2 className="text-xs tracking-widest uppercase mb-4 font-sans" style={{ color: "var(--muted)" }}>ตัวนับถอยหลัง + ข้อความเร่งด่วน</h2>
+        <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>แคมเปญสิ้นสุดวันที่ (เว้นว่างเพื่อไม่แสดงตัวนับถอยหลัง)</label>
+        <input
+          type="datetime-local"
+          value={toDatetimeLocal(config.endsAt)}
+          onChange={(e) => {
+            if (!e.target.value) { patch({ endsAt: "" }); return; }
+            const d = new Date(e.target.value);
+            if (!Number.isNaN(d.getTime())) patch({ endsAt: d.toISOString() });
+          }}
+          className={`${inputClass} mb-4`}
+          style={inputStyle}
+        />
+        <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>ข้อความเร่งด่วน (โชว์ใต้ตัวนับถอยหลัง เว้นว่างเพื่อไม่แสดง)</label>
+        <input value={config.urgencyNote} onChange={(e) => patch({ urgencyNote: e.target.value })} className={inputClass} style={inputStyle} />
       </div>
 
       {/* Tiers */}
