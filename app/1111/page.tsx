@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { getAllProducts } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
+import { ADMIN_TOKEN_COOKIE, isAdminToken } from "@/lib/admin-auth";
 import {
   DEFAULT_CAMPAIGN_1111,
   normalizeCampaign1111,
@@ -25,6 +27,14 @@ export default async function Campaign1111Page({
   const { tab } = await searchParams;
   const config = normalizeCampaign1111(await getSetting("campaign-1111", DEFAULT_CAMPAIGN_1111));
 
+  // Admin can preview the full page via their logged-in cookie even while
+  // the campaign is off — customers without that cookie still see the
+  // "disabled" placeholder, so the page stays invisible to real shoppers
+  // right up until the admin flips it on.
+  const cookieStore = await cookies();
+  const isAdmin = isAdminToken(cookieStore.get(ADMIN_TOKEN_COOKIE)?.value);
+  const isAdminPreview = !config.enabled && isAdmin;
+
   // Hidden and sold-out pieces can't be bought, so they never enter any tier.
   const products = (await getAllProducts()).filter((p) => !p.hidden && !p.soldOut);
 
@@ -45,5 +55,5 @@ export default async function Campaign1111Page({
 
   const initialTab = CAMPAIGN_TIER_KEYS.find((k) => k === tab) ?? "wishlist";
 
-  return <Campaign1111Client config={config} productsByTier={byTier} initialTab={initialTab} />;
+  return <Campaign1111Client config={config} productsByTier={byTier} initialTab={initialTab} isAdminPreview={isAdminPreview} />;
 }

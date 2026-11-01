@@ -1,4 +1,4 @@
-const ADMIN_TOKEN_COOKIE = "supatida_admin";
+export const ADMIN_TOKEN_COOKIE = "supatida_admin";
 
 function parseCookie(header: string | null, name: string): string | undefined {
   if (!header) return undefined;
@@ -10,10 +10,14 @@ function parseCookie(header: string | null, name: string): string | undefined {
   return undefined;
 }
 
-export function isAdminRequest(request: Request): boolean {
-  const token = parseCookie(request.headers.get("cookie"), ADMIN_TOKEN_COOKIE);
+export function isAdminToken(token: string | undefined): boolean {
   const expected = Buffer.from(
     process.env.ADMIN_PASSWORD || "supatida2024"
   ).toString("base64");
   return token === expected;
+}
+
+export function isAdminRequest(request: Request): boolean {
+  const token = parseCookie(request.headers.get("cookie"), ADMIN_TOKEN_COOKIE);
+  return isAdminToken(token);
 }
