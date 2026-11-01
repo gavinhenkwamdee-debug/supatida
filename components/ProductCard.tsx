@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/db";
 import { getOriginalPrice, getDiscountPercent } from "@/lib/pricing";
+import type { ProductCampaign } from "@/lib/campaign-1111-config";
 
 const DIAMOND_SVG = (
   <svg viewBox="0 0 80 80" className="w-24 h-24 opacity-20" fill="none">
@@ -21,7 +22,17 @@ const LINE_ICON = (
   </svg>
 );
 
-export default function ProductCard({ product, priority = false, popular = false }: { product: Product; priority?: boolean; popular?: boolean }) {
+export default function ProductCard({
+  product,
+  priority = false,
+  popular = false,
+  campaign = null,
+}: {
+  product: Product;
+  priority?: boolean;
+  popular?: boolean;
+  campaign?: ProductCampaign | null;
+}) {
   const images = product.images.filter(Boolean);
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
@@ -221,17 +232,42 @@ export default function ProductCard({ product, priority = false, popular = false
 
         {!product.soldOut && (
           <div className="mb-2 sm:mb-3">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>
-                {fmt(originalPrice)}
-              </span>
-              <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#C0392B", color: "white", fontSize: "9px" }}>
-                -{discountPct}%
-              </span>
-            </div>
-            <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "var(--gold)" }}>
-              {priceFormatted}
-            </p>
+            {campaign?.kind === "discount" ? (
+              // Campaign live: the listed price is the "before" price and the
+              // campaign price is the real one — same number as on /1111.
+              <>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>
+                    {priceFormatted}
+                  </span>
+                  <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#C0392B", color: "white", fontSize: "9px" }}>
+                    11.11 -{campaign.percent}%
+                  </span>
+                </div>
+                <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "#C0392B" }}>
+                  {fmt(campaign.price)}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>
+                    {fmt(originalPrice)}
+                  </span>
+                  <span className="text-xs font-sans px-1.5 py-0.5 font-bold" style={{ backgroundColor: "#C0392B", color: "white", fontSize: "9px" }}>
+                    -{discountPct}%
+                  </span>
+                </div>
+                <p className="text-sm sm:text-xl font-sans font-light tracking-wide" style={{ color: "var(--gold)" }}>
+                  {priceFormatted}
+                </p>
+                {campaign?.kind === "mixmatch" && (
+                  <p className="text-[10px] sm:text-xs font-sans mt-1" style={{ color: "#C0392B" }}>
+                    11.11 · เลือก 2 ชิ้น ลด {campaign.percent}%
+                  </p>
+                )}
+              </>
+            )}
           </div>
         )}
 

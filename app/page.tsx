@@ -3,6 +3,8 @@ import { getAllProducts } from "@/lib/db";
 import CatalogClient from "@/components/CatalogClient";
 import ProductCard from "@/components/ProductCard";
 import { seededShuffle } from "@/lib/shuffle";
+import { getActiveCampaign1111 } from "@/lib/campaign-1111";
+import { productCampaign } from "@/lib/campaign-1111-config";
 import type { Product } from "@/lib/db";
 
 const POPULAR_COUNT = 10;
@@ -63,6 +65,7 @@ function sortDefault(products: Product[]): { ordered: Product[]; popularIds: Set
 export default async function CatalogPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const all = await getAllProducts();
+  const campaign = await getActiveCampaign1111();
   const filtered = filterProducts(all, sp.category, sp.minPrice, sp.maxPrice);
   const hasFilters = sp.category || sp.minPrice || sp.maxPrice;
 
@@ -97,6 +100,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
                   product={product}
                   priority={i < 4}
                   popular={popularIds.has(product.id)}
+                  campaign={productCampaign(campaign, product)}
                 />
               ))}
             </div>

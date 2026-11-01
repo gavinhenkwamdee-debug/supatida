@@ -262,64 +262,75 @@ function MixMatch({ products, percent }: { products: CampaignProduct[]; percent:
   }
 
   return (
-    <div className="pb-32">
-      <ProductBrowser products={products} percent={percent} mode="select" picked={picked.map((p) => p.id)} onToggle={toggle} />
-
-      {/* Sticky selection bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white" style={{ borderTop: "1px solid var(--border)", boxShadow: "0 -4px 16px rgba(0,0,0,0.08)" }}>
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="flex gap-2 flex-shrink-0">
-            {[0, 1].map((i) => {
-              const p = picked[i];
-              return (
-                <div key={i} className="relative">
-                  {p ? (
-                    <>
-                      <Thumb src={p.image} size={48} alt={p.name} />
-                      <button
-                        type="button"
-                        aria-label={`เอา ${p.name} ออก`}
-                        onClick={() => toggle(p)}
-                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] flex items-center justify-center text-white"
-                        style={{ backgroundColor: "var(--charcoal)" }}
-                      >
-                        ✕
-                      </button>
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-center text-xs font-sans" style={{ width: 48, height: 48, border: "1px dashed var(--border)", color: "var(--muted)" }}>
-                      {i + 1}
-                    </div>
-                  )}
+    <div>
+      {/* Selection panel — sticks to the top while the grid scrolls under it.
+          It's in normal flow (not position:fixed at the bottom) so the two
+          picks and the estimated price can't end up off-screen. */}
+      <div
+        className="sticky top-0 z-30 bg-white mb-5 p-3 sm:p-4"
+        style={{ border: "1px solid var(--charcoal)", boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }}
+      >
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          {[0, 1].map((i) => {
+            const p = picked[i];
+            return p ? (
+              <div key={i} className="flex items-center gap-2 p-1.5 min-w-0" style={{ border: "1px solid var(--border)" }}>
+                <Thumb src={p.image} size={44} alt={p.name} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] leading-tight truncate" style={{ color: "var(--charcoal)" }}>{p.name}</p>
+                  <p className="text-[11px] font-sans" style={{ color: "var(--muted)" }}>{fmt(p.price)}</p>
                 </div>
-              );
-            })}
-          </div>
+                <button
+                  type="button"
+                  aria-label={`เอา ${p.name} ออก`}
+                  onClick={() => toggle(p)}
+                  className="w-6 h-6 rounded-full text-[10px] flex items-center justify-center text-white flex-shrink-0"
+                  style={{ backgroundColor: "var(--charcoal)" }}
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div
+                key={i}
+                className="flex items-center justify-center text-xs font-sans"
+                style={{ height: 55, border: "1px dashed var(--border)", color: "var(--muted)" }}
+              >
+                ชิ้นที่ {i + 1}
+              </div>
+            );
+          })}
+        </div>
 
-          <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
             {full ? (
               <>
-                <p className="text-[11px] font-sans" style={{ color: "var(--muted)" }}>ราคาประเมินหลังลด {percent}%</p>
-                <p className="text-lg font-sans leading-tight" style={{ color: ACCENT }}>{fmt(est.total)}</p>
+                <p className="text-[11px] font-sans" style={{ color: "var(--muted)" }}>
+                  <span className="line-through">{fmt(est.subtotal)}</span> · ราคาประเมินหลังลด {percent}%
+                </p>
+                <p className="text-2xl font-sans leading-tight" style={{ color: ACCENT }}>{fmt(est.total)}</p>
               </>
             ) : (
-              <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>
-                เลือกแล้ว {picked.length}/2 ชิ้น — {picked.length === 0 ? "แตะสินค้าเพื่อเลือก" : "เลือกอีก 1 ชิ้น"}
-              </p>
+              <>
+                <p className="text-[11px] font-sans" style={{ color: "var(--muted)" }}>ราคาประเมินหลังลด {percent}%</p>
+                <p className="text-sm font-sans" style={{ color: "var(--charcoal)" }}>เลือกอีก {2 - picked.length} ชิ้นเพื่อดูราคา</p>
+              </>
             )}
           </div>
-
           <button
             type="button"
             disabled={!full}
             onClick={openSummary}
-            className="px-4 py-3 text-xs tracking-widest uppercase font-sans transition-opacity disabled:opacity-40 flex-shrink-0"
+            className="px-5 py-3 text-xs tracking-widest uppercase font-sans transition-opacity disabled:opacity-40 flex-shrink-0"
             style={{ backgroundColor: "var(--charcoal)", color: "var(--gold-light)" }}
           >
             ดูสรุป
           </button>
         </div>
       </div>
+
+      <ProductBrowser products={products} percent={percent} mode="select" picked={picked.map((p) => p.id)} onToggle={toggle} />
 
       {showSummary && full && (
         <SummarySheet items={picked} percent={percent} stamp={stamp} onClose={() => setShowSummary(false)} />

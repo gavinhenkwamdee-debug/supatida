@@ -8,6 +8,7 @@ import CertLogos from "./CertLogos";
 import PopupBanner from "./PopupBanner";
 import { getOriginalPrice, getDiscountPercent } from "@/lib/pricing";
 import type { Product } from "@/lib/db";
+import type { ProductCampaign } from "@/lib/campaign-1111-config";
 
 
 const DIAMOND_SVG = (
@@ -63,9 +64,10 @@ function LineButton({ product }: { product: Product }) {
   );
 }
 
-export default function ProductDetailClient({ product }: { product: Product }) {
+export default function ProductDetailClient({ product, campaign = null }: { product: Product; campaign?: ProductCampaign | null }) {
   const [activeImg, setActiveImg] = useState(0);
   const images = product.images.filter(Boolean);
+  const shownPrice = campaign?.kind === "discount" ? campaign.price : product.price;
 
   // Fire ViewContent once per product page
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         content_ids: [String(product.id)],
         content_name: product.name,
         content_type: "product",
-        value: product.price,
+        value: shownPrice,
         currency: "THB",
       });
     }
@@ -86,7 +88,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           item_id: String(product.id),
           item_name: product.name,
           item_category: product.category,
-          price: product.price,
+          price: shownPrice,
         }],
       });
     }
@@ -185,6 +187,18 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               const fmt = (n: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
               const originalPrice = getOriginalPrice(product.id, product.price);
               const discountPct = getDiscountPercent(product.id);
+              if (campaign?.kind === "discount") {
+                // Campaign live: same price the customer saw on /1111.
+                return (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-sm font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(product.price)}</span>
+                      <span className="text-xs font-sans font-bold px-2 py-0.5" style={{ backgroundColor: "#C0392B", color: "white" }}>11.11 -{campaign.percent}%</span>
+                    </div>
+                    <p className="text-3xl font-sans font-light" style={{ color: "#C0392B" }}>{fmt(campaign.price)}</p>
+                  </div>
+                );
+              }
               return (
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -192,6 +206,11 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                     <span className="text-xs font-sans font-bold px-2 py-0.5" style={{ backgroundColor: "#C0392B", color: "white" }}>-{discountPct}%</span>
                   </div>
                   <p className="text-3xl font-sans font-light" style={{ color: "var(--gold)" }}>{fmt(product.price)}</p>
+                  {campaign?.kind === "mixmatch" && (
+                    <Link href="/1111?tab=mixmatch" className="inline-block mt-2 text-xs font-sans underline" style={{ color: "#C0392B" }}>
+                      11.11 · เลือก 2 ชิ้น ลด {campaign.percent}% — ดูโปรโมชั่น →
+                    </Link>
+                  )}
                 </div>
               );
             })()}

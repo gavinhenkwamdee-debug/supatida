@@ -6,6 +6,8 @@ import { getSetting } from "@/lib/settings";
 import { DEFAULT_PAYLATER, type PayLaterConfig } from "@/lib/paylater-config";
 import { slugify } from "@/lib/slugify";
 import PayLaterProductCard from "@/components/PayLaterProductCard";
+import { getActiveCampaign1111 } from "@/lib/campaign-1111";
+import { productCampaign } from "@/lib/campaign-1111-config";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
   }
 
   const allProducts = await getAllProducts();
+  const campaign1111 = await getActiveCampaign1111();
   const productIds = config.productIds || [];
 
   const promoProducts = allProducts
@@ -81,7 +84,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {promoProducts.map((product) => (
-                <PayLaterProductCard key={product.id} product={product} />
+                <PayLaterProductCard key={product.id} product={product} campaign={productCampaign(campaign1111, product)} />
               ))}
             </div>
           )}

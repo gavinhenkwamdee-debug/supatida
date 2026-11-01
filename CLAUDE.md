@@ -121,3 +121,9 @@ prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5
 - Hidden and sold-out products never appear in any tier. The campaign shows the
   listed `product.price` as the "before" price, not the fake markup from
   `lib/pricing.ts`.
+- **One price everywhere:** while the campaign is on, the catalog cards, product
+  detail page (incl. JSON-LD/meta price) and the PayLater campaign cards show the
+  campaign price too. Pages call `getActiveCampaign1111()` (null when off) and
+  pass `productCampaign(config, product)` down — never recompute the discount in
+  a component. Mix & Match products have no single-item price (the 11% is for a
+  pair), so they keep the normal price plus a pointer to `/1111?tab=mixmatch`.

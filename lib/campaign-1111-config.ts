@@ -71,6 +71,27 @@ export function campaignPrice(price: number, percent: number): number {
   return Math.ceil(afterDiscount / 1e8) * 100;
 }
 
+// What the rest of the site needs to know about one product while the
+// campaign is live, so a product shows the same price everywhere.
+//  - "discount": Wishlist / Little Extra — a real standalone price cut.
+//  - "mixmatch": the 11% only applies to a PAIR, so it has no single-item
+//    price; pages show the normal price plus a pointer to the pair offer.
+export type ProductCampaign =
+  | { kind: "discount"; percent: number; price: number }
+  | { kind: "mixmatch"; percent: number };
+
+export function productCampaign(
+  config: Campaign1111Config | null,
+  product: { id: number; price: number; soldOut: boolean }
+): ProductCampaign | null {
+  // Sold-out pieces aren't part of the campaign (same rule as /1111).
+  if (!config || !config.enabled || product.soldOut) return null;
+  const tier = tierOf(config, product.id);
+  const percent = config.tiers[tier].percent;
+  if (tier === "mixmatch") return { kind: "mixmatch", percent };
+  return { kind: "discount", percent, price: campaignPrice(product.price, percent) };
+}
+
 // Fields shared with the server so both sides agree on the exact shape.
 function toNumber(v: unknown, fallback: number): number {
   const n = typeof v === "number" ? v : parseFloat(String(v));
