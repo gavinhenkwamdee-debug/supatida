@@ -32,6 +32,12 @@ export interface Campaign1111Config {
   // absent defaults to DEFAULT_TIER ("extra"), and "none" opts a product out
   // of the campaign entirely instead of falling into that default.
   assignments: Record<string, StoredAssignment>;
+  // ISO datetime the campaign ends — drives the /1111 countdown. Empty
+  // string means "no countdown shown".
+  endsAt: string;
+  // Shown near the top of /1111 — each piece is a unique, one-off item, so
+  // this nudges "don't wait, it won't restock" urgency.
+  urgencyNote: string;
 }
 
 export const DEFAULT_CAMPAIGN_1111: Campaign1111Config = {
@@ -58,6 +64,8 @@ export const DEFAULT_CAMPAIGN_1111: Campaign1111Config = {
     },
   },
   assignments: {},
+  endsAt: "2026-11-18T23:59:59+07:00",
+  urgencyNote: "สินค้าแต่ละชิ้นมีจำนวนจำกัดเพียงชิ้นเดียว หมดแล้วหมดเลย ไม่มีสั่งเพิ่ม",
 };
 
 export function fillPercent(text: string, percent: number): string {
@@ -138,5 +146,7 @@ export function normalizeCampaign1111(raw: unknown): Campaign1111Config {
     bannerImage: toText(src.bannerImage, ""),
     tiers,
     assignments,
+    endsAt: toText(src.endsAt, DEFAULT_CAMPAIGN_1111.endsAt),
+    urgencyNote: toText(src.urgencyNote, DEFAULT_CAMPAIGN_1111.urgencyNote),
   };
 }

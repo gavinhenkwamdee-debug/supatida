@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -54,6 +54,53 @@ function LineIcon() {
   );
 }
 
+// Ticks every second on the client only — SSR has no "now" to render
+// consistently, so it starts null and fills in after mount.
+function Countdown({ endsAt }: { endsAt: string }) {
+  const target = useMemo(() => new Date(endsAt).getTime(), [endsAt]);
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!endsAt || Number.isNaN(target) || now === null) return null;
+
+  const remaining = target - now;
+  if (remaining <= 0) {
+    return (
+      <p className="text-center text-xs tracking-widest uppercase font-sans mb-6" style={{ color: ACCENT }}>
+        แคมเปญสิ้นสุดแล้ว
+      </p>
+    );
+  }
+
+  const units = [
+    { n: Math.floor(remaining / 86400000), label: "วัน" },
+    { n: Math.floor((remaining % 86400000) / 3600000), label: "ชม." },
+    { n: Math.floor((remaining % 3600000) / 60000), label: "นาที" },
+    { n: Math.floor((remaining % 60000) / 1000), label: "วิ" },
+  ];
+
+  return (
+    <div className="flex items-center justify-center gap-2 sm:gap-3 mb-6">
+      <span className="text-xs font-sans tracking-widest uppercase" style={{ color: "var(--muted)" }}>เหลือเวลา</span>
+      {units.map((u) => (
+        <div
+          key={u.label}
+          className="flex flex-col items-center justify-center px-2.5 py-1.5"
+          style={{ minWidth: 48, backgroundColor: "var(--charcoal)", color: "white" }}
+        >
+          <span className="text-lg sm:text-xl font-sans leading-none">{String(u.n).padStart(2, "0")}</span>
+          <span className="text-[9px] tracking-wider uppercase font-sans mt-0.5" style={{ color: "var(--gold-light)" }}>{u.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Thumb({ src, size, alt }: { src: string; size: number; alt: string }) {
   return (
     <div className="relative flex-shrink-0 overflow-hidden" style={{ width: size, height: size, backgroundColor: "var(--img-bg)" }}>
@@ -93,6 +140,12 @@ function ProductCard({
         style={{ fontSize: "10px", backgroundColor: ACCENT }}
       >
         -{percent}%
+      </span>
+      <span
+        className="absolute top-2 right-2 px-1.5 py-0.5 font-sans text-white"
+        style={{ fontSize: "9px", backgroundColor: "rgba(28,28,28,0.75)" }}
+      >
+        มีชิ้นเดียว
       </span>
       {selected && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "rgba(28,28,28,0.35)" }}>
@@ -479,6 +532,14 @@ export default function Campaign1111Client({
             <p className="text-xs tracking-[0.4em] uppercase font-sans mb-1" style={{ color: ACCENT }}>Campaign</p>
             <h2 className="text-5xl sm:text-6xl tracking-wider" style={{ color: "var(--charcoal)" }}>11.11</h2>
           </div>
+
+          <Countdown endsAt={config.endsAt} />
+
+          {config.urgencyNote && (
+            <p className="text-center text-xs sm:text-sm font-sans mb-8 max-w-lg mx-auto" style={{ color: ACCENT }}>
+              ⚠️ {config.urgencyNote}
+            </p>
+          )}
 
           <div role="tablist" className="grid grid-cols-3 gap-2 sm:gap-3 mb-8 max-w-3xl mx-auto">
             {CAMPAIGN_TIER_KEYS.map((key) => {
