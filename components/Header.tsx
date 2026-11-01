@@ -27,6 +27,7 @@ export default function Header() {
   const [payLaterName, setPayLaterName] = useState("Pay Later");
   const [googleReviewsConnected, setGoogleReviewsConnected] = useState(false);
   const [silverEnabled, setSilverEnabled] = useState(false);
+  const [campaign1111Enabled, setCampaign1111Enabled] = useState(false);
   const [aboutEnabled, setAboutEnabled] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [aboutMenuPos, setAboutMenuPos] = useState<{ top: number; left: number } | null>(null);
@@ -71,6 +72,10 @@ export default function Header() {
     fetch("/api/settings/silver-enabled")
       .then((r) => r.json())
       .then((d) => setSilverEnabled(!!d.enabled))
+      .catch(() => {});
+    fetch("/api/settings/campaign-1111-enabled")
+      .then((r) => r.json())
+      .then((d) => setCampaign1111Enabled(!!d.enabled))
       .catch(() => {});
     fetch("/api/settings/about")
       .then((r) => r.json())
@@ -139,6 +144,20 @@ export default function Header() {
         className="flex gap-1 px-4 py-2 overflow-x-auto scrollbar-hide"
       >
         <div className="flex gap-1 mx-auto">
+          {campaign1111Enabled && (
+            <Link
+              href="/1111"
+              className="px-3 py-2 text-xs tracking-widest uppercase transition-all font-sans whitespace-nowrap flex-shrink-0 font-bold"
+              style={{
+                color: "white",
+                background: "#C0392B",
+                borderBottom: "2px solid #C0392B",
+              }}
+            >
+              🔥 11.11
+            </Link>
+          )}
+
           {/* Promo campaign tab — before Super Sale, name is admin-editable */}
           {payLaterEnabled && (
             <Link

@@ -408,6 +408,11 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             style={{ backgroundColor: "#0284C7", color: "white" }}>
             💳 Campaign
           </Link>
+          <Link href="/admin/campaign-1111"
+            className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
+            style={{ backgroundColor: "#C0392B", color: "white" }}>
+            🔥 11.11
+          </Link>
           <Link href="/admin/hero-banner"
             className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
             style={{ backgroundColor: "#6B5E4E", color: "white" }}>

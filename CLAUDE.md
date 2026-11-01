@@ -104,3 +104,20 @@ groups — YOUR WISH / STRENGTH / BALANCE).
   photo/gradient PNG, or a `data:image/svg+xml,...` URI generated inline
   (no upload needed) — used for the gradient-sphere color swatches and the
   dashed-circle "None" placeholder.
+
+## 11.11 campaign (`/1111`, admin at `/admin/campaign-1111`)
+
+Config lives in `site_settings` key `campaign-1111` (no table/column, so no
+prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5%.
+
+- **MECE by construction:** `assignments` maps productId → tier, one value per
+  product, and only `wishlist`/`mixmatch` are stored. Absent = `extra`, so every
+  product lands in exactly one tier. Always read it through `tierOf()`.
+- **Prices:** `campaignPrice()` in `lib/campaign-1111-config.ts` rounds the
+  discounted price **up** to the next 100 baht, in integer math (plain
+  `price * 0.85` can float to 17000.000000000002 and bump an exact price a
+  full 100). Don't hand-roll the discount elsewhere. Mix & Match rounds the
+  pair's *total*, not each piece.
+- Hidden and sold-out products never appear in any tier. The campaign shows the
+  listed `product.price` as the "before" price, not the fake markup from
+  `lib/pricing.ts`.
