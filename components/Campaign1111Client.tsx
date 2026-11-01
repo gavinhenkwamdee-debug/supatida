@@ -397,7 +397,7 @@ function SummarySheet({
           </div>
 
           <p className="text-[11px] font-sans mt-4 leading-relaxed" style={{ color: "var(--muted)" }}>
-            * เป็นราคาประเมิน แอดมินจะยืนยันราคาและสต็อกอีกครั้งทาง LINE
+            * แคมเปญ 11.11 ชำระเงินผ่านการโอนชำระเท่านั้น
           </p>
         </div>
 
