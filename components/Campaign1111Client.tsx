@@ -307,13 +307,13 @@ function MixMatch({ products, percent }: { products: CampaignProduct[]; percent:
             {full ? (
               <>
                 <p className="text-[11px] font-sans" style={{ color: "var(--muted)" }}>
-                  <span className="line-through">{fmt(est.subtotal)}</span> · ราคาประเมินหลังลด {percent}%
+                  <span className="line-through">{fmt(est.subtotal)}</span> · ราคาหลังลด ~{percent}%
                 </p>
                 <p className="text-2xl font-sans leading-tight" style={{ color: ACCENT }}>{fmt(est.total)}</p>
               </>
             ) : (
               <>
-                <p className="text-[11px] font-sans" style={{ color: "var(--muted)" }}>ราคาประเมินหลังลด {percent}%</p>
+                <p className="text-[11px] font-sans" style={{ color: "var(--muted)" }}>ราคาหลังลด ~{percent}%</p>
                 <p className="text-sm font-sans" style={{ color: "var(--charcoal)" }}>เลือกอีก {2 - picked.length} ชิ้นเพื่อดูราคา</p>
               </>
             )}
@@ -384,10 +384,7 @@ function SummarySheet({
               <span>{fmt(est.subtotal)}</span>
             </div>
             <div className="flex justify-between items-end pt-1" style={{ color: "var(--charcoal)" }}>
-              <span>
-                ราคาประเมินหลังลด {percent}%
-                <span className="block text-[11px]" style={{ color: "var(--muted)" }}>ปัดขึ้นหลักร้อย</span>
-              </span>
+              <span>ราคาหลังลด ~{percent}%</span>
               <span className="text-2xl" style={{ color: ACCENT }}>{fmt(est.total)}</span>
             </div>
             <div className="flex justify-between text-xs" style={{ color: "#2E7D32" }}>
