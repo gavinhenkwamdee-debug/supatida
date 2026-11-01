@@ -433,10 +433,12 @@ export default function Campaign1111Client({
   config,
   productsByTier,
   initialTab,
+  isAdminPreview = false,
 }: {
   config: Campaign1111Config;
   productsByTier: Record<CampaignTierKey, CampaignProduct[]>;
   initialTab: CampaignTierKey;
+  isAdminPreview?: boolean;
 }) {
   const [tab, setTab] = useState<CampaignTierKey>(initialTab);
 
@@ -449,6 +451,13 @@ export default function Campaign1111Client({
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--ivory)" }}>
+      {isAdminPreview && (
+        <div className="sticky top-0 z-50 text-center py-2 px-4 text-xs tracking-widest uppercase font-sans font-bold"
+          style={{ backgroundColor: "#C0392B", color: "white" }}>
+          🔒 พรีวิวสำหรับแอดมิน — ลูกค้ายังมองไม่เห็นหน้านี้ (แคมเปญยังปิดอยู่)
+        </div>
+      )}
+
       <div className="text-center py-5" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "white" }}>
         <Link href="/" className="inline-block">
           <h1 className="text-2xl tracking-[0.2em]" style={{ color: "var(--charcoal)" }}>SUPATIDA</h1>
@@ -456,7 +465,7 @@ export default function Campaign1111Client({
         </Link>
       </div>
 
-      {!config.enabled ? (
+      {!config.enabled && !isAdminPreview ? (
         <div className="max-w-2xl mx-auto px-4 py-24 text-center">
           <p className="text-sm font-sans" style={{ color: "var(--muted)" }}>โปรโมชั่นนี้ปิดใช้งานชั่วคราว</p>
         </div>
