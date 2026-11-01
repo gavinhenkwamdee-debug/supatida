@@ -171,16 +171,30 @@ function ProductCard({
 
   if (mode === "select") {
     return (
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-pressed={selected}
+      <div
         className="flex flex-col bg-white overflow-hidden text-left transition-shadow hover:shadow-lg"
         style={{ border: selected ? "2px solid var(--charcoal)" : "1px solid var(--border)" }}
       >
-        {image}
-        <div className="p-3 sm:p-4">{info}</div>
-      </button>
+        <Link href={`/products/${product.id}`} target="_blank" rel="noopener noreferrer" className="block">
+          {image}
+        </Link>
+        <div className="flex flex-col flex-1 p-3 sm:p-4">
+          {info}
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-pressed={selected}
+            className="mt-auto py-2 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
+            style={
+              selected
+                ? { backgroundColor: "var(--charcoal)", color: "white" }
+                : { border: "1px solid var(--charcoal)", color: "var(--charcoal)", backgroundColor: "white" }
+            }
+          >
+            {selected ? "✓ เลือกแล้ว" : "เลือกชิ้นนี้"}
+          </button>
+        </div>
+      </div>
     );
   }
 
