@@ -39,10 +39,13 @@ export default async function Campaign1111Page({
   const products = (await getAllProducts()).filter((p) => !p.hidden && !p.soldOut);
 
   // Each product goes through tierOf() exactly once, so a product can only
-  // ever appear in a single tab.
+  // ever appear in a single tab. "none" means explicitly opted out of the
+  // campaign, so it never lands in any tab at all.
   const byTier: Record<CampaignTierKey, CampaignProduct[]> = { wishlist: [], mixmatch: [], extra: [] };
   for (const p of products) {
-    byTier[tierOf(config, p.id)].push({
+    const tier = tierOf(config, p.id);
+    if (tier === "none") continue;
+    byTier[tier].push({
       id: p.id,
       name: p.name,
       price: p.price,

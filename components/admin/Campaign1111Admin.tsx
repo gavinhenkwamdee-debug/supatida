@@ -8,15 +8,24 @@ import {
   tierOf,
   type Campaign1111Config,
   type CampaignTierKey,
+  type AssignedTier,
 } from "@/lib/campaign-1111-config";
 
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
 
-const TIER_COLOR: Record<CampaignTierKey, string> = {
+const NONE_LABEL = "ไม่ร่วมรายการ";
+
+// "none" (opted out entirely) sits alongside the three real discount tiers
+// everywhere products get assigned or filtered, but it has no entry in
+// config.tiers — there's no percent/copy to edit for "no discount".
+const ASSIGN_KEYS: AssignedTier[] = [...CAMPAIGN_TIER_KEYS, "none"];
+
+const TIER_COLOR: Record<AssignedTier, string> = {
   wishlist: "#C0392B",
   mixmatch: "#0E7490",
   extra: "#6B5E4E",
+  none: "#9CA3AF",
 };
 
 const ROWS_PER_PAGE = 60;
@@ -60,7 +69,7 @@ export default function Campaign1111Admin() {
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
-  const [tierFilter, setTierFilter] = useState<CampaignTierKey | "all">("all");
+  const [tierFilter, setTierFilter] = useState<AssignedTier | "all">("all");
   const [rowLimit, setRowLimit] = useState(ROWS_PER_PAGE);
 
   useEffect(() => {
@@ -81,7 +90,7 @@ export default function Campaign1111Admin() {
   const eligible = useMemo(() => products.filter((p) => !p.soldOut), [products]);
 
   const counts = useMemo(() => {
-    const c: Record<CampaignTierKey, number> = { wishlist: 0, mixmatch: 0, extra: 0 };
+    const c: Record<AssignedTier, number> = { wishlist: 0, mixmatch: 0, extra: 0, none: 0 };
     if (draft) for (const p of eligible) c[tierOf(draft, p.id)]++;
     return c;
   }, [draft, eligible]);
@@ -117,8 +126,9 @@ export default function Campaign1111Admin() {
   }
 
   // One value per product id, and "extra" is the absence of a value — that's
-  // what keeps the three tiers mutually exclusive and exhaustive.
-  function assign(ids: number[], tier: CampaignTierKey) {
+  // what keeps the three tiers (plus "none", opted out entirely) mutually
+  // exclusive and exhaustive.
+  function assign(ids: number[], tier: AssignedTier) {
     const assignments = { ...config.assignments };
     for (const id of ids) {
       if (tier === "extra") delete assignments[String(id)];
@@ -166,7 +176,7 @@ export default function Campaign1111Admin() {
   }
 
   const total = eligible.length;
-  const mece = counts.wishlist + counts.mixmatch + counts.extra === total;
+  const mece = counts.wishlist + counts.mixmatch + counts.extra + counts.none === total;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -174,7 +184,7 @@ export default function Campaign1111Admin() {
         <div>
           <h1 className="text-2xl tracking-wider" style={{ color: "var(--charcoal)" }}>แคมเปญ 11.11</h1>
           <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
-            3 ระดับส่วนลด — สินค้าแต่ละชิ้นอยู่ได้ระดับเดียว ที่ไม่ได้เลือกจะตกไป Little Extra อัตโนมัติ
+            3 ระดับส่วนลด — สินค้าแต่ละชิ้นอยู่ได้ระดับเดียว ที่ไม่ได้เลือกจะตกไป Little Extra อัตโนมัติ (หรือกด ✕ เพื่อไม่ร่วมรายการเลย)
           </p>
         </div>
         <div className="flex gap-4 items-center">
@@ -281,8 +291,8 @@ export default function Campaign1111Admin() {
       <div className={cardClass} style={cardStyle}>
         <h2 className="text-xs tracking-widest uppercase mb-3 font-sans" style={{ color: "var(--muted)" }}>จัดสินค้าเข้าระดับ</h2>
 
-        <div className="grid grid-cols-3 gap-2 mb-2">
-          {CAMPAIGN_TIER_KEYS.map((key) => (
+        <div className="grid grid-cols-4 gap-2 mb-2">
+          {ASSIGN_KEYS.map((key) => (
             <button
               key={key}
               type="button"
@@ -295,12 +305,14 @@ export default function Campaign1111Admin() {
               }}
             >
               <span className="block text-2xl font-sans font-light leading-none">{counts[key]}</span>
-              <span className="block text-[11px] tracking-wider uppercase font-sans mt-1">{config.tiers[key].name} · {config.tiers[key].percent}%</span>
+              <span className="block text-[11px] tracking-wider uppercase font-sans mt-1">
+                {key === "none" ? NONE_LABEL : `${config.tiers[key].name} · ${config.tiers[key].percent}%`}
+              </span>
             </button>
           ))}
         </div>
         <p className="text-xs font-sans mb-4" style={{ color: mece ? "#2E7D32" : "#C0392B" }}>
-          {mece ? "✓" : "✗"} สินค้าพร้อมขายทั้งหมด {total} ชิ้น = {counts.wishlist} + {counts.mixmatch} + {counts.extra} (ไม่ซ้ำ ไม่ตกหล่น)
+          {mece ? "✓" : "✗"} สินค้าพร้อมขายทั้งหมด {total} ชิ้น = {counts.wishlist} + {counts.mixmatch} + {counts.extra} + {counts.none} (ไม่ซ้ำ ไม่ตกหล่น)
           <span style={{ color: "var(--muted)" }}> · สินค้าหมดสต็อกไม่แสดงในแคมเปญ</span>
         </p>
 
@@ -325,21 +337,24 @@ export default function Campaign1111Admin() {
 
         <div className="flex flex-wrap items-center gap-2 mb-4 p-3" style={{ backgroundColor: "#FAF8F4", border: "1px solid var(--border)" }}>
           <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>ตั้งทั้งหมดที่แสดงอยู่ ({filtered.length}) เป็น:</span>
-          {CAMPAIGN_TIER_KEYS.map((key) => (
-            <button
-              key={key}
-              type="button"
-              disabled={filtered.length === 0}
-              onClick={() => {
-                if (filtered.length > 1 && !confirm(`ย้ายสินค้า ${filtered.length} ชิ้นไป ${config.tiers[key].name}?`)) return;
-                assign(filtered.map((p) => p.id), key);
-              }}
-              className="px-3 py-1.5 text-xs font-sans text-white disabled:opacity-40"
-              style={{ backgroundColor: TIER_COLOR[key] }}
-            >
-              {config.tiers[key].name}
-            </button>
-          ))}
+          {ASSIGN_KEYS.map((key) => {
+            const label = key === "none" ? NONE_LABEL : config.tiers[key].name;
+            return (
+              <button
+                key={key}
+                type="button"
+                disabled={filtered.length === 0}
+                onClick={() => {
+                  if (filtered.length > 1 && !confirm(`ย้ายสินค้า ${filtered.length} ชิ้นไป ${label}?`)) return;
+                  assign(filtered.map((p) => p.id), key);
+                }}
+                className="px-3 py-1.5 text-xs font-sans text-white disabled:opacity-40"
+                style={{ backgroundColor: TIER_COLOR[key] }}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         {filtered.length === 0 ? (
@@ -360,17 +375,18 @@ export default function Campaign1111Admin() {
                   <div className="flex-1 min-w-0">
                     <p className="text-xs truncate" style={{ color: "var(--charcoal)" }}>{p.name}</p>
                     <p className="text-xs font-mono truncate" style={{ color: "var(--muted)" }}>
-                      {p.specifications["Product Code"] || `#${p.id}`} · {THB(p.price)} → {THB(campaignPrice(p.price, config.tiers[current].percent))}
+                      {p.specifications["Product Code"] || `#${p.id}`} · {THB(p.price)}
+                      {current === "none" ? ` · ${NONE_LABEL}` : ` → ${THB(campaignPrice(p.price, config.tiers[current].percent))}`}
                       {p.soldOut && " · หมดสต็อก"}
                     </p>
                   </div>
                   <div className="flex flex-shrink-0">
-                    {CAMPAIGN_TIER_KEYS.map((key) => (
+                    {ASSIGN_KEYS.map((key) => (
                       <button
                         key={key}
                         type="button"
                         onClick={() => assign([p.id], key)}
-                        title={config.tiers[key].name}
+                        title={key === "none" ? NONE_LABEL : config.tiers[key].name}
                         className="px-2.5 py-1.5 text-xs font-sans"
                         style={{
                           border: `1px solid ${TIER_COLOR[key]}`,
@@ -379,7 +395,7 @@ export default function Campaign1111Admin() {
                           color: current === key ? "white" : TIER_COLOR[key],
                         }}
                       >
-                        {config.tiers[key].percent}%
+                        {key === "none" ? "✕" : `${config.tiers[key].percent}%`}
                       </button>
                     ))}
                   </div>
