@@ -66,11 +66,48 @@ export default function ShareButton() {
 
   if (pathname?.startsWith("/admin")) return null;
 
+  // Instagram Stories has no public web API a site can post to directly —
+  // the only way to make it show up as a destination is the same way
+  // sharing a photo from the camera roll does: hand the OS share sheet an
+  // actual image file via the Web Share API's `files`. So this fetches the
+  // page's own og:image (product photo, campaign banner, ...) and tries
+  // that first; browsers/pages that can't do file sharing fall back to a
+  // plain link share, then to the small Facebook/LINE/copy menu.
   async function handleShareClick() {
-    const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
+    const nav = navigator as Navigator & {
+      share?: (data: ShareData) => Promise<void>;
+      canShare?: (data: ShareData) => boolean;
+    };
+    const title = document.title;
+    const url = window.location.href;
+
+    if (nav.share && nav.canShare) {
+      const imageUrl = document.querySelector('meta[property="og:image"]')?.getAttribute("content");
+      let file: File | null = null;
+      if (imageUrl) {
+        try {
+          const res = await fetch(imageUrl);
+          const blob = await res.blob();
+          const ext = blob.type.split("/")[1]?.split("+")[0] || "jpg";
+          file = new File([blob], `supatida.${ext}`, { type: blob.type });
+        } catch {
+          file = null; // CORS, network error, etc. — fall through to link share
+        }
+      }
+      if (file && nav.canShare({ files: [file] })) {
+        try {
+          await nav.share({ files: [file], title, text: `${title}\n${url}` });
+        } catch {
+          // user cancelled the native share sheet — respect that, don't
+          // immediately pop a second (link-only) share prompt
+        }
+        return;
+      }
+    }
+
     if (nav.share) {
       try {
-        await nav.share({ title: document.title, url: window.location.href });
+        await nav.share({ title, url });
       } catch {
         // user cancelled — nothing to do
       }
