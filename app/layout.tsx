@@ -3,6 +3,7 @@ import "./globals.css";
 import { millerBanner, graphie, louella } from "@/lib/fonts";
 import { getSetting } from "@/lib/settings";
 import { DEFAULT_TYPOGRAPHY, FONT_STACK, type TypographyConfig } from "@/lib/typography-config";
+import ShareButton from "@/components/ShareButton";
 
 const SITE_URL = "https://www.supatidajewelry.com";
 
@@ -113,6 +114,7 @@ export default async function RootLayout({
           }}
         />
         {children}
+        <ShareButton />
       </body>
     </html>
   );
