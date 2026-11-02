@@ -261,18 +261,6 @@ export default function AboutAdmin() {
             </div>
           </>
         )}
-
-        {activeTab === "appointment" && (
-          <div>
-            <label className={labelClass} style={labelStyle}>ลิงก์ LINE สำหรับนัดหมาย</label>
-            <input
-              className={fieldClass}
-              style={fieldStyle}
-              value={config.appointment.lineUrl}
-              onChange={(e) => setConfig((c) => ({ ...c, appointment: { ...c.appointment, lineUrl: e.target.value } }))}
-            />
-          </div>
-        )}
       </div>
 
       <button
