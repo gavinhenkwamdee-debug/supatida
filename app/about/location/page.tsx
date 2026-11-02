@@ -5,9 +5,18 @@ import { DEFAULT_ABOUT, type AboutConfig } from "@/lib/about-config";
 
 export const metadata = { title: "Our Location" };
 
+// Google's "Embed a map" panel hands you a full <iframe src="...">...</iframe>
+// snippet, and admins naturally paste the whole thing rather than digging
+// out just the src="..." value — extract it here so either form works.
+function extractMapUrl(raw: string): string {
+  const match = raw.match(/src\s*=\s*["']([^"']+)["']/i);
+  return match ? match[1] : raw;
+}
+
 export default async function AboutLocationPage() {
   const about = await getSetting<AboutConfig>("about", DEFAULT_ABOUT);
   const section = about.location;
+  const mapUrl = extractMapUrl(section.mapEmbedUrl);
 
   return (
     <div className="min-h-screen px-4 py-12" style={{ backgroundColor: "var(--ivory)" }}>
@@ -49,11 +58,11 @@ export default async function AboutLocationPage() {
             </div>
           )}
 
-          {section.mapEmbedUrl && (
-            section.mapEmbedUrl.includes("/maps/embed") ? (
+          {mapUrl && (
+            mapUrl.startsWith("http") && mapUrl.includes("/maps/embed") ? (
               <div className="w-full overflow-hidden" style={{ aspectRatio: "16/9", border: "1px solid var(--border)" }}>
                 <iframe
-                  src={section.mapEmbedUrl}
+                  src={mapUrl}
                   className="w-full h-full border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
@@ -66,7 +75,7 @@ export default async function AboutLocationPage() {
               // /maps/embed?pb=... URL can be embedded, so anything else
               // becomes a plain link instead of a broken frame.
               <a
-                href={section.mapEmbedUrl}
+                href={mapUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
