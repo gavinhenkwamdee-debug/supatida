@@ -13,8 +13,8 @@ import {
 } from "@/lib/gemstoneMeanings";
 import type { GroupKind } from "@/lib/customRings";
 
-// Baguette has no photography yet, so it's the only DIAMOND_SHAPES entry left out here.
-const DIAMOND_SHAPE_OPTIONS = ["round", "pear", "princess", "oval", "emerald", "heart", "marquise"] as const;
+// Only shapes with real photography uploaded (DIAMOND_SHAPE_IMAGES) can be offered.
+const DIAMOND_SHAPE_OPTIONS = Object.keys(DIAMOND_SHAPE_IMAGES);
 
 // The ring's own "power" groups double as the meaning picker — main_power is
 // YOUR WISH, secondary_power is YOUR STRENGTH, tertiary_power is YOUR
@@ -324,8 +324,29 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
           const choice = g.choices.find((c) => c.id === selections[g.id]);
           if (!choice) return undefined;
           if (isDiamondMeaning(g)) {
-            const images = DIAMOND_SHAPE_IMAGES[diamondShapes[g.id] ?? "round"];
-            if (images) return { ...choice, swatchImage: images.swatchImage, overlayImage: images.overlayImage };
+            const shape = diamondShapes[g.id] ?? "round";
+            const images = DIAMOND_SHAPE_IMAGES[shape];
+            if (images) {
+              // Shapes have different natural silhouettes (e.g. marquise is
+              // long/thin, round is compact) — a per-shape position/size
+              // override (admin-tunable) takes precedence over the choice's
+              // own default overlay fields, so each shape can sit right on
+              // the ring regardless of what the default was tuned for.
+              const override = choice.diamondShapeOverlays?.[shape];
+              return {
+                ...choice,
+                swatchImage: images.swatchImage,
+                overlayImage: images.overlayImage,
+                ...(override
+                  ? {
+                      overlayX: override.x,
+                      overlayY: override.y,
+                      overlayWidth: override.width,
+                      overlayRotation: override.rotation,
+                    }
+                  : {}),
+              };
+            }
           }
           return choice;
         })

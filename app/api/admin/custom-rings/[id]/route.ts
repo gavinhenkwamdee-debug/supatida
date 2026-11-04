@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { deleteCustomRing, getCustomRingById, replaceCustomRing } from "@/lib/customRings";
-import type { GroupInput, GroupKind, RingFieldsInput, StoneKind } from "@/lib/customRings";
+import type { DiamondShapeOverlay, GroupInput, GroupKind, RingFieldsInput, StoneKind } from "@/lib/customRings";
 import { isAdminRequest } from "@/lib/admin-auth";
 
-const GROUP_KINDS: GroupKind[] = ["generic", "dropdown", "text_input", "main_power", "secondary_power", "tertiary_power"];
+const GROUP_KINDS: GroupKind[] = ["generic", "dropdown", "text_input", "main_power", "secondary_power", "tertiary_power", "metal"];
 const STONE_KINDS: StoneKind[] = ["diamond", "gem"];
 
 function parseGroupKind(v: unknown): GroupKind {
@@ -12,6 +12,22 @@ function parseGroupKind(v: unknown): GroupKind {
 
 function parseStoneKind(v: unknown): StoneKind | null {
   return STONE_KINDS.includes(v as StoneKind) ? (v as StoneKind) : null;
+}
+
+function parseDiamondShapeOverlays(v: unknown): Record<string, DiamondShapeOverlay> {
+  if (!v || typeof v !== "object") return {};
+  const out: Record<string, DiamondShapeOverlay> = {};
+  for (const [shape, val] of Object.entries(v as Record<string, unknown>)) {
+    if (!val || typeof val !== "object") continue;
+    const o = val as Record<string, unknown>;
+    out[shape] = {
+      x: Number(o.x) || 50,
+      y: Number(o.y) || 50,
+      width: Number(o.width) || 20,
+      rotation: Number(o.rotation) || 0,
+    };
+  }
+  return out;
 }
 
 type Params = { params: Promise<{ id: string }> };
@@ -70,11 +86,13 @@ export async function PUT(request: Request, { params }: Params) {
                     overlayY: Number(choice.overlayY) || 50,
                     overlayWidth: Number(choice.overlayWidth) || 20,
                     overlayRotation: Number(choice.overlayRotation) || 0,
+                    diamondShapeOverlays: parseDiamondShapeOverlays(choice.diamondShapeOverlays),
                     baseImageOverride: choice.baseImageOverride ? String(choice.baseImageOverride) : null,
                     baseImageZoom: Number(choice.baseImageZoom) || 1,
                     baseImageOffsetX: Number(choice.baseImageOffsetX) || 0,
                     baseImageOffsetY: Number(choice.baseImageOffsetY) || 0,
                     priceDelta: Number(choice.priceDelta) || 0,
+                    sizeSurchargePerStep: Number(choice.sizeSurchargePerStep) || 0,
                     sortOrder: ci,
                     stoneKind: parseStoneKind(choice.stoneKind),
                     shape: choice.shape ? String(choice.shape) : null,

@@ -3,6 +3,8 @@
 // admin-editable (per the spec this list is shared across every custom
 // ring), so it lives as a plain data table rather than in the DB.
 
+import type { GroupKind } from "./customRings";
+
 export type MeaningCategory = "wish" | "strength" | "balance";
 
 // Mock swatch photos — reused from the real gem/diamond images already
@@ -182,6 +184,26 @@ export const MEANINGS_BY_CATEGORY: Record<MeaningCategory, Meaning[]> = {
   strength: STRENGTH_MEANINGS,
   balance: BALANCE_MEANINGS,
 };
+
+// The ring's own "power" groups double as the meaning picker — main_power is
+// YOUR WISH, secondary_power is YOUR STRENGTH, tertiary_power is YOUR
+// BALANCE. Shared between the customer-facing configurator and the admin
+// form so both agree on which choice is "the diamond one".
+const POWER_KIND_TO_MEANING_CATEGORY: Partial<Record<GroupKind, MeaningCategory>> = {
+  main_power: "wish",
+  secondary_power: "strength",
+  tertiary_power: "balance",
+};
+
+// True when the choice at this position within a power group is the one
+// "meaning" whose gemstone is literally Diamond (currently just
+// ACHIEVEMENT) — the one case where the customer gets a diamond-shape
+// sub-picker, and where the admin can set a per-shape overlay position.
+export function isDiamondMeaningChoice(kind: GroupKind, index: number): boolean {
+  const category = POWER_KIND_TO_MEANING_CATEGORY[kind];
+  if (!category) return false;
+  return MEANINGS_BY_CATEGORY[category][index]?.gemstone === "Diamond";
+}
 
 export const CATEGORY_LABEL: Record<MeaningCategory, string> = {
   wish: "YOUR WISH",
