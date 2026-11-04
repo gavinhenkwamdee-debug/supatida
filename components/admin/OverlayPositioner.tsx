@@ -2,6 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
+export interface OverlayReference {
+  label: string;
+  image: string;
+  x: number;
+  y: number;
+  width: number;
+  rotation: number;
+}
+
 export default function OverlayPositioner({
   baseImage,
   overlayImage,
@@ -10,6 +19,7 @@ export default function OverlayPositioner({
   width,
   rotation,
   onChange,
+  references,
 }: {
   baseImage: string;
   overlayImage: string;
@@ -18,6 +28,11 @@ export default function OverlayPositioner({
   width: number;
   rotation: number;
   onChange: (x: number, y: number, width: number, rotation: number) => void;
+  // Other choices in the same group, already positioned — shown as faint,
+  // non-interactive ghosts so a new gem photo (often a different size/crop
+  // than the last one) can be matched by eye instead of guessing from
+  // copy-pasted px numbers that don't account for that size difference.
+  references?: OverlayReference[];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -106,6 +121,23 @@ export default function OverlayPositioner({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={baseImage} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" draggable={false} />
+        {references?.map((ref, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src={ref.image}
+            alt=""
+            draggable={false}
+            className="absolute pointer-events-none"
+            style={{
+              left: `${ref.x}%`,
+              top: `${ref.y}%`,
+              width: `${ref.width}%`,
+              transform: `translate(-50%, -50%) rotate(${ref.rotation}deg)`,
+              opacity: 0.35,
+            }}
+          />
+        ))}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={overlayImage}
@@ -126,6 +158,11 @@ export default function OverlayPositioner({
       <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
         คลิกหรือลากรูป gem เพื่อวางตำแหน่งบนแหวน หรือใส่พิกัดพิกเซลด้านล่างเพื่อความแม่นยำ
       </p>
+      {references && references.length > 0 && (
+        <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
+          เงาจางๆ = ตำแหน่งที่จัดไว้แล้วของ {references.map((r) => r.label).join(", ")} — ใช้เทียบขนาด/ตำแหน่งให้ตรงกัน
+        </p>
+      )}
 
       <div className="flex gap-3 mt-2">
         <div className="flex-1">
