@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import OverlayPositioner from "./OverlayPositioner";
+import OverlayPositioner, { type OverlayReference } from "./OverlayPositioner";
 import { DIAMOND_SHAPES, DIAMOND_SHAPE_LABELS } from "@/lib/ringShapes";
 import type { CustomRingDetail, GroupKind, GroupWithRing, StoneKind } from "@/lib/customRings";
 
@@ -222,6 +222,7 @@ function ImageUploadBox({
 
 function ChoiceEditor({
   choice,
+  siblingChoices,
   baseImage,
   groupKind,
   onChange,
@@ -233,6 +234,7 @@ function ChoiceEditor({
   onCopyPosition,
 }: {
   choice: ChoiceState;
+  siblingChoices: ChoiceState[];
   baseImage: string;
   groupKind: GroupKind;
   onChange: (c: ChoiceState) => void;
@@ -246,12 +248,15 @@ function ChoiceEditor({
   const [positioning, setPositioning] = useState(false);
   const [swatchPositioning, setSwatchPositioning] = useState(false);
   const [basePositioning, setBasePositioning] = useState(false);
+  // Collapsed by default for an empty/new choice so the form shows just
+  // name+price to start — but stays open for a choice that already has an
+  // image/color set, so existing rings don't look like their data vanished.
+  const [imagesExpanded, setImagesExpanded] = useState(
+    Boolean(choice.swatchImage || choice.overlayImage || choice.baseImageOverride || choice.colorFilter)
+  );
 
   return (
     <div className="p-3" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
-      <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
-        <strong>Gem overlay</strong> = ลอยทับรูปหลัก (ใช้กับพลอย) · <strong>Base</strong> = เปลี่ยนรูปแหวนทั้งรูป (ใช้กับโลหะ/สี)
-      </p>
       {groupKind === "main_power" && (
         <div className="flex items-center flex-wrap gap-2 mb-2 p-2" style={{ backgroundColor: "#FAF8F4", border: "1px solid var(--border)" }}>
           <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>ชนิดพลอย:</span>
@@ -297,26 +302,6 @@ function ChoiceEditor({
         <p className="text-xs font-sans italic mb-2" style={{ color: "var(--muted)" }}>* บันทึกเป็นพลอยทรงสี่เหลี่ยมจตุรัสอัตโนมัติ</p>
       )}
       <div className="flex gap-3 items-start">
-        {groupKind !== "dropdown" && (
-          <>
-            <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
-            <ImageUploadBox
-              src={choice.overlayImage || ""}
-              label="+ Gem overlay"
-              size={64}
-              onUploaded={(url) => onChange({ ...choice, overlayImage: url })}
-              onClear={() => onChange({ ...choice, overlayImage: null })}
-            />
-            <ImageUploadBox
-              src={choice.baseImageOverride || ""}
-              label="+ Base (แทนรูปหลัก)"
-              size={64}
-              onUploaded={(url) => onChange({ ...choice, baseImageOverride: url })}
-              onClear={() => onChange({ ...choice, baseImageOverride: null })}
-            />
-          </>
-        )}
-
         <div className="flex-1 min-w-0 space-y-2">
           <input
             value={choice.label}
@@ -347,78 +332,6 @@ function ChoiceEditor({
               />
             </div>
           )}
-          <div>
-            <span className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>
-              โทนสีตัวเรือน (ใช้กับตัวเลือก &quot;สี&quot; เท่านั้น — ปรับโทนรูปแหวนหลัก ไม่ใช่รูป swatch)
-            </span>
-            <select
-              value={COLOR_TINT_PRESETS.some((p) => p.value === (choice.colorFilter ?? "")) ? (choice.colorFilter ?? "") : "__custom__"}
-              onChange={(e) => onChange({ ...choice, colorFilter: e.target.value || null })}
-              className="w-full px-2 py-1.5 text-xs font-sans outline-none mb-1"
-              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-            >
-              {COLOR_TINT_PRESETS.map((p) => (
-                <option key={p.label} value={p.value}>{p.label}</option>
-              ))}
-              <option value="__custom__" disabled>— กำหนดเองด้านล่าง —</option>
-            </select>
-            <input
-              value={choice.colorFilter ?? ""}
-              onChange={(e) => onChange({ ...choice, colorFilter: e.target.value || null })}
-              placeholder="เช่น sepia(0.5) saturate(2) hue-rotate(-10deg)"
-              className="w-full px-2 py-1.5 text-xs font-sans outline-none"
-              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-            />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {choice.overlayImage && baseImage && (
-              <button type="button" onClick={() => setPositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
-                {positioning ? "ปิดตำแหน่ง" : "จัดตำแหน่ง"}
-              </button>
-            )}
-            {choice.swatchImage && (
-              <button type="button" onClick={() => setSwatchPositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
-                {swatchPositioning ? "ปิดจัด Swatch" : "ขยาย/จัด Swatch"}
-              </button>
-            )}
-            {choice.baseImageOverride && (
-              <button type="button" onClick={() => setBasePositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
-                {basePositioning ? "ปิดจัดตำแหน่งรูปแหวน" : "จัดตำแหน่งรูปแหวน"}
-              </button>
-            )}
-            {choice.overlayImage && (
-              <button
-                type="button"
-                onClick={() => onCopyPosition({ x: choice.overlayX, y: choice.overlayY, width: choice.overlayWidth, rotation: choice.overlayRotation })}
-                className="text-xs tracking-wider uppercase underline font-sans"
-                style={{ color: "var(--gold-dark)" }}
-                title={`x=${fmtPx(choice.overlayX)}px, y=${fmtPx(choice.overlayY)}px, หมุน=${Math.round(choice.overlayRotation)}°`}
-              >
-                คัดลอกตำแหน่ง
-              </button>
-            )}
-            {choice.overlayImage && copiedPosition && (
-              <button
-                type="button"
-                onClick={() =>
-                  onChange({
-                    ...choice,
-                    overlayX: copiedPosition.x,
-                    overlayY: copiedPosition.y,
-                    overlayWidth: copiedPosition.width,
-                    overlayRotation: copiedPosition.rotation,
-                  })
-                }
-                className="text-xs tracking-wider uppercase underline font-sans"
-                style={{ color: "var(--gold-dark)" }}
-              >
-                วางตำแหน่ง ({fmtPx(copiedPosition.x)}, {fmtPx(copiedPosition.y)}px, {Math.round(copiedPosition.rotation)}°)
-              </button>
-            )}
-            <button type="button" onClick={onRemove} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "#C0392B" }}>
-              ลบตัวเลือก
-            </button>
-          </div>
         </div>
 
         <div className="flex flex-col gap-1 flex-shrink-0">
@@ -438,51 +351,178 @@ function ChoiceEditor({
             style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
             title="เลื่อนลง"
           >↓</button>
+          <button type="button" onClick={onRemove} className="w-6 h-6 text-xs flex items-center justify-center" style={{ border: "1px solid #C0392B", color: "#C0392B" }} title="ลบตัวเลือก">✕</button>
         </div>
       </div>
 
-      {positioning && choice.overlayImage && baseImage && (
-        <div className="mt-3 max-w-xs">
-          <OverlayPositioner
-            baseImage={baseImage}
-            overlayImage={choice.overlayImage}
-            x={choice.overlayX}
-            y={choice.overlayY}
-            width={choice.overlayWidth}
-            rotation={choice.overlayRotation}
-            onChange={(x, y, width, rotation) => onChange({ ...choice, overlayX: x, overlayY: y, overlayWidth: width, overlayRotation: rotation })}
-          />
+      {groupKind !== "dropdown" && (
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => setImagesExpanded((v) => !v)}
+            className="text-xs tracking-wider uppercase underline font-sans"
+            style={{ color: "var(--gold-dark)" }}
+          >
+            {imagesExpanded ? "▾ ซ่อนรูปภาพ/สี" : "▸ ตั้งค่ารูปภาพ/สี"}
+          </button>
+
+          {imagesExpanded && (
+            <div className="mt-2 space-y-2 p-2" style={{ backgroundColor: "#FAF8F4", border: "1px solid var(--border)" }}>
+              <div className="flex gap-3 items-start flex-wrap">
+                <div>
+                  <ImageUploadBox src={choice.swatchImage} label="+ Swatch" size={64} onUploaded={(url) => onChange({ ...choice, swatchImage: url })} />
+                  <p className="text-[10px] font-sans mt-1 max-w-[64px]" style={{ color: "var(--muted)" }}>รูปเล็กให้ลูกค้าเลือก</p>
+                </div>
+                <div>
+                  <ImageUploadBox
+                    src={choice.overlayImage || ""}
+                    label="+ Gem overlay"
+                    size={64}
+                    onUploaded={(url) => onChange({ ...choice, overlayImage: url })}
+                    onClear={() => onChange({ ...choice, overlayImage: null })}
+                  />
+                  <p className="text-[10px] font-sans mt-1 max-w-[64px]" style={{ color: "var(--muted)" }}>รูปพลอยลอยบนแหวน (เฉพาะกลุ่มเลือกพลอย)</p>
+                </div>
+                <div>
+                  <ImageUploadBox
+                    src={choice.baseImageOverride || ""}
+                    label="+ Base (แทนรูปหลัก)"
+                    size={64}
+                    onUploaded={(url) => onChange({ ...choice, baseImageOverride: url })}
+                    onClear={() => onChange({ ...choice, baseImageOverride: null })}
+                  />
+                  <p className="text-[10px] font-sans mt-1 max-w-[64px]" style={{ color: "var(--muted)" }}>เปลี่ยนรูปแหวนทั้งรูป (เฉพาะเปลี่ยนทรง/โลหะที่ภาพต่างจริง)</p>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>
+                  โทนสีตัวเรือน (ใช้กับตัวเลือก &quot;สี&quot; เท่านั้น — ปรับโทนรูปแหวนหลัก ไม่ใช่รูป swatch)
+                </span>
+                <select
+                  value={COLOR_TINT_PRESETS.some((p) => p.value === (choice.colorFilter ?? "")) ? (choice.colorFilter ?? "") : "__custom__"}
+                  onChange={(e) => onChange({ ...choice, colorFilter: e.target.value || null })}
+                  className="w-full px-2 py-1.5 text-xs font-sans outline-none mb-1"
+                  style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+                >
+                  {COLOR_TINT_PRESETS.map((p) => (
+                    <option key={p.label} value={p.value}>{p.label}</option>
+                  ))}
+                  <option value="__custom__" disabled>— กำหนดเองด้านล่าง —</option>
+                </select>
+                <input
+                  value={choice.colorFilter ?? ""}
+                  onChange={(e) => onChange({ ...choice, colorFilter: e.target.value || null })}
+                  placeholder="เช่น sepia(0.5) saturate(2) hue-rotate(-10deg)"
+                  className="w-full px-2 py-1.5 text-xs font-sans outline-none"
+                  style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {choice.overlayImage && baseImage && (
+                  <button type="button" onClick={() => setPositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
+                    {positioning ? "ปิดตำแหน่ง" : "จัดตำแหน่ง"}
+                  </button>
+                )}
+                {choice.swatchImage && (
+                  <button type="button" onClick={() => setSwatchPositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
+                    {swatchPositioning ? "ปิดจัด Swatch" : "ขยาย/จัด Swatch"}
+                  </button>
+                )}
+                {choice.baseImageOverride && (
+                  <button type="button" onClick={() => setBasePositioning((p) => !p)} className="text-xs tracking-wider uppercase underline font-sans" style={{ color: "var(--gold-dark)" }}>
+                    {basePositioning ? "ปิดจัดตำแหน่งรูปแหวน" : "จัดตำแหน่งรูปแหวน"}
+                  </button>
+                )}
+                {choice.overlayImage && (
+                  <button
+                    type="button"
+                    onClick={() => onCopyPosition({ x: choice.overlayX, y: choice.overlayY, width: choice.overlayWidth, rotation: choice.overlayRotation })}
+                    className="text-xs tracking-wider uppercase underline font-sans"
+                    style={{ color: "var(--gold-dark)" }}
+                    title={`x=${fmtPx(choice.overlayX)}px, y=${fmtPx(choice.overlayY)}px, หมุน=${Math.round(choice.overlayRotation)}°`}
+                  >
+                    คัดลอกตำแหน่ง
+                  </button>
+                )}
+                {choice.overlayImage && copiedPosition && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onChange({
+                        ...choice,
+                        overlayX: copiedPosition.x,
+                        overlayY: copiedPosition.y,
+                        overlayWidth: copiedPosition.width,
+                        overlayRotation: copiedPosition.rotation,
+                      })
+                    }
+                    className="text-xs tracking-wider uppercase underline font-sans"
+                    style={{ color: "var(--gold-dark)" }}
+                  >
+                    วางตำแหน่ง ({fmtPx(copiedPosition.x)}, {fmtPx(copiedPosition.y)}px, {Math.round(copiedPosition.rotation)}°)
+                  </button>
+                )}
+              </div>
+
+              {positioning && choice.overlayImage && baseImage && (
+                <div className="max-w-xs">
+                  <OverlayPositioner
+                    baseImage={baseImage}
+                    overlayImage={choice.overlayImage}
+                    x={choice.overlayX}
+                    y={choice.overlayY}
+                    width={choice.overlayWidth}
+                    rotation={choice.overlayRotation}
+                    onChange={(x, y, width, rotation) => onChange({ ...choice, overlayX: x, overlayY: y, overlayWidth: width, overlayRotation: rotation })}
+                    references={siblingChoices
+                      .filter((c) => c.overlayImage)
+                      .map((c): OverlayReference => ({
+                        label: c.label || "ตัวเลือกอื่น",
+                        image: c.overlayImage!,
+                        x: c.overlayX,
+                        y: c.overlayY,
+                        width: c.overlayWidth,
+                        rotation: c.overlayRotation,
+                      }))}
+                  />
+                </div>
+              )}
+
+              {swatchPositioning && choice.swatchImage && (
+                <div>
+                  <SwatchPositioner
+                    swatchImage={choice.swatchImage}
+                    zoom={choice.swatchZoom || 1}
+                    offsetX={choice.swatchOffsetX || 0}
+                    offsetY={choice.swatchOffsetY || 0}
+                    rotation={choice.swatchRotation || 0}
+                    onZoomChange={(z) => onChange({ ...choice, swatchZoom: z })}
+                    onOffsetChange={(x, y) => onChange({ ...choice, swatchOffsetX: x, swatchOffsetY: y })}
+                    onRotationChange={(r) => onChange({ ...choice, swatchRotation: r })}
+                  />
+                </div>
+              )}
+
+              {basePositioning && choice.baseImageOverride && baseImage && (
+                <div className="max-w-xs">
+                  <BaseImagePositioner
+                    referenceImage={baseImage}
+                    image={choice.baseImageOverride}
+                    zoom={choice.baseImageZoom || 1}
+                    offsetX={choice.baseImageOffsetX || 0}
+                    offsetY={choice.baseImageOffsetY || 0}
+                    onZoomChange={(z) => onChange({ ...choice, baseImageZoom: z })}
+                    onOffsetChange={(x, y) => onChange({ ...choice, baseImageOffsetX: x, baseImageOffsetY: y })}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {swatchPositioning && choice.swatchImage && (
-        <div className="mt-3">
-          <SwatchPositioner
-            swatchImage={choice.swatchImage}
-            zoom={choice.swatchZoom || 1}
-            offsetX={choice.swatchOffsetX || 0}
-            offsetY={choice.swatchOffsetY || 0}
-            rotation={choice.swatchRotation || 0}
-            onZoomChange={(z) => onChange({ ...choice, swatchZoom: z })}
-            onOffsetChange={(x, y) => onChange({ ...choice, swatchOffsetX: x, swatchOffsetY: y })}
-            onRotationChange={(r) => onChange({ ...choice, swatchRotation: r })}
-          />
-        </div>
-      )}
-
-      {basePositioning && choice.baseImageOverride && baseImage && (
-        <div className="mt-3 max-w-xs">
-          <BaseImagePositioner
-            referenceImage={baseImage}
-            image={choice.baseImageOverride}
-            zoom={choice.baseImageZoom || 1}
-            offsetX={choice.baseImageOffsetX || 0}
-            offsetY={choice.baseImageOffsetY || 0}
-            onZoomChange={(z) => onChange({ ...choice, baseImageZoom: z })}
-            onOffsetChange={(x, y) => onChange({ ...choice, baseImageOffsetX: x, baseImageOffsetY: y })}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -839,6 +879,7 @@ function GroupEditor({
               <ChoiceEditor
                 key={choice.key}
                 choice={choice}
+                siblingChoices={group.choices.filter((c) => c.key !== choice.key)}
                 baseImage={baseImage}
                 groupKind={group.kind}
                 onChange={(c) => onChange({ ...group, choices: group.choices.map((x) => (x.key === c.key ? c : x)) })}
