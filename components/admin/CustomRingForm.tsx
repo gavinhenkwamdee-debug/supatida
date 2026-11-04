@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import OverlayPositioner, { type OverlayReference } from "./OverlayPositioner";
 import { DIAMOND_SHAPES, DIAMOND_SHAPE_LABELS } from "@/lib/ringShapes";
-import type { CustomRingDetail, GroupKind, GroupWithRing, StoneKind } from "@/lib/customRings";
+import { DIAMOND_SHAPE_IMAGES, isDiamondMeaningChoice } from "@/lib/gemstoneMeanings";
+import type { CustomRingDetail, DiamondShapeOverlay, GroupKind, GroupWithRing, StoneKind } from "@/lib/customRings";
+
+// Only shapes with real photography uploaded (DIAMOND_SHAPE_IMAGES) can get a
+// per-shape overlay position — same set the customer-facing shape picker offers.
+const DIAMOND_SHAPE_OPTIONS = Object.keys(DIAMOND_SHAPE_IMAGES);
 
 const GROUP_KIND_OPTIONS: { value: GroupKind; label: string }[] = [
   { value: "generic", label: "ทั่วไป (ปุ่ม/วงกลม)" },
@@ -50,6 +55,7 @@ interface ChoiceState {
   overlayY: number;
   overlayWidth: number;
   overlayRotation: number;
+  diamondShapeOverlays: Record<string, DiamondShapeOverlay>;
   baseImageOverride: string | null;
   baseImageZoom: number;
   baseImageOffsetX: number;
@@ -100,6 +106,7 @@ function emptyChoice(): ChoiceState {
     overlayY: 50,
     overlayWidth: 20,
     overlayRotation: 0,
+    diamondShapeOverlays: {},
     baseImageOverride: null,
     baseImageZoom: 1,
     baseImageOffsetX: 0,
@@ -245,6 +252,7 @@ function ChoiceEditor({
   siblingChoices,
   baseImage,
   groupKind,
+  isDiamondMeaningChoice,
   onChange,
   onRemove,
   onMove,
@@ -257,6 +265,7 @@ function ChoiceEditor({
   siblingChoices: ChoiceState[];
   baseImage: string;
   groupKind: GroupKind;
+  isDiamondMeaningChoice: boolean;
   onChange: (c: ChoiceState) => void;
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
@@ -268,6 +277,7 @@ function ChoiceEditor({
   const [positioning, setPositioning] = useState(false);
   const [swatchPositioning, setSwatchPositioning] = useState(false);
   const [basePositioning, setBasePositioning] = useState(false);
+  const [activeShape, setActiveShape] = useState<string | null>(null);
   // Collapsed by default for an empty/new choice so the form shows just
   // name+price to start — but stays open for a choice that already has an
   // image/color set, so existing rings don't look like their data vanished.
@@ -507,6 +517,124 @@ function ChoiceEditor({
                         rotation: c.overlayRotation,
                       }))}
                   />
+                </div>
+              )}
+
+              {isDiamondMeaningChoice && baseImage && (
+                <div className="mt-3 p-2" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
+                  <p className="text-xs font-sans mb-1" style={{ color: "var(--charcoal)" }}>
+                    ตำแหน่ง/ขนาดเฉพาะแต่ละทรงเพชร
+                  </p>
+                  <p className="text-[10px] font-sans mb-2" style={{ color: "var(--muted)" }}>
+                    ค่า &quot;จัดตำแหน่ง&quot; ด้านบนคือค่าเริ่มต้น — ใช้กับทุกทรงที่ยังไม่ได้ตั้งค่าเฉพาะที่นี่
+                    เลือกทรงด้านล่างเพื่อปรับตำแหน่ง/ขนาด/มุมของทรงนั้นแยกออกมา (เช่น มาร์คีส์ยาวรีควรเล็กกว่าทรงกลม)
+                  </p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-2 mb-2">
+                    {DIAMOND_SHAPE_OPTIONS.map((shape) => {
+                      const hasOverride = Boolean(choice.diamondShapeOverlays[shape]);
+                      const selected = activeShape === shape;
+                      return (
+                        <button
+                          key={shape}
+                          type="button"
+                          onClick={() => setActiveShape(selected ? null : shape)}
+                          title={DIAMOND_SHAPE_LABELS[shape]}
+                          className="flex flex-col items-center gap-1"
+                          style={{ width: 48 }}
+                        >
+                          <span
+                            className="rounded-full overflow-hidden flex-shrink-0 relative"
+                            style={{
+                              width: 36,
+                              height: 36,
+                              border: selected ? "2px solid #344EAD" : "1px solid var(--border)",
+                              backgroundColor: "var(--img-bg)",
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={DIAMOND_SHAPE_IMAGES[shape].swatchImage} alt={DIAMOND_SHAPE_LABELS[shape]} className="w-full h-full object-cover" />
+                          </span>
+                          <span className="text-[9px] font-sans text-center leading-tight" style={{ color: selected ? "#344EAD" : "var(--muted)" }}>
+                            {DIAMOND_SHAPE_LABELS[shape].split(" ")[0]}
+                            {hasOverride ? " •" : ""}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {activeShape && (() => {
+                    const override = choice.diamondShapeOverlays[activeShape];
+                    const x = override?.x ?? choice.overlayX;
+                    const y = override?.y ?? choice.overlayY;
+                    const width = override?.width ?? choice.overlayWidth;
+                    const rotation = override?.rotation ?? choice.overlayRotation;
+                    function setOverride(next: DiamondShapeOverlay) {
+                      onChange({
+                        ...choice,
+                        diamondShapeOverlays: { ...choice.diamondShapeOverlays, [activeShape as string]: next },
+                      });
+                    }
+                    return (
+                      <div className="max-w-xs">
+                        <div className="flex flex-wrap items-center gap-3 mb-2">
+                          <span className="text-xs font-sans" style={{ color: "var(--charcoal)" }}>
+                            กำลังจัด: {DIAMOND_SHAPE_LABELS[activeShape]}
+                          </span>
+                          {override && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onChange({
+                                  ...choice,
+                                  diamondShapeOverlays: Object.fromEntries(
+                                    Object.entries(choice.diamondShapeOverlays).filter(([s]) => s !== activeShape)
+                                  ),
+                                })
+                              }
+                              className="text-xs tracking-wider uppercase underline font-sans"
+                              style={{ color: "#C0392B" }}
+                            >
+                              ใช้ค่าเริ่มต้น
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => onCopyPosition({ x, y, width, rotation })}
+                            className="text-xs tracking-wider uppercase underline font-sans"
+                            style={{ color: "var(--gold-dark)" }}
+                          >
+                            คัดลอกตำแหน่ง
+                          </button>
+                          {copiedPosition && (
+                            <button
+                              type="button"
+                              onClick={() => setOverride(copiedPosition)}
+                              className="text-xs tracking-wider uppercase underline font-sans"
+                              style={{ color: "var(--gold-dark)" }}
+                            >
+                              วางตำแหน่ง
+                            </button>
+                          )}
+                        </div>
+                        <OverlayPositioner
+                          baseImage={baseImage}
+                          overlayImage={DIAMOND_SHAPE_IMAGES[activeShape].overlayImage}
+                          x={x}
+                          y={y}
+                          width={width}
+                          rotation={rotation}
+                          onChange={(nx, ny, nwidth, nrotation) => setOverride({ x: nx, y: ny, width: nwidth, rotation: nrotation })}
+                          references={DIAMOND_SHAPE_OPTIONS.filter((s) => s !== activeShape)
+                            .filter((s) => choice.diamondShapeOverlays[s])
+                            .map((s): OverlayReference => {
+                              const o = choice.diamondShapeOverlays[s];
+                              return { label: DIAMOND_SHAPE_LABELS[s], image: DIAMOND_SHAPE_IMAGES[s].overlayImage, x: o.x, y: o.y, width: o.width, rotation: o.rotation };
+                            })}
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -904,6 +1032,7 @@ function GroupEditor({
                 siblingChoices={referenceChoicesFor(group, allGroups).filter((c) => c.key !== choice.key)}
                 baseImage={baseImage}
                 groupKind={group.kind}
+                isDiamondMeaningChoice={isDiamondMeaningChoice(group.kind, i)}
                 onChange={(c) => onChange({ ...group, choices: group.choices.map((x) => (x.key === c.key ? c : x)) })}
                 onRemove={() => onChange({ ...group, choices: group.choices.filter((x) => x.key !== choice.key) })}
                 onMove={(dir) => moveChoice(i, dir)}
@@ -960,6 +1089,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             overlayY: c.overlayY,
             overlayWidth: c.overlayWidth,
             overlayRotation: c.overlayRotation,
+            diamondShapeOverlays: c.diamondShapeOverlays ?? {},
             baseImageOverride: c.baseImageOverride,
             baseImageZoom: c.baseImageZoom,
             baseImageOffsetX: c.baseImageOffsetX,
@@ -1029,6 +1159,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         overlayY: c.overlayY,
         overlayWidth: c.overlayWidth,
         overlayRotation: c.overlayRotation,
+        diamondShapeOverlays: c.diamondShapeOverlays ?? {},
         baseImageOverride: c.baseImageOverride,
         baseImageZoom: c.baseImageZoom,
         baseImageOffsetX: c.baseImageOffsetX,
@@ -1092,6 +1223,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
                 overlayY: c.overlayY,
                 overlayWidth: c.overlayWidth,
                 overlayRotation: c.overlayRotation,
+                diamondShapeOverlays: c.diamondShapeOverlays ?? {},
                 baseImageOverride: c.baseImageOverride,
                 baseImageZoom: c.baseImageZoom || 1,
                 baseImageOffsetX: c.baseImageOffsetX || 0,

@@ -17,6 +17,13 @@ export type StoneKind = "diamond" | "gem";
 export { DIAMOND_SHAPES } from "./ringShapes";
 export type { DiamondShape } from "./ringShapes";
 
+export interface DiamondShapeOverlay {
+  x: number;
+  y: number;
+  width: number;
+  rotation: number;
+}
+
 export interface CustomRingChoice {
   id: number;
   label: string;
@@ -43,6 +50,13 @@ export interface CustomRingChoice {
   overlayY: number;
   overlayWidth: number;
   overlayRotation: number;
+  // Only meaningful on the ACHIEVEMENT ("ความสำเร็จ") choice, whose gemstone
+  // is Diamond — the customer there also picks a diamond shape, and each
+  // shape's photo has a different natural silhouette/aspect ratio, so the
+  // overlayX/Y/Width/Rotation above (the default) can look off for some
+  // shapes. Keyed by shape (e.g. "round", "marquise"); a shape with no entry
+  // here falls back to the default overlay fields above.
+  diamondShapeOverlays: Record<string, DiamondShapeOverlay>;
   baseImageOverride: string | null;
   // baseImageOverride photos come from separate shoots and often frame the
   // ring at a different size/position within the square — these nudge the
@@ -102,6 +116,7 @@ export interface ChoiceInput {
   overlayY: number;
   overlayWidth: number;
   overlayRotation: number;
+  diamondShapeOverlays: Record<string, DiamondShapeOverlay>;
   baseImageOverride: string | null;
   baseImageZoom: number;
   baseImageOffsetX: number;
@@ -215,6 +230,9 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS size_surcharge_per_step NUMERIC NOT NULL DEFAULT 0
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS diamond_shape_overlays TEXT NOT NULL DEFAULT '{}'
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -233,6 +251,29 @@ function toRing(row: any): CustomRing {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseDiamondShapeOverlays(raw: unknown): Record<string, DiamondShapeOverlay> {
+  if (typeof raw !== "string" || !raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    const out: Record<string, DiamondShapeOverlay> = {};
+    for (const [shape, v] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!v || typeof v !== "object") continue;
+      const o = v as Record<string, unknown>;
+      out[shape] = {
+        x: parseFloat(String(o.x)) || 50,
+        y: parseFloat(String(o.y)) || 50,
+        width: parseFloat(String(o.width)) || 20,
+        rotation: parseFloat(String(o.rotation)) || 0,
+      };
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toChoice(row: any): CustomRingChoice {
   return {
     id: row.id,
@@ -248,6 +289,7 @@ function toChoice(row: any): CustomRingChoice {
     overlayY: parseFloat(row.overlay_y),
     overlayWidth: parseFloat(row.overlay_width),
     overlayRotation: parseFloat(row.overlay_rotation) || 0,
+    diamondShapeOverlays: parseDiamondShapeOverlays(row.diamond_shape_overlays),
     baseImageOverride: row.base_image_override ?? null,
     baseImageZoom: parseFloat(row.base_image_zoom) || 1,
     baseImageOffsetX: parseFloat(row.base_image_offset_x) || 0,
@@ -377,10 +419,10 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, base_image_zoom, base_image_offset_x, base_image_offset_y, price_delta, size_surcharge_per_step, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, diamond_shape_overlays, base_image_override, base_image_zoom, base_image_offset_x, base_image_offset_y, price_delta, size_surcharge_per_step, sort_order, stone_kind, shape)
         VALUES (
           ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY}, ${choice.swatchRotation}, ${choice.colorFilter},
-          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.baseImageZoom}, ${choice.baseImageOffsetX}, ${choice.baseImageOffsetY}, ${choice.priceDelta}, ${choice.sizeSurchargePerStep}, ${choice.sortOrder},
+          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${JSON.stringify(choice.diamondShapeOverlays ?? {})}, ${choice.baseImageOverride}, ${choice.baseImageZoom}, ${choice.baseImageOffsetX}, ${choice.baseImageOffsetY}, ${choice.priceDelta}, ${choice.sizeSurchargePerStep}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )
       `;
