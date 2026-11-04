@@ -19,10 +19,10 @@ const GEM_ORANGE = `${R2}ring-1785744823668.png`; // Padparadscha
 const GEM_BLUE = `${R2}ring-1785744279338.png`; // Phailin
 const GEM_PURPLE = `${R2}ring-1785744372089.png`; // Purple Sapphire
 const GEM_RED = `${R2}ring-1785744091294.png`; // Ruby
-const DIAMOND_ROUND = `${R2}ring-1786867853729.png`;
 const DIAMOND_PRINCESS = `${R2}ring-1786867836873.png`;
 // Isolated-on-white studio photos supplied directly by the admin (not R2 —
 // plain static files) for a consistent look across shapes.
+const DIAMOND_ROUND = "/diamond-shapes/round.webp";
 const DIAMOND_PEAR = "/diamond-shapes/pear.webp";
 const DIAMOND_OVAL = "/diamond-shapes/oval.webp";
 const DIAMOND_EMERALD = "/diamond-shapes/emerald.webp";
@@ -30,11 +30,11 @@ const DIAMOND_HEART = "/diamond-shapes/heart.webp";
 const DIAMOND_MARQUISE = "/diamond-shapes/marquise.webp";
 
 // Swatch+overlay pairs for the diamond-shape sub-picker shown when a
-// meaning's gemstone is "Diamond" (currently just ACHIEVEMENT). Round and
-// Princess still use the original R2 photography (no replacement supplied
-// yet); Baguette has no photo yet either, so it's left out here.
+// meaning's gemstone is "Diamond" (currently just ACHIEVEMENT). Princess
+// still uses the original R2 photography (no replacement supplied yet);
+// Baguette has no photo yet either, so it's left out here.
 export const DIAMOND_SHAPE_IMAGES: Record<string, { swatchImage: string; overlayImage: string }> = {
-  round: { swatchImage: DIAMOND_ROUND, overlayImage: `${R2}ring-1786867856563.png` },
+  round: { swatchImage: DIAMOND_ROUND, overlayImage: DIAMOND_ROUND },
   pear: { swatchImage: DIAMOND_PEAR, overlayImage: DIAMOND_PEAR },
   princess: { swatchImage: DIAMOND_PRINCESS, overlayImage: `${R2}ring-1786867839830.png` },
   oval: { swatchImage: DIAMOND_OVAL, overlayImage: DIAMOND_OVAL },
