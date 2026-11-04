@@ -73,6 +73,12 @@ export interface CustomRingChoice {
   // selected together with a numeric-labeled choice in any "dropdown" group.
   // 0 for metals with flat sizing (e.g. Silver).
   sizeSurchargePerStep: number;
+  // Only meaningful on a choice inside a "metal" group — true for a base
+  // metal that can't reliably hold other color plating (e.g. Silver, where
+  // rose/yellow gold plating wears off quickly). When this metal is
+  // selected, every other group's "color" choices (colorFilter set) are
+  // restricted to the untinted one (colorFilter === "none") only.
+  onlyWhiteGold: boolean;
   sortOrder: number;
   stoneKind: StoneKind | null;
   shape: string | null;
@@ -123,6 +129,7 @@ export interface ChoiceInput {
   baseImageOffsetY: number;
   priceDelta: number;
   sizeSurchargePerStep: number;
+  onlyWhiteGold: boolean;
   sortOrder: number;
   stoneKind: StoneKind | null;
   shape: string | null;
@@ -233,6 +240,9 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS diamond_shape_overlays TEXT NOT NULL DEFAULT '{}'
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS only_white_gold BOOLEAN NOT NULL DEFAULT FALSE
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -296,6 +306,7 @@ function toChoice(row: any): CustomRingChoice {
     baseImageOffsetY: parseFloat(row.base_image_offset_y) || 0,
     priceDelta: parseFloat(row.price_delta),
     sizeSurchargePerStep: parseFloat(row.size_surcharge_per_step) || 0,
+    onlyWhiteGold: Boolean(row.only_white_gold),
     sortOrder: row.sort_order,
     stoneKind: (row.stone_kind as StoneKind | null) ?? null,
     shape: row.shape ?? null,
@@ -419,10 +430,10 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, diamond_shape_overlays, base_image_override, base_image_zoom, base_image_offset_x, base_image_offset_y, price_delta, size_surcharge_per_step, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, diamond_shape_overlays, base_image_override, base_image_zoom, base_image_offset_x, base_image_offset_y, price_delta, size_surcharge_per_step, only_white_gold, sort_order, stone_kind, shape)
         VALUES (
           ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY}, ${choice.swatchRotation}, ${choice.colorFilter},
-          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${JSON.stringify(choice.diamondShapeOverlays ?? {})}, ${choice.baseImageOverride}, ${choice.baseImageZoom}, ${choice.baseImageOffsetX}, ${choice.baseImageOffsetY}, ${choice.priceDelta}, ${choice.sizeSurchargePerStep}, ${choice.sortOrder},
+          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${JSON.stringify(choice.diamondShapeOverlays ?? {})}, ${choice.baseImageOverride}, ${choice.baseImageZoom}, ${choice.baseImageOffsetX}, ${choice.baseImageOffsetY}, ${choice.priceDelta}, ${choice.sizeSurchargePerStep}, ${choice.onlyWhiteGold}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )
       `;

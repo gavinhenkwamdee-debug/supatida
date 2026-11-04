@@ -93,6 +93,7 @@ export async function PUT(request: Request, { params }: Params) {
                     baseImageOffsetY: Number(choice.baseImageOffsetY) || 0,
                     priceDelta: Number(choice.priceDelta) || 0,
                     sizeSurchargePerStep: Number(choice.sizeSurchargePerStep) || 0,
+                    onlyWhiteGold: Boolean(choice.onlyWhiteGold),
                     sortOrder: ci,
                     stoneKind: parseStoneKind(choice.stoneKind),
                     shape: choice.shape ? String(choice.shape) : null,

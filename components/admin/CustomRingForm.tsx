@@ -62,6 +62,7 @@ interface ChoiceState {
   baseImageOffsetY: number;
   priceDelta: number;
   sizeSurchargePerStep: number;
+  onlyWhiteGold: boolean;
   stoneKind: StoneKind | null;
   shape: string | null;
 }
@@ -113,6 +114,7 @@ function emptyChoice(): ChoiceState {
     baseImageOffsetY: 0,
     priceDelta: 0,
     sizeSurchargePerStep: 0,
+    onlyWhiteGold: false,
     stoneKind: null,
     shape: null,
   };
@@ -361,6 +363,18 @@ function ChoiceEditor({
                 style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
               />
             </div>
+          )}
+          {groupKind === "metal" && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={choice.onlyWhiteGold}
+                onChange={(e) => onChange({ ...choice, onlyWhiteGold: e.target.checked })}
+              />
+              <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>
+                ชุบสีอื่นไม่ทน — จำกัดให้ลูกค้าเลือกได้แค่ White Gold เท่านั้น (เช่น Silver)
+              </span>
+            </label>
           )}
         </div>
 
@@ -1096,6 +1110,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             baseImageOffsetY: c.baseImageOffsetY,
             priceDelta: c.priceDelta,
             sizeSurchargePerStep: c.sizeSurchargePerStep,
+            onlyWhiteGold: c.onlyWhiteGold ?? false,
             stoneKind: c.stoneKind,
             shape: c.shape,
           })),
@@ -1166,6 +1181,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         baseImageOffsetY: c.baseImageOffsetY,
         priceDelta: c.priceDelta,
         sizeSurchargePerStep: c.sizeSurchargePerStep,
+        onlyWhiteGold: c.onlyWhiteGold ?? false,
         stoneKind: c.stoneKind,
         shape: c.shape,
       }))
@@ -1230,6 +1246,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
                 baseImageOffsetY: c.baseImageOffsetY || 0,
                 priceDelta: c.priceDelta,
                 sizeSurchargePerStep: c.sizeSurchargePerStep || 0,
+                onlyWhiteGold: Boolean(c.onlyWhiteGold),
                 stoneKind,
                 shape,
               };
