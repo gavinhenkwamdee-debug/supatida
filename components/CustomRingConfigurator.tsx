@@ -13,8 +13,8 @@ import {
 } from "@/lib/gemstoneMeanings";
 import type { GroupKind } from "@/lib/customRings";
 
-// Only these 4 shapes have real photography uploaded so far.
-const DIAMOND_SHAPE_OPTIONS = ["round", "pear", "princess", "oval"] as const;
+// Baguette has no photography yet, so it's the only DIAMOND_SHAPES entry left out here.
+const DIAMOND_SHAPE_OPTIONS = ["round", "pear", "princess", "oval", "emerald", "heart", "marquise"] as const;
 
 // The ring's own "power" groups double as the meaning picker — main_power is
 // YOUR WISH, secondary_power is YOUR STRENGTH, tertiary_power is YOUR
