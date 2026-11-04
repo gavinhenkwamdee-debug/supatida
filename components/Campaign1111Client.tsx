@@ -21,6 +21,15 @@ export interface CampaignProduct {
 }
 
 const PAGE_SIZE = 24;
+
+const PRICE_RANGES = [
+  { label: "ทุกราคา", min: 0, max: Infinity },
+  { label: "< ฿10,000", min: 0, max: 10000 },
+  { label: "฿10,000 – 30,000", min: 10000, max: 30000 },
+  { label: "฿30,000 – 50,000", min: 30000, max: 50000 },
+  { label: "฿50,000 – 100,000", min: 50000, max: 100000 },
+  { label: "฿100,000+", min: 100000, max: Infinity },
+];
 const LINE_URL = "https://lin.ee/U9D2iyG";
 const ACCENT = "#C0392B";
 
@@ -235,10 +244,14 @@ function ProductBrowser({
   onToggle?: (p: CampaignProduct) => void;
 }) {
   const [category, setCategory] = useState("All");
+  const [priceIdx, setPriceIdx] = useState(0);
   const [visible, setVisible] = useState(PAGE_SIZE);
 
   const categories = useMemo(() => Array.from(new Set(products.map((p) => p.category))).filter(Boolean), [products]);
-  const filtered = category === "All" ? products : products.filter((p) => p.category === category);
+  const priceRange = PRICE_RANGES[priceIdx];
+  const filtered = products
+    .filter((p) => category === "All" || p.category === category)
+    .filter((p) => p.price >= priceRange.min && p.price <= priceRange.max);
 
   if (products.length === 0) {
     return <p className="text-center text-sm font-sans py-12" style={{ color: "var(--muted)" }}>ยังไม่มีสินค้าในรายการนี้</p>;
@@ -247,7 +260,7 @@ function ProductBrowser({
   return (
     <div>
       {categories.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-5 pb-1">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3 pb-1">
           {["All", ...categories].map((c) => (
             <button
               key={c}
@@ -266,6 +279,31 @@ function ProductBrowser({
         </div>
       )}
 
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide mb-5 pb-1">
+        <span className="text-xs tracking-wider font-sans whitespace-nowrap flex-shrink-0" style={{ color: "var(--muted)" }}>
+          ราคา:
+        </span>
+        {PRICE_RANGES.map((r, i) => (
+          <button
+            key={r.label}
+            type="button"
+            onClick={() => { setPriceIdx(i); setVisible(PAGE_SIZE); }}
+            className="px-3 py-1 text-xs rounded-full font-sans whitespace-nowrap flex-shrink-0 transition-colors"
+            style={
+              priceIdx === i
+                ? { backgroundColor: "var(--charcoal)", color: "var(--gold-light)", border: "1px solid var(--charcoal)" }
+                : { backgroundColor: "white", color: "var(--muted)", border: "1px solid var(--border)" }
+            }
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="text-center text-sm font-sans py-12" style={{ color: "var(--muted)" }}>ไม่พบสินค้าในช่วงราคานี้</p>
+      ) : (
+      <>
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
         {filtered.slice(0, visible).map((p) => (
           <ProductCard
@@ -290,6 +328,8 @@ function ProductBrowser({
             ดูเพิ่มเติม ({filtered.length - visible})
           </button>
         </div>
+      )}
+      </>
       )}
     </div>
   );
