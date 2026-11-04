@@ -30,6 +30,17 @@ const DIAMOND_OVAL = "/diamond-shapes/oval.webp";
 const DIAMOND_EMERALD = "/diamond-shapes/emerald.webp";
 const DIAMOND_HEART = "/diamond-shapes/heart.webp";
 const DIAMOND_MARQUISE = "/diamond-shapes/marquise.webp";
+// These 4 shapes' source photos crop the gem close to the frame edge —
+// great for the overlay (more resolution on the gem itself), but in the
+// small round swatch/shape-picker circle (object-fit: cover) that makes
+// the gem fill the circle edge-to-edge, inconsistently larger than
+// round/princess/marquise's own photos, which have more natural padding.
+// These padded variants exist purely to match that look in swatch/picker
+// circles; overlay rendering on the ring photo still uses the originals.
+const DIAMOND_PEAR_SWATCH = "/diamond-shapes/pear-swatch.webp";
+const DIAMOND_OVAL_SWATCH = "/diamond-shapes/oval-swatch.webp";
+const DIAMOND_EMERALD_SWATCH = "/diamond-shapes/emerald-swatch.webp";
+const DIAMOND_HEART_SWATCH = "/diamond-shapes/heart-swatch.webp";
 
 // Swatch+overlay pairs for the diamond-shape sub-picker shown when a
 // meaning's gemstone is "Diamond" (currently just ACHIEVEMENT). Princess
@@ -37,11 +48,11 @@ const DIAMOND_MARQUISE = "/diamond-shapes/marquise.webp";
 // Baguette has no photo yet either, so it's left out here.
 export const DIAMOND_SHAPE_IMAGES: Record<string, { swatchImage: string; overlayImage: string }> = {
   round: { swatchImage: DIAMOND_ROUND, overlayImage: DIAMOND_ROUND },
-  pear: { swatchImage: DIAMOND_PEAR, overlayImage: DIAMOND_PEAR },
+  pear: { swatchImage: DIAMOND_PEAR_SWATCH, overlayImage: DIAMOND_PEAR },
   princess: { swatchImage: DIAMOND_PRINCESS, overlayImage: `${R2}ring-1786867839830.png` },
-  oval: { swatchImage: DIAMOND_OVAL, overlayImage: DIAMOND_OVAL },
-  emerald: { swatchImage: DIAMOND_EMERALD, overlayImage: DIAMOND_EMERALD },
-  heart: { swatchImage: DIAMOND_HEART, overlayImage: DIAMOND_HEART },
+  oval: { swatchImage: DIAMOND_OVAL_SWATCH, overlayImage: DIAMOND_OVAL },
+  emerald: { swatchImage: DIAMOND_EMERALD_SWATCH, overlayImage: DIAMOND_EMERALD },
+  heart: { swatchImage: DIAMOND_HEART_SWATCH, overlayImage: DIAMOND_HEART },
   marquise: { swatchImage: DIAMOND_MARQUISE, overlayImage: DIAMOND_MARQUISE },
 };
 
