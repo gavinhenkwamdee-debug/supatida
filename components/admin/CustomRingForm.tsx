@@ -16,6 +16,13 @@ const GROUP_KIND_OPTIONS: { value: GroupKind; label: string }[] = [
   { value: "metal", label: "ตัวเรือน/โลหะ (Metal) — เชื่อมราคากับไซส์" },
 ];
 
+// YOUR WISH / STRENGTH / BALANCE all render on the same ring photo at once
+// (one stone picked from each), so when positioning a gem in any of the
+// three, the reference ghosts shown should span all three groups — not just
+// siblings within the one being edited — otherwise stones from different
+// groups end up placed on top of each other.
+const POWER_KINDS: GroupKind[] = ["main_power", "secondary_power", "tertiary_power"];
+
 // Quick-fill presets for a "metal color" choice's colorFilter — CSS filter()
 // tint layered on the ring's base photo (assumes the photo is neutral
 // white/silver metal to start; the sepia+hue-rotate combo is the standard
@@ -60,6 +67,16 @@ interface GroupState {
   placeholder: string;
   priceDelta: number;
   choices: ChoiceState[];
+}
+
+// Choices to show as position-reference ghosts while editing one in `group`:
+// the three power groups pool together (see POWER_KINDS above), any other
+// group kind only references its own siblings.
+function referenceChoicesFor(group: GroupState, allGroups: GroupState[]): ChoiceState[] {
+  if (POWER_KINDS.includes(group.kind)) {
+    return allGroups.filter((g) => POWER_KINDS.includes(g.kind)).flatMap((g) => g.choices);
+  }
+  return group.choices;
 }
 
 let uid = 0;
@@ -782,6 +799,7 @@ function BaseImagePositioner({
 
 function GroupEditor({
   group,
+  allGroups,
   baseImage,
   onChange,
   onRemove,
@@ -791,6 +809,7 @@ function GroupEditor({
   onCopyPosition,
 }: {
   group: GroupState;
+  allGroups: GroupState[];
   baseImage: string;
   onChange: (g: GroupState) => void;
   onRemove: () => void;
@@ -882,7 +901,7 @@ function GroupEditor({
               <ChoiceEditor
                 key={choice.key}
                 choice={choice}
-                siblingChoices={group.choices.filter((c) => c.key !== choice.key)}
+                siblingChoices={referenceChoicesFor(group, allGroups).filter((c) => c.key !== choice.key)}
                 baseImage={baseImage}
                 groupKind={group.kind}
                 onChange={(c) => onChange({ ...group, choices: group.choices.map((x) => (x.key === c.key ? c : x)) })}
@@ -1165,6 +1184,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         <GroupEditor
           key={g.key}
           group={g}
+          allGroups={groups}
           baseImage={baseImage}
           onChange={(ng) => setGroups(groups.map((x) => (x.key === g.key ? ng : x)))}
           onRemove={() => setGroups(groups.filter((x) => x.key !== g.key))}
