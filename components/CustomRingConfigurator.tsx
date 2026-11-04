@@ -342,7 +342,36 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     [groups, textValues]
   );
 
-  const totalPrice = ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0) + textInputTotal;
+  // Some metals (9K/14K/18K gold) cost more gold per step above size 55,
+  // while others (e.g. Silver) don't scale with size at all — rather than
+  // hand-setting a priceDelta on every single size choice per metal, the
+  // selected "metal" group's choice carries a baht-per-step rate, applied
+  // against whichever numeric size is picked in any "dropdown" group.
+  const metalChoice = useMemo(() => {
+    for (const group of groups) {
+      if (group.kind !== "metal") continue;
+      const choice = group.choices.find((c) => c.id === selections[group.id]);
+      if (choice) return choice;
+    }
+    return undefined;
+  }, [groups, selections]);
+
+  const sizeSurcharge = useMemo(() => {
+    if (!metalChoice?.sizeSurchargePerStep) return 0;
+    let surcharge = 0;
+    for (const group of groups) {
+      if (group.kind !== "dropdown") continue;
+      const choice = group.choices.find((c) => c.id === selections[group.id]);
+      if (!choice) continue;
+      const sizeNum = parseInt(choice.label, 10);
+      if (!Number.isFinite(sizeNum) || sizeNum < 56) continue;
+      surcharge += (sizeNum - 55) * metalChoice.sizeSurchargePerStep;
+    }
+    return surcharge;
+  }, [groups, selections, metalChoice]);
+
+  const totalPrice =
+    ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0) + textInputTotal + sizeSurcharge;
 
   // A choice can replace the whole ring photo (e.g. a different base ring
   // design) instead of just layering a gem on top — last selected group
@@ -404,7 +433,14 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
           <div className="flex items-baseline justify-between mb-1">
             <h2 className="text-xl tracking-wide" style={{ color: "var(--charcoal)" }}>{ring.name}</h2>
           </div>
-          <p className="text-lg font-sans font-light mb-4" style={{ color: "var(--gold)" }}>{THB(totalPrice)}</p>
+          <div className="mb-4">
+            <p className="text-lg font-sans font-light" style={{ color: "var(--gold)" }}>{THB(totalPrice)}</p>
+            {sizeSurcharge > 0 && (
+              <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>
+                (รวมค่าทองตามไซส์ +{THB(sizeSurcharge)})
+              </p>
+            )}
+          </div>
 
           {ring.description && (
             <p className="text-sm font-sans mb-4" style={{ color: "var(--muted)" }}>{ring.description}</p>

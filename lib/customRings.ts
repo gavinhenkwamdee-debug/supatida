@@ -8,7 +8,11 @@ const sql = neon(process.env.DATABASE_URL!);
 // "dropdown" renders its choices as a <select> (e.g. ring size) instead of buttons.
 // "text_input" has no choices — the customer types free text (e.g. engraving) and
 // `placeholder`/`priceDelta` on the group configure it.
-export type GroupKind = "generic" | "dropdown" | "text_input" | "main_power" | "secondary_power" | "tertiary_power";
+// "metal" marks the group holding the ring's metal/karat choices (Silver,
+// 9K, 14K, 18K, ...) — each choice's sizeSurchargePerStep lets the ring-size
+// dropdown's price scale with the selected metal (see sizeSurchargePerStep
+// below) instead of every size needing its own hand-set priceDelta.
+export type GroupKind = "generic" | "dropdown" | "text_input" | "main_power" | "secondary_power" | "tertiary_power" | "metal";
 export type StoneKind = "diamond" | "gem";
 export { DIAMOND_SHAPES } from "./ringShapes";
 export type { DiamondShape } from "./ringShapes";
@@ -50,6 +54,11 @@ export interface CustomRingChoice {
   baseImageOffsetX: number;
   baseImageOffsetY: number;
   priceDelta: number;
+  // Only meaningful on a choice inside a "metal" group — baht added per ring
+  // size from size 56 upward (size 56 itself = 1 step) when this metal is
+  // selected together with a numeric-labeled choice in any "dropdown" group.
+  // 0 for metals with flat sizing (e.g. Silver).
+  sizeSurchargePerStep: number;
   sortOrder: number;
   stoneKind: StoneKind | null;
   shape: string | null;
@@ -98,6 +107,7 @@ export interface ChoiceInput {
   baseImageOffsetX: number;
   baseImageOffsetY: number;
   priceDelta: number;
+  sizeSurchargePerStep: number;
   sortOrder: number;
   stoneKind: StoneKind | null;
   shape: string | null;
@@ -202,6 +212,9 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS base_image_offset_y NUMERIC NOT NULL DEFAULT 0
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS size_surcharge_per_step NUMERIC NOT NULL DEFAULT 0
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -240,6 +253,7 @@ function toChoice(row: any): CustomRingChoice {
     baseImageOffsetX: parseFloat(row.base_image_offset_x) || 0,
     baseImageOffsetY: parseFloat(row.base_image_offset_y) || 0,
     priceDelta: parseFloat(row.price_delta),
+    sizeSurchargePerStep: parseFloat(row.size_surcharge_per_step) || 0,
     sortOrder: row.sort_order,
     stoneKind: (row.stone_kind as StoneKind | null) ?? null,
     shape: row.shape ?? null,
@@ -363,10 +377,10 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, base_image_zoom, base_image_offset_x, base_image_offset_y, price_delta, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, base_image_override, base_image_zoom, base_image_offset_x, base_image_offset_y, price_delta, size_surcharge_per_step, sort_order, stone_kind, shape)
         VALUES (
           ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY}, ${choice.swatchRotation}, ${choice.colorFilter},
-          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.baseImageZoom}, ${choice.baseImageOffsetX}, ${choice.baseImageOffsetY}, ${choice.priceDelta}, ${choice.sortOrder},
+          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${choice.baseImageOverride}, ${choice.baseImageZoom}, ${choice.baseImageOffsetX}, ${choice.baseImageOffsetY}, ${choice.priceDelta}, ${choice.sizeSurchargePerStep}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )
       `;

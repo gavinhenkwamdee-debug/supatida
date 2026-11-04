@@ -13,6 +13,7 @@ const GROUP_KIND_OPTIONS: { value: GroupKind; label: string }[] = [
   { value: "main_power", label: "พลังงานหลัก (Main Power)" },
   { value: "secondary_power", label: "พลังงานรอง (Secondary Power)" },
   { value: "tertiary_power", label: "พลังงานที่สาม (Tertiary Power)" },
+  { value: "metal", label: "ตัวเรือน/โลหะ (Metal) — เชื่อมราคากับไซส์" },
 ];
 
 // Quick-fill presets for a "metal color" choice's colorFilter — CSS filter()
@@ -47,6 +48,7 @@ interface ChoiceState {
   baseImageOffsetX: number;
   baseImageOffsetY: number;
   priceDelta: number;
+  sizeSurchargePerStep: number;
   stoneKind: StoneKind | null;
   shape: string | null;
 }
@@ -86,6 +88,7 @@ function emptyChoice(): ChoiceState {
     baseImageOffsetX: 0,
     baseImageOffsetY: 0,
     priceDelta: 0,
+    sizeSurchargePerStep: 0,
     stoneKind: null,
     shape: null,
   };
@@ -332,6 +335,18 @@ function ChoiceEditor({
               style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
             />
           </div>
+          {groupKind === "metal" && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>ค่าทองเพิ่ม/ไซส์ ฿ (เริ่มไซส์ 56)</span>
+              <input
+                type="number"
+                value={choice.sizeSurchargePerStep}
+                onChange={(e) => onChange({ ...choice, sizeSurchargePerStep: Number(e.target.value) || 0 })}
+                className="w-24 px-2 py-1 text-xs font-sans outline-none"
+                style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+              />
+            </div>
+          )}
           <div>
             <span className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>
               โทนสีตัวเรือน (ใช้กับตัวเลือก &quot;สี&quot; เท่านั้น — ปรับโทนรูปแหวนหลัก ไม่ใช่รูป swatch)
@@ -786,6 +801,14 @@ function GroupEditor({
         </p>
       )}
 
+      {group.kind === "metal" && (
+        <p className="text-xs font-sans italic mb-3 px-1" style={{ color: "var(--gold-dark)" }}>
+          * เมื่อลูกค้าเลือกโลหะในหมวดนี้ พร้อมกับเลือกไซส์ (หมวด Dropdown ที่ตัวเลือกเป็นตัวเลขไซส์) ราคาจะบวกเพิ่มอัตโนมัติ =
+          (ไซส์ − 55) × &quot;ค่าทองเพิ่ม/ไซส์&quot; ของโลหะนั้น เริ่มคิดตั้งแต่ไซส์ 56 เป็นต้นไป (ไซส์ 55 ลงไปไม่มีค่าเพิ่ม) —
+          ใส่ 0 สำหรับโลหะที่ไม่คิดเพิ่มตามไซส์ เช่น Silver
+        </p>
+      )}
+
       {group.kind === "text_input" ? (
         <div className="p-3" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
           <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
@@ -879,6 +902,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             baseImageOffsetX: c.baseImageOffsetX,
             baseImageOffsetY: c.baseImageOffsetY,
             priceDelta: c.priceDelta,
+            sizeSurchargePerStep: c.sizeSurchargePerStep,
             stoneKind: c.stoneKind,
             shape: c.shape,
           })),
@@ -947,6 +971,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         baseImageOffsetX: c.baseImageOffsetX,
         baseImageOffsetY: c.baseImageOffsetY,
         priceDelta: c.priceDelta,
+        sizeSurchargePerStep: c.sizeSurchargePerStep,
         stoneKind: c.stoneKind,
         shape: c.shape,
       }))
@@ -1009,6 +1034,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
                 baseImageOffsetX: c.baseImageOffsetX || 0,
                 baseImageOffsetY: c.baseImageOffsetY || 0,
                 priceDelta: c.priceDelta,
+                sizeSurchargePerStep: c.sizeSurchargePerStep || 0,
                 stoneKind,
                 shape,
               };
