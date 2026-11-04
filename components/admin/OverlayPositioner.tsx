@@ -196,7 +196,7 @@ export default function OverlayPositioner({
       <input
         type="range"
         min={3}
-        max={60}
+        max={100}
         value={width}
         onChange={(e) => onChange(x, y, Number(e.target.value), rotation)}
         className="w-full"

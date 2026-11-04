@@ -130,7 +130,10 @@ async function compressImage(file: File): Promise<File> {
     const url = URL.createObjectURL(file);
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      const MAX = 1200;
+      // Gem overlay photos get zoomed up to fill much more of the ring photo
+      // than before (positioner size cap raised 60% -> 100%) — a higher
+      // resolution ceiling here keeps that enlargement from looking soft.
+      const MAX = 2000;
       let { width, height } = img;
       if (width > MAX || height > MAX) {
         if (width > height) { height = Math.round((height * MAX) / width); width = MAX; }
