@@ -160,7 +160,7 @@ export default function OverlayPositioner({
       </p>
       {references && references.length > 0 && (
         <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>
-          เงาจางๆ = ตำแหน่งที่จัดไว้แล้วของ {references.map((r) => r.label).join(", ")} — ใช้เทียบขนาด/ตำแหน่งให้ตรงกัน
+          เงาจางๆ = ตำแหน่งที่จัดไว้แล้วของตัวเลือกอื่น ({references.length} ตำแหน่ง{references.length <= 6 ? `: ${references.map((r) => r.label).join(", ")}` : ""}) — ใช้เทียบขนาด/ตำแหน่งให้ตรงกัน
         </p>
       )}
 
