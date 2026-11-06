@@ -54,6 +54,9 @@ export async function PUT(request: Request, { params }: Params) {
     description: String(body.description ?? ""),
     basePrice: Number(body.basePrice) || 0,
     baseImage: String(body.baseImage ?? ""),
+    realPhotos: Array.isArray(body.realPhotos)
+      ? body.realPhotos.filter((u: unknown): u is string => typeof u === "string" && u.length > 0)
+      : [],
     enabled: Boolean(body.enabled),
   };
 
