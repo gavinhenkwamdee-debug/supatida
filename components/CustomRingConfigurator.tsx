@@ -118,9 +118,10 @@ function GroupSection({
   textValue?: string;
   onTextChange?: (v: string) => void;
   // True when the ring's currently-selected metal can't reliably hold
-  // other color plating (e.g. Silver) — every "color" choice (colorFilter
-  // set) other than the untinted one (colorFilter === "none") is hidden,
-  // in whichever group happens to hold them.
+  // other color plating (e.g. Silver) — in any group that has a choice
+  // admin-flagged isWhiteGoldOption, every other choice in that group is
+  // hidden. A group with no such flagged choice is untouched (it isn't a
+  // "ring color" style group at all).
   onlyWhiteGold?: boolean;
 }) {
   // The diamond/gem toggle only makes sense for a plain "pick your stone"
@@ -132,8 +133,8 @@ function GroupSection({
     [isMainPower, group.choices]
   );
   let visibleChoices = isMainPower && stoneKind ? group.choices.filter((c) => c.stoneKind === stoneKind) : group.choices;
-  if (onlyWhiteGold) {
-    visibleChoices = visibleChoices.filter((c) => !c.colorFilter || c.colorFilter === "none");
+  if (onlyWhiteGold && group.choices.some((c) => c.isWhiteGoldOption)) {
+    visibleChoices = visibleChoices.filter((c) => c.isWhiteGoldOption);
   }
   const selectedChoice = group.choices.find((c) => c.id === selectedId);
   const allHaveImages = visibleChoices.length > 0 && visibleChoices.every((c) => c.swatchImage);
@@ -458,19 +459,20 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     setSelections((prev) => {
       const next = prev[groupId] === choiceId ? { ...prev, [groupId]: undefined } : { ...prev, [groupId]: choiceId };
       // Switching to a metal that can't reliably hold other color plating
-      // (e.g. Silver — colorFilter choices like Rose/Yellow Gold wear off
-      // it quickly) bumps any already-selected tinted color back to the
-      // untinted one (colorFilter === "none") in whichever group holds it,
-      // matching what GroupSection now hides from that group's choices.
+      // (e.g. Silver — Rose/Yellow Gold wear off it quickly) bumps any
+      // already-selected non-White-Gold choice back to the admin-flagged
+      // isWhiteGoldOption choice in whichever group holds it, matching
+      // what GroupSection now hides from that group's choices.
       const group = groups.find((g) => g.id === groupId);
       const chosen = group?.choices.find((c) => c.id === choiceId);
       if (group?.kind === "metal" && next[groupId] === choiceId && chosen?.onlyWhiteGold) {
         for (const g of groups) {
           if (g.id === groupId) continue;
+          const whiteChoice = g.choices.find((c) => c.isWhiteGoldOption);
+          if (!whiteChoice) continue;
           const current = g.choices.find((c) => c.id === next[g.id]);
-          if (current?.colorFilter && current.colorFilter !== "none") {
-            const whiteChoice = g.choices.find((c) => c.colorFilter === "none");
-            if (whiteChoice) next[g.id] = whiteChoice.id;
+          if (current && !current.isWhiteGoldOption) {
+            next[g.id] = whiteChoice.id;
           }
         }
       }

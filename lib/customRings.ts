@@ -76,9 +76,16 @@ export interface CustomRingChoice {
   // Only meaningful on a choice inside a "metal" group — true for a base
   // metal that can't reliably hold other color plating (e.g. Silver, where
   // rose/yellow gold plating wears off quickly). When this metal is
-  // selected, every other group's "color" choices (colorFilter set) are
-  // restricted to the untinted one (colorFilter === "none") only.
+  // selected, every OTHER group that has at least one choice flagged
+  // isWhiteGoldOption (below) is narrowed down to just that choice.
   onlyWhiteGold: boolean;
+  // Admin-flagged on whichever choice represents the neutral/White Gold
+  // option in a "ring color"-style group — set directly rather than
+  // inferred from colorFilter === "none", since a color group may tint via
+  // colorFilter OR swap in a whole different baseImageOverride photo per
+  // color, and onlyWhiteGold (above) needs to work either way. At most one
+  // choice per group should have this set.
+  isWhiteGoldOption: boolean;
   sortOrder: number;
   stoneKind: StoneKind | null;
   shape: string | null;
@@ -130,6 +137,7 @@ export interface ChoiceInput {
   priceDelta: number;
   sizeSurchargePerStep: number;
   onlyWhiteGold: boolean;
+  isWhiteGoldOption: boolean;
   sortOrder: number;
   stoneKind: StoneKind | null;
   shape: string | null;
@@ -243,6 +251,9 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS only_white_gold BOOLEAN NOT NULL DEFAULT FALSE
   `;
+  await sql`
+    ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS is_white_gold_option BOOLEAN NOT NULL DEFAULT FALSE
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
@@ -307,6 +318,7 @@ function toChoice(row: any): CustomRingChoice {
     priceDelta: parseFloat(row.price_delta),
     sizeSurchargePerStep: parseFloat(row.size_surcharge_per_step) || 0,
     onlyWhiteGold: Boolean(row.only_white_gold),
+    isWhiteGoldOption: Boolean(row.is_white_gold_option),
     sortOrder: row.sort_order,
     stoneKind: (row.stone_kind as StoneKind | null) ?? null,
     shape: row.shape ?? null,
@@ -430,10 +442,10 @@ export async function replaceCustomRing(
     for (const choice of group.choices) {
       await sql`
         INSERT INTO custom_ring_choices
-          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, diamond_shape_overlays, base_image_override, base_image_zoom, base_image_offset_x, base_image_offset_y, price_delta, size_surcharge_per_step, only_white_gold, sort_order, stone_kind, shape)
+          (group_id, label, swatch_image, swatch_zoom, swatch_offset_x, swatch_offset_y, swatch_rotation, color_filter, overlay_image, overlay_x, overlay_y, overlay_width, overlay_rotation, diamond_shape_overlays, base_image_override, base_image_zoom, base_image_offset_x, base_image_offset_y, price_delta, size_surcharge_per_step, only_white_gold, is_white_gold_option, sort_order, stone_kind, shape)
         VALUES (
           ${groupId}, ${choice.label}, ${choice.swatchImage}, ${choice.swatchZoom}, ${choice.swatchOffsetX}, ${choice.swatchOffsetY}, ${choice.swatchRotation}, ${choice.colorFilter},
-          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${JSON.stringify(choice.diamondShapeOverlays ?? {})}, ${choice.baseImageOverride}, ${choice.baseImageZoom}, ${choice.baseImageOffsetX}, ${choice.baseImageOffsetY}, ${choice.priceDelta}, ${choice.sizeSurchargePerStep}, ${choice.onlyWhiteGold}, ${choice.sortOrder},
+          ${choice.overlayImage}, ${choice.overlayX}, ${choice.overlayY}, ${choice.overlayWidth}, ${choice.overlayRotation}, ${JSON.stringify(choice.diamondShapeOverlays ?? {})}, ${choice.baseImageOverride}, ${choice.baseImageZoom}, ${choice.baseImageOffsetX}, ${choice.baseImageOffsetY}, ${choice.priceDelta}, ${choice.sizeSurchargePerStep}, ${choice.onlyWhiteGold}, ${choice.isWhiteGoldOption}, ${choice.sortOrder},
           ${choice.stoneKind}, ${choice.shape}
         )
       `;

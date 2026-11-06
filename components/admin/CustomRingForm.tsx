@@ -63,6 +63,7 @@ interface ChoiceState {
   priceDelta: number;
   sizeSurchargePerStep: number;
   onlyWhiteGold: boolean;
+  isWhiteGoldOption: boolean;
   stoneKind: StoneKind | null;
   shape: string | null;
 }
@@ -115,6 +116,7 @@ function emptyChoice(): ChoiceState {
     priceDelta: 0,
     sizeSurchargePerStep: 0,
     onlyWhiteGold: false,
+    isWhiteGoldOption: false,
     stoneKind: null,
     shape: null,
   };
@@ -462,6 +464,18 @@ function ChoiceEditor({
                   style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
                 />
               </div>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={choice.isWhiteGoldOption}
+                  onChange={(e) => onChange({ ...choice, isWhiteGoldOption: e.target.checked })}
+                />
+                <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>
+                  นี่คือตัวเลือก White Gold — ใช้เป็นตัวเดียวที่เหลือเมื่อลูกค้าเลือกวัสดุที่ชุบสีอื่นไม่ได้
+                  (ติ๊กไว้ไม่ว่ากลุ่มนี้จะปรับสีด้วยโทนสี หรือเปลี่ยนรูปแหวนทั้งรูปต่อสีก็ได้)
+                </span>
+              </label>
 
               <div className="flex flex-wrap gap-3">
                 {choice.overlayImage && baseImage && (
@@ -1111,6 +1125,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
             priceDelta: c.priceDelta,
             sizeSurchargePerStep: c.sizeSurchargePerStep,
             onlyWhiteGold: c.onlyWhiteGold ?? false,
+            isWhiteGoldOption: c.isWhiteGoldOption ?? false,
             stoneKind: c.stoneKind,
             shape: c.shape,
           })),
@@ -1182,6 +1197,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         priceDelta: c.priceDelta,
         sizeSurchargePerStep: c.sizeSurchargePerStep,
         onlyWhiteGold: c.onlyWhiteGold ?? false,
+        isWhiteGoldOption: c.isWhiteGoldOption ?? false,
         stoneKind: c.stoneKind,
         shape: c.shape,
       }))
@@ -1247,6 +1263,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
                 priceDelta: c.priceDelta,
                 sizeSurchargePerStep: c.sizeSurchargePerStep || 0,
                 onlyWhiteGold: Boolean(c.onlyWhiteGold),
+                isWhiteGoldOption: Boolean(c.isWhiteGoldOption),
                 stoneKind,
                 shape,
               };
