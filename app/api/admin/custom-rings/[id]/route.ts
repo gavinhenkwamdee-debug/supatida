@@ -94,6 +94,7 @@ export async function PUT(request: Request, { params }: Params) {
                     priceDelta: Number(choice.priceDelta) || 0,
                     sizeSurchargePerStep: Number(choice.sizeSurchargePerStep) || 0,
                     onlyWhiteGold: Boolean(choice.onlyWhiteGold),
+                    isWhiteGoldOption: Boolean(choice.isWhiteGoldOption),
                     sortOrder: ci,
                     stoneKind: parseStoneKind(choice.stoneKind),
                     shape: choice.shape ? String(choice.shape) : null,
