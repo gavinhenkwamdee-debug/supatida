@@ -298,6 +298,8 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
   });
   const [textValues, setTextValues] = useState<Record<number, string>>({});
   const [diamondShapes, setDiamondShapes] = useState<Record<number, string>>({});
+  const [realPhotosOpen, setRealPhotosOpen] = useState(false);
+  const [realPhotosTabHovered, setRealPhotosTabHovered] = useState(false);
 
   const groups = ring.groups;
 
@@ -589,7 +591,7 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
 
         {/* Image + purchase action */}
         <main className="flex flex-col items-center px-6 py-10 lg:py-16 lg:sticky lg:top-0">
-          <div className="relative w-full max-w-lg mb-4" style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
+          <div className="relative w-full max-w-lg mb-8" style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
             {effectiveBaseImage && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -622,26 +624,6 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
             )}
           </div>
 
-          {ring.realPhotos.length > 0 && (
-            <div className="w-full max-w-lg mb-8">
-              <p className="text-xs tracking-[0.2em] uppercase font-sans mb-2" style={{ color: "var(--muted)" }}>
-                ภาพถ่ายจริง
-              </p>
-              <div className="flex gap-2">
-                {ring.realPhotos.map((url, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={i}
-                    src={url}
-                    alt={`${ring.name} ภาพถ่ายจริง ${i + 1}`}
-                    className="flex-1 aspect-square object-cover min-w-0"
-                    style={{ border: "1px solid var(--border)" }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
           {meaningSummary && (
             <div className="w-full max-w-xs mb-6 p-4 text-center" style={{ backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
               <p className="text-xs tracking-[0.2em] uppercase font-sans mb-2" style={{ color: "var(--gold)" }}>
@@ -667,6 +649,100 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
           </p>
         </main>
       </div>
+
+      {ring.realPhotos.length > 0 && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setRealPhotosOpen(false)}
+            aria-hidden="true"
+            className="fixed inset-0 transition-opacity duration-300"
+            style={{
+              zIndex: 40,
+              backgroundColor: "rgba(20,20,19,0.5)",
+              opacity: realPhotosOpen ? 1 : 0,
+              pointerEvents: realPhotosOpen ? "auto" : "none",
+            }}
+          />
+
+          {/* Edge tab — click to open, hover (desktop) reveals the label */}
+          <button
+            type="button"
+            onClick={() => setRealPhotosOpen(true)}
+            onMouseEnter={() => setRealPhotosTabHovered(true)}
+            onMouseLeave={() => setRealPhotosTabHovered(false)}
+            aria-label="ดูภาพถ่ายจริง"
+            className="fixed flex items-center gap-2 py-3 transition-all duration-200"
+            style={{
+              zIndex: 45,
+              right: 0,
+              top: "50%",
+              transform: realPhotosOpen ? "translateY(-50%) translateX(100%)" : "translateY(-50%)",
+              backgroundColor: "white",
+              border: "1px solid var(--border)",
+              borderRight: "none",
+              borderRadius: "6px 0 0 6px",
+              paddingLeft: realPhotosTabHovered ? 14 : 10,
+              paddingRight: 10,
+              boxShadow: "-2px 0 6px rgba(0,0,0,0.05)",
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--charcoal)" strokeWidth="1.5" aria-hidden="true" style={{ flexShrink: 0 }}>
+              <path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" />
+              <circle cx="12" cy="13" r="3.5" />
+            </svg>
+            <span
+              className="text-xs font-sans whitespace-nowrap overflow-hidden transition-all duration-200"
+              style={{
+                maxWidth: realPhotosTabHovered ? 120 : 0,
+                opacity: realPhotosTabHovered ? 1 : 0,
+                color: "var(--charcoal)",
+              }}
+            >
+              ตัวอย่างภาพจริง
+            </span>
+          </button>
+
+          {/* Slide-out panel */}
+          <div
+            className="fixed top-0 right-0 h-full overflow-y-auto transition-transform duration-300"
+            style={{
+              zIndex: 50,
+              width: "min(88vw, 420px)",
+              backgroundColor: "var(--ivory)",
+              borderLeft: "1px solid var(--border)",
+              transform: realPhotosOpen ? "translateX(0)" : "translateX(100%)",
+            }}
+          >
+            <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid var(--border)" }}>
+              <p className="text-xs tracking-[0.2em] uppercase font-sans" style={{ color: "var(--charcoal)" }}>
+                ภาพถ่ายจริง
+              </p>
+              <button
+                type="button"
+                onClick={() => setRealPhotosOpen(false)}
+                aria-label="ปิด"
+                className="text-lg leading-none px-1"
+                style={{ color: "var(--muted)" }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 flex flex-col gap-3">
+              {ring.realPhotos.map((url, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={i}
+                  src={url}
+                  alt={`${ring.name} ภาพถ่ายจริง ${i + 1}`}
+                  className="w-full aspect-square object-cover"
+                  style={{ border: "1px solid var(--border)" }}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
