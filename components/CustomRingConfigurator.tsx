@@ -364,6 +364,26 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     [groups, selections, diamondShapes]
   );
 
+  // Switching diamond shape swaps the SAME overlay <img> element's `src`
+  // (same choice id, so React keeps the element) — the new position/size
+  // style applies instantly, but the browser still has to fetch the new
+  // image bytes, so for a moment it paints the OLD (still-loaded) image
+  // stretched into the NEW shape's box: a visible flash of a mismatched
+  // gem. Preloading every shape's images as soon as the ring could show
+  // this picker means they're already in the browser cache by the time
+  // the customer clicks a shape, so the swap is instant.
+  const needsDiamondShapePreload = groups.some(isMeaningGroup);
+  const diamondShapePreloadUrls = useMemo(() => {
+    if (!needsDiamondShapePreload) return [];
+    const urls = new Set<string>();
+    for (const images of Object.values(DIAMOND_SHAPE_IMAGES)) {
+      urls.add(images.swatchImage);
+      urls.add(images.overlayImage);
+    }
+    return Array.from(urls);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsDiamondShapePreload]);
+
   const textInputTotal = useMemo(
     () =>
       groups
@@ -467,6 +487,14 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--ivory)" }}>
+      {diamondShapePreloadUrls.length > 0 && (
+        <div aria-hidden style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
+          {diamondShapePreloadUrls.map((url) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={url} src={url} alt="" />
+          ))}
+        </div>
+      )}
       {/* Minimal header */}
       <div className="text-center py-6" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "white" }}>
         <Link href="/" className="inline-block">
