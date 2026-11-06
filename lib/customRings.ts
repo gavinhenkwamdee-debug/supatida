@@ -107,6 +107,11 @@ export interface CustomRing {
   description: string;
   basePrice: number;
   baseImage: string;
+  // Real photos of the finished ring (shown as-is, no gem overlay compositing)
+  // — shown on the customer page as a small gallery under the live preview,
+  // so customers can see what the piece actually looks like finished,
+  // alongside the live composite preview built from their choices.
+  realPhotos: string[];
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -157,6 +162,7 @@ export interface RingFieldsInput {
   description: string;
   basePrice: number;
   baseImage: string;
+  realPhotos: string[];
   enabled: boolean;
 }
 
@@ -254,9 +260,22 @@ export async function initCustomRingsDB() {
   await sql`
     ALTER TABLE custom_ring_choices ADD COLUMN IF NOT EXISTS is_white_gold_option BOOLEAN NOT NULL DEFAULT FALSE
   `;
+  await sql`
+    ALTER TABLE custom_rings ADD COLUMN IF NOT EXISTS real_photos TEXT NOT NULL DEFAULT '[]'
+  `;
 }
 
 // ── Row mappers ───────────────────────────────────────────
+function parseRealPhotos(raw: unknown): string[] {
+  if (typeof raw !== "string" || !raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((u): u is string => typeof u === "string" && u.length > 0) : [];
+  } catch {
+    return [];
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toRing(row: any): CustomRing {
   return {
@@ -265,6 +284,7 @@ function toRing(row: any): CustomRing {
     description: row.description,
     basePrice: parseFloat(row.base_price),
     baseImage: row.base_image,
+    realPhotos: parseRealPhotos(row.real_photos),
     enabled: row.enabled,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -423,6 +443,7 @@ export async function replaceCustomRing(
       description = ${fields.description},
       base_price  = ${fields.basePrice},
       base_image  = ${fields.baseImage},
+      real_photos = ${JSON.stringify(fields.realPhotos ?? [])},
       enabled     = ${fields.enabled},
       updated_at  = NOW()
     WHERE id = ${id}

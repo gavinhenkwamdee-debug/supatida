@@ -589,7 +589,7 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
 
         {/* Image + purchase action */}
         <main className="flex flex-col items-center px-6 py-10 lg:py-16 lg:sticky lg:top-0">
-          <div className="relative w-full max-w-lg mb-8" style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
+          <div className="relative w-full max-w-lg mb-4" style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
             {effectiveBaseImage && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -621,6 +621,26 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
               ) : null
             )}
           </div>
+
+          {ring.realPhotos.length > 0 && (
+            <div className="w-full max-w-lg mb-8">
+              <p className="text-xs tracking-[0.2em] uppercase font-sans mb-2" style={{ color: "var(--muted)" }}>
+                ภาพถ่ายจริง
+              </p>
+              <div className="flex gap-2">
+                {ring.realPhotos.map((url, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={i}
+                    src={url}
+                    alt={`${ring.name} ภาพถ่ายจริง ${i + 1}`}
+                    className="flex-1 aspect-square object-cover min-w-0"
+                    style={{ border: "1px solid var(--border)" }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {meaningSummary && (
             <div className="w-full max-w-xs mb-6 p-4 text-center" style={{ backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>

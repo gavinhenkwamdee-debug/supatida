@@ -1094,6 +1094,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
   const [description, setDescription] = useState(ring?.description || "");
   const [basePrice, setBasePrice] = useState(ring?.basePrice?.toString() || "");
   const [baseImage, setBaseImage] = useState(ring?.baseImage || "");
+  const [realPhotos, setRealPhotos] = useState<string[]>(ring?.realPhotos || []);
   const [enabled, setEnabled] = useState(ring?.enabled ?? true);
   const [groups, setGroups] = useState<GroupState[]>(
     ring?.groups.length
@@ -1216,6 +1217,7 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
       description: description.trim(),
       basePrice: parseFloat(basePrice) || 0,
       baseImage,
+      realPhotos,
       enabled,
       groups: groups
         .filter((g) => g.label.trim())
@@ -1342,6 +1344,26 @@ export default function CustomRingForm({ ring }: { ring?: CustomRingDetail }) {
         <div>
           <label className={labelClass} style={labelStyle}>Base Ring Image (ไม่มี gem)</label>
           <ImageUploadBox src={baseImage} label="+ Upload" size={160} onUploaded={setBaseImage} />
+        </div>
+
+        <div>
+          <label className={labelClass} style={labelStyle}>ภาพถ่ายจริง (แสดงใต้รูป preview ในหน้าลูกค้า)</label>
+          <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
+            ภาพถ่ายจริงของแหวนที่เสร็จแล้ว (ไม่ใช่ภาพจำลอง/3D) — ถ้าไม่ใส่ไว้เลย หน้าลูกค้าจะไม่แสดงส่วนนี้
+          </p>
+          <div className="flex gap-3 flex-wrap">
+            {realPhotos.map((url, i) => (
+              <ImageUploadBox
+                key={i}
+                src={url}
+                label="+ Upload"
+                size={110}
+                onUploaded={(newUrl) => setRealPhotos(realPhotos.map((u, j) => (j === i ? newUrl : u)))}
+                onClear={() => setRealPhotos(realPhotos.filter((_, j) => j !== i))}
+              />
+            ))}
+            <ImageUploadBox src="" label="+ เพิ่มรูป" size={110} onUploaded={(url) => setRealPhotos([...realPhotos, url])} />
+          </div>
         </div>
       </div>
 
