@@ -282,6 +282,22 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
         initial[g.id] = g.choices[0].id;
       }
     }
+    // Each group defaults independently to its own first choice, so if the
+    // default metal (also just whatever's first) can't reliably hold other
+    // color plating, bump every "ring color" style group's default to its
+    // White Gold option too — same correction toggleChoice applies on every
+    // later click, just run once up front so the initial render doesn't
+    // show a colour the metal couldn't actually wear.
+    for (const metalGroup of ring.groups) {
+      if (metalGroup.kind !== "metal") continue;
+      const metalChoice = metalGroup.choices.find((c) => c.id === initial[metalGroup.id]);
+      if (!metalChoice?.onlyWhiteGold) continue;
+      for (const g of ring.groups) {
+        if (g.id === metalGroup.id) continue;
+        const whiteChoice = g.choices.find((c) => c.isWhiteGoldOption);
+        if (whiteChoice) initial[g.id] = whiteChoice.id;
+      }
+    }
     return initial;
   });
   const [powerStoneKind, setPowerStoneKind] = useState<Record<number, StoneKind>>(() => {
