@@ -300,6 +300,7 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
   const [diamondShapes, setDiamondShapes] = useState<Record<number, string>>({});
   const [realPhotosOpen, setRealPhotosOpen] = useState(false);
   const [realPhotosTabHovered, setRealPhotosTabHovered] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   const groups = ring.groups;
 
@@ -366,6 +367,38 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [groups, selections, diamondShapes]
   );
+
+  // Flat label/value list for the order-summary popup — one row per group
+  // the customer actually made a choice in. Meaning groups show the
+  // gemstone name (plus diamond shape, if that's the gem) instead of the
+  // raw choice label, same as the sidebar's "เลือกแล้ว" indicator; a "None"
+  // pick in a meaning group is skipped since it carries no meaning to report.
+  const summaryRows = useMemo(() => {
+    const rows: { label: string; value: string }[] = [];
+    for (const g of groups) {
+      if (g.kind === "text_input") {
+        const v = textValues[g.id]?.trim();
+        if (v) rows.push({ label: g.label, value: v });
+        continue;
+      }
+      const choice = g.choices.find((c) => c.id === selections[g.id]);
+      if (!choice) continue;
+      if (isMeaningGroup(g)) {
+        const meaning = meaningForChoice(g, choice);
+        if (!meaning) continue;
+        let value = meaning.gemstone;
+        if (isDiamondMeaning(g)) {
+          const shape = diamondShapes[g.id] ?? "round";
+          value += ` ทรง${DIAMOND_SHAPE_LABELS[shape] ?? shape}`;
+        }
+        rows.push({ label: g.label, value });
+      } else {
+        rows.push({ label: g.label, value: choiceLabel(g, choice) });
+      }
+    }
+    return rows;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, selections, textValues, diamondShapes]);
 
   // Switching diamond shape swaps the SAME overlay <img> element's `src`
   // (same choice id, so React keeps the element) — the new position/size
@@ -635,20 +668,125 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
             </div>
           )}
 
-          <a
-            href="https://lin.ee/U9D2iyG"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => setSummaryOpen(true)}
             className="w-full max-w-xs text-center py-3.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
-            style={{ border: "1px solid var(--charcoal)", color: "var(--charcoal)" }}
+            style={{ border: "1px solid var(--charcoal)", color: "var(--charcoal)", backgroundColor: "white" }}
           >
             สอบถามข้อมูล / สั่งทำแหวนนี้
-          </a>
+          </button>
           <p className="text-xs font-sans mt-3 text-center" style={{ color: "var(--muted)" }}>
             แคปหน้าจอส่ง admin ได้เลยค่ะ
           </p>
         </main>
       </div>
+
+      {summaryOpen && (
+        <div
+          onClick={() => setSummaryOpen(false)}
+          className="fixed inset-0 flex items-center justify-center p-4"
+          style={{ zIndex: 60, backgroundColor: "rgba(20,20,19,0.6)" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md max-h-[90vh] overflow-y-auto"
+            style={{ backgroundColor: "var(--ivory)", border: "1px solid var(--border)" }}
+          >
+            <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid var(--border)" }}>
+              <p className="text-xs tracking-[0.2em] uppercase font-sans" style={{ color: "var(--charcoal)" }}>
+                สรุปแบบแหวนของคุณ
+              </p>
+              <button
+                type="button"
+                onClick={() => setSummaryOpen(false)}
+                aria-label="ปิด"
+                className="text-lg leading-none px-1"
+                style={{ color: "var(--muted)" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 flex flex-col items-center">
+              <div
+                className="relative w-full max-w-xs mb-4"
+                style={{ aspectRatio: "1/1", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}
+              >
+                {effectiveBaseImage && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={effectiveBaseImage}
+                    alt={ring.name}
+                    className="absolute inset-0 w-full h-full object-contain"
+                    style={{
+                      ...(effectiveColorFilter ? { filter: effectiveColorFilter } : {}),
+                      ...(baseImageTransform ? { transform: baseImageTransform } : {}),
+                    }}
+                  />
+                )}
+                {selectedChoices.map((c) =>
+                  c.overlayImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={c.id}
+                      src={c.overlayImage}
+                      alt=""
+                      className="absolute"
+                      style={{
+                        left: `${c.overlayX}%`,
+                        top: `${c.overlayY}%`,
+                        width: `${c.overlayWidth}%`,
+                        transform: `translate(-50%, -50%) rotate(${c.overlayRotation}deg)`,
+                      }}
+                    />
+                  ) : null
+                )}
+              </div>
+
+              <h3 className="text-base tracking-wide mb-1 text-center" style={{ color: "var(--charcoal)" }}>
+                {ring.name}
+              </h3>
+              <p className="text-lg font-sans font-light mb-4" style={{ color: "var(--gold)" }}>{THB(totalPrice)}</p>
+
+              {summaryRows.length > 0 && (
+                <div className="w-full mb-4">
+                  {summaryRows.map((row, i) => (
+                    <div
+                      key={i}
+                      className="flex justify-between gap-3 py-2 text-sm font-sans"
+                      style={{ borderBottom: "1px solid var(--border)" }}
+                    >
+                      <span style={{ color: "var(--muted)" }}>{row.label}</span>
+                      <span className="text-right" style={{ color: "var(--charcoal)" }}>{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {meaningSummary && (
+                <p className="text-sm font-sans text-center mb-4 leading-relaxed" style={{ color: "var(--charcoal)" }}>
+                  {meaningSummary.generatedSummary}
+                </p>
+              )}
+
+              <p className="text-sm font-sans text-center mb-4" style={{ color: "var(--charcoal)" }}>
+                แคปหน้าจอนี้แล้วส่งให้แอดมินทางไลน์ได้เลยค่ะ
+              </p>
+
+              <a
+                href="https://lin.ee/U9D2iyG"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full text-center py-3.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
+                style={{ border: "1px solid var(--charcoal)", color: "white", backgroundColor: "var(--charcoal)" }}
+              >
+                ไปที่ไลน์
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {ring.realPhotos.length > 0 && (
         <>
