@@ -95,8 +95,12 @@ export default function Campaign1111Admin() {
 
   const dirty = useMemo(() => JSON.stringify(saved) !== JSON.stringify(draft), [saved, draft]);
 
-  // Only in-stock pieces ever show on the campaign page, so only they count
-  // toward the MECE totals.
+  // A sold-out piece that's already assigned still shows (as "SOLD OUT") on
+  // the live campaign page, but there's nothing left to manage for it here —
+  // it can't be newly assigned or un-assigned to any visible effect, so it's
+  // dropped from both the MECE totals and the browsable/searchable list
+  // below. Once something sells out it simply stops appearing in this admin
+  // tool, instead of lingering as dead clutter in every filter/search.
   const eligible = useMemo(() => products.filter((p) => !p.soldOut), [products]);
 
   const counts = useMemo(() => {
@@ -110,13 +114,13 @@ export default function Campaign1111Admin() {
   const filtered = useMemo(() => {
     if (!draft) return [];
     const q = search.trim().toLowerCase();
-    return products.filter((p) => {
+    return eligible.filter((p) => {
       if (categoryFilter !== "All" && p.category !== categoryFilter) return false;
       if (tierFilter !== "all" && tierOf(draft, p.id) !== tierFilter) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (p.specifications["Product Code"] || "").toLowerCase().includes(q);
     });
-  }, [products, draft, search, categoryFilter, tierFilter]);
+  }, [eligible, draft, search, categoryFilter, tierFilter]);
 
   if (error && !draft) {
     return <div className="p-8 text-sm font-sans" style={{ color: "#C0392B" }}>{error}</div>;
