@@ -151,14 +151,11 @@ function GroupSection({
           value={textValue ?? ""}
           onChange={(e) => onTextChange?.(e.target.value)}
           placeholder={group.placeholder || "พิมพ์ข้อความที่ต้องการ"}
-          maxLength={10}
+          maxLength={7}
           className="w-full px-3 py-2.5 text-sm font-sans outline-none"
           style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
         />
-        <p className="text-xs font-sans mt-1 text-right" style={{ color: "var(--muted)" }}>{(textValue ?? "").length}/10</p>
-        {group.priceDelta > 0 && (
-          <p className="text-xs font-sans mt-1.5" style={{ color: "var(--muted)" }}>+{THB(group.priceDelta)} หากระบุข้อความ</p>
-        )}
+        <p className="text-xs font-sans mt-1 text-right" style={{ color: "var(--muted)" }}>{(textValue ?? "").length}/7</p>
       </div>
     );
   }
@@ -436,14 +433,6 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needsDiamondShapePreload]);
 
-  const textInputTotal = useMemo(
-    () =>
-      groups
-        .filter((g) => g.kind === "text_input" && textValues[g.id]?.trim())
-        .reduce((sum, g) => sum + g.priceDelta, 0),
-    [groups, textValues]
-  );
-
   // Some metals (9K/14K/18K gold) cost more gold per step above size 55,
   // while others (e.g. Silver) don't scale with size at all — rather than
   // hand-setting a priceDelta on every single size choice per metal, the
@@ -473,7 +462,7 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
   }, [groups, selections, metalChoice]);
 
   const totalPrice =
-    ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0) + textInputTotal + sizeSurcharge;
+    ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0) + sizeSurcharge;
 
   // A choice can replace the whole ring photo (e.g. a different base ring
   // design) instead of just layering a gem on top — last selected group
