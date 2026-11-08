@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { getEnabledCustomRings } from "@/lib/customRings";
 import { getSetting } from "@/lib/settings";
@@ -8,11 +9,30 @@ export const dynamic = "force-dynamic";
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
 
-const FEATURES = [
-  { label: "เพชร Lab-Grown แท้ 100%", icon: "M12 2 2 9l10 13L22 9Z M2 9h20M8.5 2 7 9l5 13 5-13-1.5-7" },
-  { label: "พลอยสีธรรมชาติแท้", icon: "M12 3 4 9l3.2 11h9.6L20 9Z" },
-  { label: "ปรับแต่งได้ตามใจทุกรายละเอียด", icon: "M12 7v5l3.5 2" },
-  { label: "สั่งทำง่าย ๆ ผ่านแชทไลน์", icon: "M21 11.5a8.4 8.4 0 0 1-8.9 8.4 8.6 8.6 0 0 1-3.2-.6L3 21l1.7-5.1a8.3 8.3 0 0 1-.7-3.4A8.4 8.4 0 0 1 12.5 3a8.4 8.4 0 0 1 8.4 8.4Z" },
+const FEATURES: { label: string; icon: ReactNode }[] = [
+  {
+    label: "เพชร Lab-Grown แท้ 100%",
+    icon: (
+      <>
+        <path d="M12 2 2 9l10 13L22 9Z" />
+        <path d="M2 9h20M8.5 2 7 9l5 13 5-13-1.5-7" />
+      </>
+    ),
+  },
+  { label: "พลอยสีธรรมชาติแท้", icon: <path d="M12 3 4 9l3.2 11h9.6L20 9Z" /> },
+  {
+    label: "ปรับแต่งได้ตามใจทุกรายละเอียด",
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3.5 2" />
+      </>
+    ),
+  },
+  {
+    label: "สั่งทำง่าย ๆ ผ่านแชทไลน์",
+    icon: <path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4 8.6 8.6 0 0 1-3.2-.6L3 21l1.7-5.1a8.3 8.3 0 0 1-.7-3.4A8.4 8.4 0 0 1 12.5 3a8.4 8.4 0 0 1 8.4 8.4Z" />,
+  },
 ];
 
 const STEPS = [
@@ -85,11 +105,11 @@ export default async function CustomRingsGalleryPage() {
       </div>
 
       {/* Feature strip */}
-      <div className="max-w-3xl mx-auto px-6 py-9 flex justify-center flex-wrap gap-8">
+      <div className="max-w-4xl mx-auto px-6 py-9 flex justify-center flex-wrap gap-x-7 gap-y-4">
         {FEATURES.map((f) => (
-          <div key={f.label} className="flex items-center gap-2.5">
+          <div key={f.label} className="flex items-center gap-2.5 whitespace-nowrap">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.4" className="flex-shrink-0">
-              <path d={f.icon} />
+              {f.icon}
             </svg>
             <span className="text-xs font-sans" style={{ color: "var(--charcoal)" }}>{f.label}</span>
           </div>
