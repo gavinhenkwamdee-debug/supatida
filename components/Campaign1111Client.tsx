@@ -335,11 +335,15 @@ function ProductBrowser({
   );
 }
 
-// The estimate is rounded on the PAIR TOTAL, not per piece — rounding each
-// item up first and then adding would overshoot by up to 200 baht.
+// Sum of each item's OWN rounded price — the same number each item's own
+// product card already shows (campaignPrice per piece) — not the pair's raw
+// subtotal rounded once. Summing the two cards' displayed prices is what a
+// customer actually does by eye, so the pair total has to match that or it
+// reads as a mistake, even though rounding the subtotal once can save the
+// customer a few baht more.
 function pairEstimate(items: CampaignProduct[], percent: number) {
   const subtotal = items.reduce((sum, p) => sum + p.price, 0);
-  const total = campaignPrice(subtotal, percent);
+  const total = items.reduce((sum, p) => sum + campaignPrice(p.price, percent), 0);
   return { subtotal, total, saved: subtotal - total };
 }
 

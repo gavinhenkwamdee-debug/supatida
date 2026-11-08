@@ -116,8 +116,12 @@ prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5
 - **Prices:** `campaignPrice()` in `lib/campaign-1111-config.ts` rounds the
   discounted price **up** to the next 100 baht, in integer math (plain
   `price * 0.85` can float to 17000.000000000002 and bump an exact price a
-  full 100). Don't hand-roll the discount elsewhere. Mix & Match rounds the
-  pair's *total*, not each piece.
+  full 100). Don't hand-roll the discount elsewhere. Mix & Match's pair total
+  (`pairEstimate()` in `components/Campaign1111Client.tsx`) sums each item's
+  own `campaignPrice()` — the same rounded number that item's own product
+  card shows — rather than rounding the pair's raw subtotal once; the latter
+  can save the customer a few more baht but then doesn't match what adding
+  up the two cards by eye gives, which read as a pricing mistake.
 - Hidden and sold-out products never appear in any tier. The campaign shows the
   listed `product.price` as the "before" price, not the fake markup from
   `lib/pricing.ts`.
