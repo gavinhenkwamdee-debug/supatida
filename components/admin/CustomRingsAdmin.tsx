@@ -4,9 +4,116 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { CustomRing, CustomRingDetail } from "@/lib/customRings";
+import type { CustomRingsBannerConfig } from "@/lib/custom-rings-banner-config";
 
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
+
+async function compressBannerImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const MAX = 1800;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round((height * MAX) / width); width = MAX; }
+        else { width = Math.round((width * MAX) / height); height = MAX; }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(
+        (blob) => resolve(new File([blob!], file.name, { type: "image/jpeg" })),
+        "image/jpeg",
+        0.85
+      );
+    };
+    img.src = url;
+  });
+}
+
+// The banner photo behind "ออกแบบแหวนของคุณเอง" on /custom-rings — a single
+// image, not a slideshow like the homepage Hero Banner, so its own small
+// section here instead of a separate admin page.
+function CustomRingsBannerAdmin() {
+  const [imageUrl, setImageUrl] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings/custom-rings-banner")
+      .then((r) => r.json())
+      .then((d: CustomRingsBannerConfig) => { setImageUrl(d.imageUrl || ""); setLoading(false); });
+  }, []);
+
+  async function save(url: string) {
+    setImageUrl(url);
+    await fetch("/api/settings/custom-rings-banner", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl: url }),
+    });
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const compressed = await compressBannerImage(file);
+      const formData = new FormData();
+      formData.append("file", compressed);
+      const res = await fetch("/api/upload-custom-ring", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) await save(data.url);
+      else alert(data.error || "อัพโหลดไม่สำเร็จ");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="bg-white p-6 mb-6" style={{ border: "1px solid var(--border)" }}>
+      <h2 className="text-sm tracking-wide mb-1" style={{ color: "var(--charcoal)" }}>Banner หน้ารวมแหวน</h2>
+      <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
+        รูปภาพด้านบนสุดของหน้า &ldquo;ออกแบบแหวนของคุณเอง&rdquo; — ถ้าไม่ใส่รูปจะใช้พื้นหลังไล่สีทองแทน แนะนำรูปแนวกว้าง (เช่น 2100×900px)
+      </p>
+
+      {imageUrl ? (
+        <div className="relative mb-3 overflow-hidden" style={{ aspectRatio: "21/9", backgroundColor: "var(--img-bg)", border: "1px solid var(--border)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+        </div>
+      ) : null}
+
+      <div className="flex gap-3">
+        <label
+          className="px-4 py-2.5 text-xs tracking-widest uppercase font-sans cursor-pointer transition-opacity hover:opacity-80"
+          style={{ border: "1px solid var(--charcoal)", color: "var(--charcoal)" }}
+        >
+          {uploading ? "กำลังอัพโหลด…" : imageUrl ? "เปลี่ยนรูป" : "+ อัพโหลดรูป Banner"}
+          <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={uploading} />
+        </label>
+        {imageUrl && (
+          <button
+            type="button"
+            onClick={() => save("")}
+            className="px-4 py-2.5 text-xs tracking-widest uppercase font-sans"
+            style={{ border: "1px solid #C0392B", color: "#C0392B" }}
+          >
+            ลบรูป
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function CustomRingsAdmin() {
   const router = useRouter();
@@ -87,6 +194,8 @@ export default function CustomRingsAdmin() {
           </Link>
         </div>
       </div>
+
+      <CustomRingsBannerAdmin />
 
       {rings.length === 0 ? (
         <div className="bg-white p-12 text-center" style={{ border: "1px solid var(--border)" }}>
