@@ -1030,25 +1030,15 @@ function GroupEditor({
       {group.kind === "text_input" ? (
         <div className="p-3" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
           <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
-            ลูกค้าจะพิมพ์ข้อความเองในช่องนี้ (เช่น สลักข้อความ) ไม่ต้องเพิ่มตัวเลือก
+            ลูกค้าจะพิมพ์ข้อความเองในช่องนี้ (เช่น สลักข้อความ) ไม่ต้องเพิ่มตัวเลือก — สูงสุด 7 ตัวอักษร ไม่มีค่าใช้จ่ายเพิ่ม
           </p>
           <input
             value={group.placeholder}
             onChange={(e) => onChange({ ...group, placeholder: e.target.value })}
             placeholder="ข้อความ placeholder เช่น พิมพ์ชื่อที่ต้องการสลัก"
-            className="w-full px-2 py-1.5 text-xs font-sans outline-none mb-2"
+            className="w-full px-2 py-1.5 text-xs font-sans outline-none"
             style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
           />
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-sans" style={{ color: "var(--muted)" }}>ราคาเพิ่ม ฿ (ถ้าลูกค้าใส่ข้อความ)</span>
-            <input
-              type="number"
-              value={group.priceDelta}
-              onChange={(e) => onChange({ ...group, priceDelta: Number(e.target.value) || 0 })}
-              className="w-24 px-2 py-1 text-xs font-sans outline-none"
-              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-            />
-          </div>
         </div>
       ) : (
         <>
