@@ -122,8 +122,14 @@ prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5
   card shows — rather than rounding the pair's raw subtotal once; the latter
   can save the customer a few more baht but then doesn't match what adding
   up the two cards by eye gives, which read as a pricing mistake.
-- Hidden and sold-out products never appear in any tier. The campaign shows the
-  listed `product.price` as the "before" price, not the fake markup from
+- Hidden products never appear in any tier. Sold-out ones do — shown with a
+  "SOLD OUT" overlay in their normal price-sorted spot (not filtered out or
+  pushed to the bottom), so customers see pieces sell out one by one in
+  place. `app/1111/page.tsx` passes `soldOut` through on `CampaignProduct`;
+  `ProductCard` (`components/Campaign1111Client.tsx`) disables the pick/LINE
+  CTA for a sold-out piece, and `MixMatch`'s `toggle()` refuses to add one to
+  the pair even if called directly. The campaign shows the listed
+  `product.price` as the "before" price, not the fake markup from
   `lib/pricing.ts`.
 - **One price everywhere:** while the campaign is on, the catalog cards, product
   detail page (incl. JSON-LD/meta price) and the PayLater campaign cards show the
