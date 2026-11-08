@@ -18,6 +18,7 @@ export interface CampaignProduct {
   category: string;
   image: string;
   code: string;
+  soldOut: boolean;
 }
 
 const PAGE_SIZE = 24;
@@ -132,6 +133,7 @@ function ProductCard({
   onToggle?: () => void;
 }) {
   const sale = campaignPrice(product.price, percent);
+  const soldOut = product.soldOut;
 
   const image = (
     <div className="relative w-full aspect-square overflow-hidden" style={{ backgroundColor: "var(--img-bg)" }}>
@@ -144,22 +146,39 @@ function ProductCard({
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
         />
       )}
-      <span
-        className="absolute top-2 left-2 px-1.5 py-0.5 font-sans font-bold text-white"
-        style={{ fontSize: "10px", backgroundColor: ACCENT }}
-      >
-        -{percent}%
-      </span>
-      <span
-        className="absolute top-2 right-2 px-1.5 py-0.5 font-sans text-white"
-        style={{ fontSize: "9px", backgroundColor: "rgba(28,28,28,0.75)" }}
-      >
-        มีชิ้นเดียว
-      </span>
-      {selected && (
+      {!soldOut && (
+        <>
+          <span
+            className="absolute top-2 left-2 px-1.5 py-0.5 font-sans font-bold text-white"
+            style={{ fontSize: "10px", backgroundColor: ACCENT }}
+          >
+            -{percent}%
+          </span>
+          <span
+            className="absolute top-2 right-2 px-1.5 py-0.5 font-sans text-white"
+            style={{ fontSize: "9px", backgroundColor: "rgba(28,28,28,0.75)" }}
+          >
+            มีชิ้นเดียว
+          </span>
+        </>
+      )}
+      {selected && !soldOut && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "rgba(28,28,28,0.35)" }}>
           <span className="w-10 h-10 rounded-full flex items-center justify-center text-xl text-white" style={{ backgroundColor: "var(--charcoal)" }}>
             ✓
+          </span>
+        </div>
+      )}
+      {/* Stays in its normal (price-sorted) spot rather than being filtered
+          out or sorted to the bottom — customers seeing pieces sell out in
+          place, one at a time, is the point (each piece is one-off stock). */}
+      {soldOut && (
+        <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+          <span
+            className="text-lg sm:text-xl tracking-[0.2em] font-sans font-bold"
+            style={{ color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
+          >
+            SOLD OUT
           </span>
         </div>
       )}
@@ -171,10 +190,14 @@ function ProductCard({
       <h3 className="text-xs sm:text-sm tracking-wide mb-1 leading-snug text-left" style={{ color: "var(--charcoal)" }}>
         {product.name}
       </h3>
-      <div className="mb-2 text-left">
-        <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(product.price)}</span>
-        <p className="text-base sm:text-xl font-sans tracking-wide" style={{ color: ACCENT }}>{fmt(sale)}</p>
-      </div>
+      {soldOut ? (
+        <p className="mb-2 text-xs font-sans text-left" style={{ color: "var(--muted)" }}>สินค้าหมดแล้ว</p>
+      ) : (
+        <div className="mb-2 text-left">
+          <span className="text-xs font-sans line-through" style={{ color: "var(--muted)" }}>{fmt(product.price)}</span>
+          <p className="text-base sm:text-xl font-sans tracking-wide" style={{ color: ACCENT }}>{fmt(sale)}</p>
+        </div>
+      )}
     </>
   );
 
@@ -182,7 +205,7 @@ function ProductCard({
     return (
       <div
         className="flex flex-col bg-white overflow-hidden text-left transition-shadow hover:shadow-lg"
-        style={{ border: selected ? "2px solid var(--charcoal)" : "1px solid var(--border)" }}
+        style={{ border: selected && !soldOut ? "2px solid var(--charcoal)" : "1px solid var(--border)" }}
       >
         <Link href={`/products/${product.id}`} target="_blank" rel="noopener noreferrer" className="block">
           {image}
@@ -192,15 +215,18 @@ function ProductCard({
           <button
             type="button"
             onClick={onToggle}
+            disabled={soldOut}
             aria-pressed={selected}
-            className="mt-auto py-2 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
+            className="mt-auto py-2 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80 disabled:hover:opacity-100 disabled:cursor-not-allowed"
             style={
-              selected
+              soldOut
+                ? { border: "1px solid var(--border)", color: "var(--muted)", backgroundColor: "var(--img-bg)" }
+                : selected
                 ? { backgroundColor: "var(--charcoal)", color: "white" }
                 : { border: "1px solid var(--charcoal)", color: "var(--charcoal)", backgroundColor: "white" }
             }
           >
-            {selected ? "✓ เลือกแล้ว" : "เลือกชิ้นนี้"}
+            {soldOut ? "สินค้าหมด" : selected ? "✓ เลือกแล้ว" : "เลือกชิ้นนี้"}
           </button>
         </div>
       </div>
@@ -212,17 +238,26 @@ function ProductCard({
       <Link href={`/products/${product.id}`} className="block">{image}</Link>
       <div className="flex flex-col flex-1 p-3 sm:p-4">
         <Link href={`/products/${product.id}`} className="hover:underline">{info}</Link>
-        <a
-          href={LINE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackLine([product], product.name)}
-          className="mt-auto flex items-center justify-center gap-2 py-2.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
-          style={{ backgroundColor: "#06C755", color: "white" }}
-        >
-          <LineIcon />
-          สอบถามข้อมูล
-        </a>
+        {soldOut ? (
+          <div
+            className="mt-auto flex items-center justify-center py-2.5 text-xs tracking-widest uppercase font-sans"
+            style={{ border: "1px solid var(--border)", color: "var(--muted)", backgroundColor: "var(--img-bg)" }}
+          >
+            สินค้าหมดแล้ว
+          </div>
+        ) : (
+          <a
+            href={LINE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackLine([product], product.name)}
+            className="mt-auto flex items-center justify-center gap-2 py-2.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
+            style={{ backgroundColor: "#06C755", color: "white" }}
+          >
+            <LineIcon />
+            สอบถามข้อมูล
+          </a>
+        )}
       </div>
     </article>
   );
@@ -353,6 +388,7 @@ function MixMatch({ products, percent }: { products: CampaignProduct[]; percent:
   const [stamp, setStamp] = useState("");
 
   function toggle(p: CampaignProduct) {
+    if (p.soldOut) return;
     setPicked((prev) => {
       if (prev.some((x) => x.id === p.id)) return prev.filter((x) => x.id !== p.id);
       if (prev.length >= 2) return prev;

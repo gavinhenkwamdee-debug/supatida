@@ -35,8 +35,11 @@ export default async function Campaign1111Page({
   const isAdmin = isAdminToken(cookieStore.get(ADMIN_TOKEN_COOKIE)?.value);
   const isAdminPreview = !config.enabled && isAdmin;
 
-  // Hidden and sold-out pieces can't be bought, so they never enter any tier.
-  const products = (await getAllProducts()).filter((p) => !p.hidden && !p.soldOut);
+  // Hidden pieces never enter any tier, but sold-out ones stay — shown with
+  // a "SOLD OUT" overlay in their normal (price-sorted) spot instead of
+  // disappearing, so customers watching the page see pieces sell out one by
+  // one in place, which is the point (each piece is one-off stock).
+  const products = (await getAllProducts()).filter((p) => !p.hidden);
 
   // Each product goes through tierOf() exactly once, so a product can only
   // ever appear in a single tab. "none" means explicitly opted out of the
@@ -52,6 +55,7 @@ export default async function Campaign1111Page({
       category: p.category,
       image: p.images.find(Boolean) ?? "",
       code: p.specifications["Product Code"] ?? "",
+      soldOut: p.soldOut,
     });
   }
   for (const key of CAMPAIGN_TIER_KEYS) byTier[key].sort((a, b) => a.price - b.price);
