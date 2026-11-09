@@ -122,15 +122,22 @@ prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5
   card shows — rather than rounding the pair's raw subtotal once; the latter
   can save the customer a few more baht but then doesn't match what adding
   up the two cards by eye gives, which read as a pricing mistake.
-- Hidden products never appear in any tier. Sold-out ones do — shown with a
-  "SOLD OUT" overlay in their normal price-sorted spot (not filtered out or
-  pushed to the bottom), so customers see pieces sell out one by one in
-  place. `app/1111/page.tsx` passes `soldOut` through on `CampaignProduct`;
-  `ProductCard` (`components/Campaign1111Client.tsx`) disables the pick/LINE
-  CTA for a sold-out piece, and `MixMatch`'s `toggle()` refuses to add one to
-  the pair even if called directly. The campaign shows the listed
-  `product.price` as the "before" price, not the fake markup from
-  `lib/pricing.ts`.
+- Hidden products never appear in any tier. Sold-out ones do, on the
+  customer-facing page — shown with a "SOLD OUT" overlay in their normal
+  price-sorted spot (not filtered out or pushed to the bottom), so customers
+  see pieces sell out one by one in place. `app/1111/page.tsx` passes
+  `soldOut` through on `CampaignProduct`; `ProductCard`
+  (`components/Campaign1111Client.tsx`) disables the pick/LINE CTA for a
+  sold-out piece, and `MixMatch`'s `toggle()` refuses to add one to the pair
+  even if called directly. The campaign shows the listed `product.price` as
+  the "before" price, not the fake markup from `lib/pricing.ts`. The
+  *admin's* assignment tool (`Campaign1111Admin.tsx`) is the opposite —
+  `eligible`/`filtered` drop sold-out pieces entirely, since once something
+  sells out there's nothing left to assign. That leaves one gap: a piece
+  that sold out *after* being assigned still shows "SOLD OUT" live but can no
+  longer be found in that list to un-assign — `soldOutStillAssigned` is a
+  separate small cleanup panel (only rendered when non-empty) that surfaces
+  exactly those pieces with a one-click "เอาออก" (assign to `none`).
 - **One price everywhere:** while the campaign is on, the catalog cards, product
   detail page (incl. JSON-LD/meta price) and the PayLater campaign cards show the
   campaign price too. Pages call `getActiveCampaign1111()` (null when off) and
