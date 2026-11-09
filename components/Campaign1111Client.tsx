@@ -53,7 +53,21 @@ function trackLine(products: CampaignProduct[], label: string) {
       body: JSON.stringify({ type: "line_click" }),
       keepalive: true,
     }).catch(() => {});
+    trackCampaign1111(p.id, "product_click");
   }
+}
+
+// Campaign-scoped analytics only (how many people open /1111, and which
+// item within it gets the most attention) — separate from the site-wide
+// products.views/lineClicks counters, and from trackLine's fbq/gtag calls
+// above. Admin reads this back via /admin/campaign-1111.
+function trackCampaign1111(productId: number | null, type: "page_view" | "product_click") {
+  fetch("/api/campaign-1111/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(productId === null ? { type } : { type, productId }),
+    keepalive: true,
+  }).catch(() => {});
 }
 
 function LineIcon() {
@@ -207,7 +221,13 @@ function ProductCard({
         className="flex flex-col bg-white overflow-hidden text-left transition-shadow hover:shadow-lg"
         style={{ border: selected && !soldOut ? "2px solid var(--charcoal)" : "1px solid var(--border)" }}
       >
-        <Link href={`/products/${product.id}`} target="_blank" rel="noopener noreferrer" className="block">
+        <Link
+          href={`/products/${product.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          onClick={() => trackCampaign1111(product.id, "product_click")}
+        >
           {image}
         </Link>
         <div className="flex flex-col flex-1 p-3 sm:p-4">
@@ -235,9 +255,9 @@ function ProductCard({
 
   return (
     <article className="flex flex-col bg-white overflow-hidden transition-shadow hover:shadow-lg" style={{ border: "1px solid var(--border)" }}>
-      <Link href={`/products/${product.id}`} className="block">{image}</Link>
+      <Link href={`/products/${product.id}`} className="block" onClick={() => trackCampaign1111(product.id, "product_click")}>{image}</Link>
       <div className="flex flex-col flex-1 p-3 sm:p-4">
-        <Link href={`/products/${product.id}`} className="hover:underline">{info}</Link>
+        <Link href={`/products/${product.id}`} className="hover:underline" onClick={() => trackCampaign1111(product.id, "product_click")}>{info}</Link>
         {soldOut ? (
           <div
             className="mt-auto flex items-center justify-center py-2.5 text-xs tracking-widest uppercase font-sans"
@@ -585,6 +605,13 @@ export default function Campaign1111Client({
   isAdminPreview?: boolean;
 }) {
   const [tab, setTab] = useState<CampaignTierKey>(initialTab);
+
+  // Once per page load, real customers only — an admin checking their own
+  // preview shouldn't inflate the traffic number they're about to read.
+  useEffect(() => {
+    if (config.enabled && !isAdminPreview) trackCampaign1111(null, "page_view");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function selectTab(key: CampaignTierKey) {
     setTab(key);

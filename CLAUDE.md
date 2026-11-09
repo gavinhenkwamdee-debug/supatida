@@ -137,3 +137,14 @@ prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5
   pass `productCampaign(config, product)` down — never recompute the discount in
   a component. Mix & Match products have no single-item price (the 11% is for a
   pair), so they keep the normal price plus a pointer to `/1111?tab=mixmatch`.
+- **Campaign-scoped traffic stats** (`lib/campaign-1111-tracking.ts`, table
+  `campaign_1111_events`): deliberately separate from the site-wide
+  `products.views`/`line_clicks` counters in `lib/db.ts` — this counts only
+  `/1111` page loads and clicks into a product *from* the campaign page, so
+  the admin panel's "สินค้าที่มีคนกดดูเยอะที่สุด" ranking reflects interest in
+  the campaign specifically, not a product's overall traffic. Public write via
+  `POST /api/campaign-1111/track` (`{type:"page_view"}` or
+  `{type:"product_click",productId}`), admin-only read via
+  `GET /api/admin/campaign-1111/stats`. `Campaign1111Client.tsx` fires
+  `page_view` once per mount, skipped for admin preview so an admin checking
+  their own campaign doesn't inflate the number they're about to read.
