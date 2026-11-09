@@ -58,7 +58,9 @@ export default async function Campaign1111Page({
       soldOut: p.soldOut,
     });
   }
-  for (const key of CAMPAIGN_TIER_KEYS) byTier[key].sort((a, b) => a.price - b.price);
+  // Priciest first — cheaper pieces were getting buried below the fold,
+  // which hid exactly the higher-value items a customer should see first.
+  for (const key of CAMPAIGN_TIER_KEYS) byTier[key].sort((a, b) => b.price - a.price);
 
   const initialTab = CAMPAIGN_TIER_KEYS.find((k) => k === tab) ?? "wishlist";
 
