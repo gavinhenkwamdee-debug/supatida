@@ -130,6 +130,16 @@ export default function Campaign1111Admin() {
     });
   }, [eligible, draft, search, categoryFilter, tierFilter]);
 
+  // A sold-out piece that's still assigned to a tier keeps showing as "SOLD
+  // OUT" in place on the live /1111 page (that's intentional — see the note
+  // below) even though it's dropped from the browse/search list above once
+  // sold out. This is the one place left to un-assign one once it's done
+  // selling, so it stops showing on the campaign page at all.
+  const soldOutStillAssigned = useMemo(() => {
+    if (!draft) return [];
+    return products.filter((p) => p.soldOut && tierOf(draft, p.id) !== "none");
+  }, [products, draft]);
+
   if (error && !draft) {
     return <div className="p-8 text-sm font-sans" style={{ color: "#C0392B" }}>{error}</div>;
   }
@@ -372,6 +382,52 @@ export default function Campaign1111Admin() {
         </div>
       </div>
 
+      {/* Sold-out cleanup — the only place left to un-assign a piece that
+          sold out after it was already put in a tier, since it's dropped
+          from the main browse/search list below once sold out. */}
+      {soldOutStillAssigned.length > 0 && (
+        <div className={cardClass} style={{ ...cardStyle, borderColor: "#C0392B" }}>
+          <h2 className="text-sm tracking-wide mb-1" style={{ color: "#C0392B" }}>
+            สินค้าหมดสต็อกที่ยังอยู่ในแคมเปญ ({soldOutStillAssigned.length})
+          </h2>
+          <p className="text-xs font-sans mb-3" style={{ color: "var(--muted)" }}>
+            ยังขึ้น SOLD OUT อยู่ในหน้าแคมเปญจริง — กด &ldquo;เอาออก&rdquo; แล้วกดบันทึก ถ้าไม่อยากให้ขึ้นอีก
+          </p>
+          <div className="space-y-2">
+            {soldOutStillAssigned.map((p) => {
+              // Never "none" here — this list is already filtered to pieces
+              // that are still assigned to a real tier.
+              const current = tierOf(config, p.id) as CampaignTierKey;
+              const image = p.images.find(Boolean);
+              return (
+                <div key={p.id} className="flex items-center gap-3 p-2" style={{ border: "1px solid var(--border)" }}>
+                  <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 44, height: 44, backgroundColor: "var(--img-bg)" }}>
+                    {image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={image} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs truncate" style={{ color: "var(--charcoal)" }}>{p.name}</p>
+                    <p className="text-xs font-mono truncate" style={{ color: "var(--muted)" }}>
+                      {config.tiers[current].name} · หมดสต็อก
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => assign([p.id], "none")}
+                    className="flex-shrink-0 px-3 py-1.5 text-xs font-sans text-white"
+                    style={{ backgroundColor: "#C0392B" }}
+                  >
+                    เอาออก
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Assignment */}
       <div className={cardClass} style={cardStyle}>
         <h2 className="text-xs tracking-widest uppercase mb-3 font-sans" style={{ color: "var(--muted)" }}>จัดสินค้าเข้าระดับ</h2>
@@ -398,7 +454,7 @@ export default function Campaign1111Admin() {
         </div>
         <p className="text-xs font-sans mb-4" style={{ color: mece ? "#2E7D32" : "#C0392B" }}>
           {mece ? "✓" : "✗"} สินค้าพร้อมขายทั้งหมด {total} ชิ้น = {counts.wishlist} + {counts.mixmatch} + {counts.extra} + {counts.none} (ไม่ซ้ำ ไม่ตกหล่น)
-          <span style={{ color: "var(--muted)" }}> · สินค้าหมดสต็อกไม่แสดงในแคมเปญ</span>
+          <span style={{ color: "var(--muted)" }}> · สินค้าหมดสต็อกไม่แสดงในลิสต์นี้ (แต่ถ้าเคย assign ไว้ก่อนหมด จะยังขึ้น SOLD OUT ในหน้าแคมเปญจริง — เอาออกได้ด้านล่าง)</span>
         </p>
 
         <div className="flex flex-wrap gap-2 mb-3">
