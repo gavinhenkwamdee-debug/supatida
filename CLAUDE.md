@@ -138,20 +138,35 @@ prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5
   longer be found in that list to un-assign — `soldOutStillAssigned` is a
   separate small cleanup panel (only rendered when non-empty) that surfaces
   exactly those pieces with a one-click "เอาออก" (assign to `none`).
-- **Campaign price shows only on `/1111` itself.** The catalog grid
-  (`app/page.tsx`), product detail page (incl. JSON-LD/meta price,
-  `app/products/[id]/page.tsx`) and the PayLater campaign cards
-  (`app/campaign/[slug]/page.tsx`) all show the plain `product.price` even
-  while the campaign is running — they don't call `getActiveCampaign1111()`
-  or `productCampaign()` at all. `ProductCard`, `ProductDetailClient` and
-  `PayLaterProductCard` still *accept* an optional `campaign` prop (default
-  `null`) and know how to render the "11.11 -X%" badge/price if ever passed
-  one — that plumbing is just unused by every current call site, kept in
-  case a page needs it again, not a page to copy the pattern from. Only
-  `app/1111/page.tsx` computes and shows campaign pricing, via `tierOf()`/
-  `campaignPrice()` directly. Mix & Match products have no single-item price
-  (the 11% is for a pair) — not relevant outside `/1111` now that nothing
-  else shows campaign pricing at all.
+- **Campaign price shows on `/1111` and on a product's own detail page —
+  not on the catalog grid or PayLater cards.** `app/page.tsx` (catalog grid)
+  and `app/campaign/[slug]/page.tsx` (PayLater cards) always show the plain
+  `product.price`, campaign on or off — browsing those shouldn't show a
+  discount with no context for why. `app/products/[id]/page.tsx` (incl.
+  JSON-LD/meta price) DOES call `getActiveCampaign1111()`/`productCampaign()`
+  and passes the result to `ProductDetailClient`, which — when the product
+  is in a real discount tier — shows `product.price` struck through, the
+  "11.11 -X%" badge, the campaign price, and a "ราคานี้สำหรับแคมเปญ 11.11
+  เท่านั้น" caption so it reads as a time-limited campaign price, never
+  confusable with the permanent-looking markup below. Rationale: a customer
+  who taps into a product straight from `/1111` must see the same price
+  they just saw there, or it looks broken; a customer who finds that same
+  product through the plain catalog never saw a discount promised, so no
+  surprise either way. `ProductCard` and `PayLaterProductCard` still
+  *accept* an optional `campaign` prop (default `null`) and know how to
+  render it, just unused by their current call sites. Mix & Match has no
+  single-item price (the 11% is for a pair) — the detail page's fallback
+  branch (below) links out to `/1111?tab=mixmatch` instead.
+- **The fallback "-25%/-30%/-35%" markup is a SEPARATE, always-on feature,
+  unrelated to the 11.11 campaign.** `getOriginalPrice()`/
+  `getDiscountPercent()` (`lib/pricing.ts`) invent a fake "original" price
+  from `productId % 3` and show it struck through on every product that
+  ISN'T in an active 11.11 discount tier — this existed before the campaign
+  and runs whether or not the campaign is even enabled. `ProductDetailClient`
+  picks ONE or the other per product, never both: the real 11.11 badge takes
+  priority when `campaign?.kind === "discount"`, this fake markup is the
+  `else` branch. Don't conflate the two when debugging a "wrong discount"
+  report — check which branch actually rendered first.
 - **Campaign-scoped traffic stats** (`lib/campaign-1111-tracking.ts`, table
   `campaign_1111_events`): deliberately separate from the site-wide
   `products.views`/`line_clicks` counters in `lib/db.ts` — this counts only
