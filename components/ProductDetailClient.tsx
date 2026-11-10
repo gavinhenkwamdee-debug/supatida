@@ -196,6 +196,7 @@ export default function ProductDetailClient({ product, campaign = null }: { prod
                       <span className="text-xs font-sans font-bold px-2 py-0.5" style={{ backgroundColor: "#C0392B", color: "white" }}>11.11 -{campaign.percent}%</span>
                     </div>
                     <p className="text-3xl font-sans font-light" style={{ color: "#C0392B" }}>{fmt(campaign.price)}</p>
+                    <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>ราคานี้สำหรับแคมเปญ 11.11 เท่านั้น</p>
                   </div>
                 );
               }
