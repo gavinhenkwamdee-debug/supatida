@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProductById } from "@/lib/db";
 import ProductDetailClient from "@/components/ProductDetailClient";
-import { getActiveCampaign1111 } from "@/lib/campaign-1111";
-import { productCampaign } from "@/lib/campaign-1111-config";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +16,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductById(Number(id));
   if (!product) return { title: "Supatida" };
 
-  const campaign = productCampaign(await getActiveCampaign1111(), product);
-  const shownPrice = campaign?.kind === "discount" ? campaign.price : product.price;
   const priceFormatted = new Intl.NumberFormat("th-TH", {
     style: "currency", currency: "THB", maximumFractionDigits: 0,
-  }).format(shownPrice);
+  }).format(product.price);
 
   const description = product.soldOut
     ? `${product.category} · SOLD OUT · Lab Grown Diamond by Supatida`
@@ -56,9 +52,6 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProductById(Number(id));
   if (!product) notFound();
 
-  const campaign = productCampaign(await getActiveCampaign1111(), product);
-  const shownPrice = campaign?.kind === "discount" ? campaign.price : product.price;
-
   const image = product.images.filter(Boolean)[0] ?? null;
 
   const jsonLd = {
@@ -72,7 +65,7 @@ export default async function ProductPage({ params }: Props) {
       "@type": "Offer",
       url: `${SITE_URL}/products/${product.id}`,
       priceCurrency: "THB",
-      price: shownPrice,
+      price: product.price,
       availability: product.soldOut
         ? "https://schema.org/SoldOut"
         : "https://schema.org/InStock",
@@ -93,7 +86,7 @@ export default async function ProductPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProductDetailClient product={product} campaign={campaign} />
+      <ProductDetailClient product={product} />
     </>
   );
 }

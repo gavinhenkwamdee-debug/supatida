@@ -138,12 +138,20 @@ prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5
   longer be found in that list to un-assign — `soldOutStillAssigned` is a
   separate small cleanup panel (only rendered when non-empty) that surfaces
   exactly those pieces with a one-click "เอาออก" (assign to `none`).
-- **One price everywhere:** while the campaign is on, the catalog cards, product
-  detail page (incl. JSON-LD/meta price) and the PayLater campaign cards show the
-  campaign price too. Pages call `getActiveCampaign1111()` (null when off) and
-  pass `productCampaign(config, product)` down — never recompute the discount in
-  a component. Mix & Match products have no single-item price (the 11% is for a
-  pair), so they keep the normal price plus a pointer to `/1111?tab=mixmatch`.
+- **Campaign price shows only on `/1111` itself.** The catalog grid
+  (`app/page.tsx`), product detail page (incl. JSON-LD/meta price,
+  `app/products/[id]/page.tsx`) and the PayLater campaign cards
+  (`app/campaign/[slug]/page.tsx`) all show the plain `product.price` even
+  while the campaign is running — they don't call `getActiveCampaign1111()`
+  or `productCampaign()` at all. `ProductCard`, `ProductDetailClient` and
+  `PayLaterProductCard` still *accept* an optional `campaign` prop (default
+  `null`) and know how to render the "11.11 -X%" badge/price if ever passed
+  one — that plumbing is just unused by every current call site, kept in
+  case a page needs it again, not a page to copy the pattern from. Only
+  `app/1111/page.tsx` computes and shows campaign pricing, via `tierOf()`/
+  `campaignPrice()` directly. Mix & Match products have no single-item price
+  (the 11% is for a pair) — not relevant outside `/1111` now that nothing
+  else shows campaign pricing at all.
 - **Campaign-scoped traffic stats** (`lib/campaign-1111-tracking.ts`, table
   `campaign_1111_events`): deliberately separate from the site-wide
   `products.views`/`line_clicks` counters in `lib/db.ts` — this counts only
