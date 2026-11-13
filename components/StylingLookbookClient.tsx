@@ -22,7 +22,13 @@ const THB = (n: number) =>
 
 const ALL = "ทั้งหมด";
 
-export default function StylingLookbookClient({ looks }: { looks: ResolvedLook[] }) {
+export default function StylingLookbookClient({
+  looks,
+  isAdminPreview = false,
+}: {
+  looks: ResolvedLook[];
+  isAdminPreview?: boolean;
+}) {
   const themes = useMemo(
     () => [ALL, ...Array.from(new Set(looks.map((l) => l.theme).filter(Boolean)))],
     [looks]
@@ -31,7 +37,16 @@ export default function StylingLookbookClient({ looks }: { looks: ResolvedLook[]
   const filtered = active === ALL ? looks : looks.filter((l) => l.theme === active);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
+    <div>
+      {isAdminPreview && (
+        <div
+          className="sticky top-0 z-50 text-center py-2 px-4 text-xs tracking-widest uppercase font-sans font-bold"
+          style={{ backgroundColor: "#C0392B", color: "white" }}
+        >
+          🔒 พรีวิวสำหรับแอดมิน — ลูกค้ายังมองไม่เห็นหน้านี้ (ยังปิดอยู่)
+        </div>
+      )}
+      <div className="max-w-6xl mx-auto px-4 py-12">
       <div className="max-w-xl mx-auto text-center mb-8">
         <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#C0392B" }}>11.11 · Styling Guide</p>
         <h2 className="text-3xl tracking-[0.05em]" style={{ color: "var(--charcoal)" }}>แต่งแบบไหนดี</h2>
@@ -104,6 +119,7 @@ export default function StylingLookbookClient({ looks }: { looks: ResolvedLook[]
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }
