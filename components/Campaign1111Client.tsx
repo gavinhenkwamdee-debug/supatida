@@ -674,15 +674,14 @@ export default function Campaign1111Client({
                 <path d="M12 2 2 9l10 13L22 9Z" />
                 <path d="M2 9h20M8.5 2 7 9l5 13 5-13-1.5-7" />
               </svg>
-              <span className="text-sm sm:text-base" style={{ color: "white" }}>แต่งแบบไหนดี</span>
-              <span className="hidden sm:inline text-xs font-sans" style={{ color: "rgba(255,255,255,0.7)" }}>
-                ดูไอเดียการจัดสไตล์กับ SUPATIDA
-              </span>
-              <span
-                className="text-xs font-sans tracking-wider uppercase transition-transform duration-200 group-hover:translate-x-0.5"
-                style={{ color: "var(--gold-light)" }}
-              >
-                ดูเลย →
+              <span className="text-sm sm:text-base" style={{ color: "white" }}>
+                แมตช์เครื่องประดับไม่เป็น?{" "}
+                <span
+                  className="transition-transform duration-200 inline-block group-hover:translate-x-0.5"
+                  style={{ color: "var(--gold-light)" }}
+                >
+                  มาดูไอเดียกันดีกว่า →
+                </span>
               </span>
             </Link>
           )}
