@@ -200,13 +200,17 @@ pattern as `campaign-1111`.
   is reachable directly; don't re-add that banner without being asked.
 - Each item's own row shows its 11.11 price (struck-through original +
   campaign price) when it's in a real discount tier, same `productCampaign()`
-  call as everywhere else — never a hand-rolled discount. A look also gets a
-  bold "งบรวมลุคนี้ (ราคา 11.11)" total: the sum of each item's
-  `campaignPrice ?? price`, so a customer sees the whole look's cost at 11.11
-  pricing without adding it up themselves. A Mix & Match-tier item has no
-  single-item campaign price (the 11% needs a pair) — it falls back to its
-  regular price in both the row and the total, which is genuinely what
-  buying it alone costs.
+  call as everywhere else — never a hand-rolled discount. The total label
+  only says "(ราคา 11.11)" when at least one tagged item actually has a
+  discount — otherwise it's a plain "งบรวมลุคนี้" over the regular-price sum
+  in gold, not red, so the label never claims a discount that isn't there.
+  A Mix & Match-tier item (`isMixMatch` on `ResolvedLookItem`) has no
+  single-item campaign price (the 11% needs a pair), so it's excluded from
+  that discount check and the total just uses its regular price — but it's
+  NOT treated as "no promo": its row gets a small teal "Mix & Match ·
+  จับคู่ลด 11%" tag, and the look gets a link to `/1111?tab=mixmatch` under
+  the total whenever any item in it is mixmatch-tier, since pricing a pair
+  correctly needs the real tool on `/1111`, not a guess here.
 - The whole feature has its own enable/disable toggle
   (`StylingLookbookAdmin.tsx`), independent of the 11.11 campaign's own
   toggle, so the admin can stage look photos privately before switching it

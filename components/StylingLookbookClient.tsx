@@ -7,9 +7,12 @@ export interface ResolvedLookItem {
   id: number;
   name: string;
   price: number;
-  // The product's 11.11 price when it's in a real discount tier, else null
-  // (Mix & Match included — there's no single-item price for a pair deal).
+  // The product's 11.11 price when it's in a real discount tier, else null.
   campaignPrice: number | null;
+  // True when the product is in the Mix & Match tier instead — no
+  // single-item price (the 11% only applies to a pair), but still worth
+  // flagging so it doesn't read as "no promo at all".
+  isMixMatch: boolean;
   image: string;
 }
 
@@ -111,7 +114,12 @@ export default function StylingLookbookClient({
                             <img src={item.image} alt="" className="w-full h-full object-cover" />
                           )}
                         </span>
-                        <span className="flex-1 min-w-0 text-xs font-sans truncate" style={{ color: "var(--charcoal)" }}>{item.name}</span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-xs font-sans truncate" style={{ color: "var(--charcoal)" }}>{item.name}</span>
+                          {item.isMixMatch && (
+                            <span className="block text-[10px] font-sans font-bold" style={{ color: "#0E7490" }}>Mix &amp; Match · จับคู่ลด 11%</span>
+                          )}
+                        </span>
                         {item.campaignPrice !== null ? (
                           <span className="flex-shrink-0 text-right">
                             <span className="block text-[10px] font-sans line-through" style={{ color: "var(--muted)" }}>{THB(item.price)}</span>
@@ -130,21 +138,36 @@ export default function StylingLookbookClient({
                     // just the regular total, and labeling it an 11.11
                     // price would be a lie (the two look the same number
                     // either way, so the label is the only thing telling
-                    // the customer which one they're seeing).
+                    // the customer which one they're seeing). Mix & Match
+                    // items have no fixed price to add in — the total below
+                    // treats them at regular price, and the note points to
+                    // the real pair-pricing tool instead of guessing at one.
                     const hasDiscount = look.items.some((item) => item.campaignPrice !== null);
+                    const hasMixMatch = look.items.some((item) => item.isMixMatch);
                     const total = look.items.reduce((sum, item) => sum + (item.campaignPrice ?? item.price), 0);
                     return (
-                      <div
-                        className="flex items-center justify-between mt-2 pt-2"
-                        style={{ borderTop: "1px solid var(--charcoal)" }}
-                      >
-                        <span className="text-xs font-sans" style={{ color: "var(--charcoal)" }}>
-                          งบรวมลุคนี้{hasDiscount ? " (ราคา 11.11)" : ""}
-                        </span>
-                        <span className="text-sm font-sans font-bold" style={{ color: hasDiscount ? "#C0392B" : "var(--gold)" }}>
-                          {THB(total)}
-                        </span>
-                      </div>
+                      <>
+                        <div
+                          className="flex items-center justify-between mt-2 pt-2"
+                          style={{ borderTop: "1px solid var(--charcoal)" }}
+                        >
+                          <span className="text-xs font-sans" style={{ color: "var(--charcoal)" }}>
+                            งบรวมลุคนี้{hasDiscount ? " (ราคา 11.11)" : ""}
+                          </span>
+                          <span className="text-sm font-sans font-bold" style={{ color: hasDiscount ? "#C0392B" : "var(--gold)" }}>
+                            {THB(total)}
+                          </span>
+                        </div>
+                        {hasMixMatch && (
+                          <Link
+                            href="/1111?tab=mixmatch"
+                            className="block mt-1.5 text-[11px] font-sans underline"
+                            style={{ color: "#0E7490" }}
+                          >
+                            มีสินค้าในลุคนี้ร่วมโปร Mix & Match — จับคู่ 2 ชิ้นรับส่วนลด 11% ที่หน้า 11.11 →
+                          </Link>
+                        )}
+                      </>
                     );
                   })()}
                 </div>

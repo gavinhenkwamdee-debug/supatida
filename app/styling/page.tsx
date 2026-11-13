@@ -38,16 +38,19 @@ export default async function StylingLookbookPage() {
         .filter((p): p is Product => p !== undefined)
         .filter((p) => !p.hidden)
         .map((p) => {
-          // Mix & Match has no single-item campaign price (the 11% is for a
-          // pair), so a mixmatch-tier piece just uses its own regular price
-          // here — that's genuinely what buying it alone costs.
+          // Mix & Match has no single-item campaign price (the 11% only
+          // applies to a pair bought together) — flag it separately so the
+          // page can say "this piece qualifies for Mix & Match" instead of
+          // just showing it as if there were no promo on it at all.
           const pc = productCampaign(campaign1111, p);
           const campaignPrice = pc?.kind === "discount" ? pc.price : null;
+          const isMixMatch = pc?.kind === "mixmatch";
           return {
             id: p.id,
             name: p.name,
             price: p.price,
             campaignPrice,
+            isMixMatch,
             image: p.images.find(Boolean) ?? "",
           };
         }),
