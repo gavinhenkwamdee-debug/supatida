@@ -598,11 +598,16 @@ export default function Campaign1111Client({
   productsByTier,
   initialTab,
   isAdminPreview = false,
+  stylingBanner = null,
 }: {
   config: Campaign1111Config;
   productsByTier: Record<CampaignTierKey, CampaignProduct[]>;
   initialTab: CampaignTierKey;
   isAdminPreview?: boolean;
+  // null when the styling lookbook is off or empty — nothing to link to.
+  // Empty string means it's on but the admin hasn't uploaded a banner photo
+  // yet, so the banner still renders with a gradient placeholder.
+  stylingBanner?: string | null;
 }) {
   const [tab, setTab] = useState<CampaignTierKey>(initialTab);
 
@@ -660,6 +665,37 @@ export default function Campaign1111Client({
             <p className="text-center text-xs sm:text-sm font-sans mb-8 max-w-lg mx-auto" style={{ color: ACCENT }}>
               ⚠️ {config.urgencyNote}
             </p>
+          )}
+
+          {stylingBanner !== null && (
+            <Link
+              href="/styling"
+              className="group relative block w-full mb-8 overflow-hidden"
+              style={{
+                aspectRatio: "16/6",
+                background: stylingBanner ? undefined : "linear-gradient(135deg, #C9B27E 0%, #B79A6B 100%)",
+              }}
+            >
+              {stylingBanner && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={stylingBanner}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                />
+              )}
+              <div
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(90deg, rgba(20,18,12,0.55) 0%, rgba(20,18,12,0.2) 55%, rgba(20,18,12,0.05) 80%)" }}
+              />
+              <div className="absolute inset-0 flex flex-col justify-center gap-1 pl-6 sm:pl-9">
+                <p className="text-xs tracking-[0.3em] uppercase font-sans" style={{ color: "var(--gold-light)" }}>Styling Guide</p>
+                <h3 className="text-xl sm:text-2xl" style={{ color: "white" }}>แต่งแบบไหนดี</h3>
+                <p className="text-xs font-sans flex items-center gap-1" style={{ color: "rgba(255,255,255,0.85)" }}>
+                  ดูไอเดียการจัดสไตล์ <span>→</span>
+                </p>
+              </div>
+            </Link>
           )}
 
           <div role="tablist" className="grid grid-cols-3 gap-2 sm:gap-3 mb-8 max-w-3xl mx-auto">

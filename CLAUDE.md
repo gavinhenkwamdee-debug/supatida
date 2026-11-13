@@ -178,3 +178,30 @@ prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5
   `GET /api/admin/campaign-1111/stats`. `Campaign1111Client.tsx` fires
   `page_view` once per mount, skipped for admin preview so an admin checking
   their own campaign doesn't inflate the number they're about to read.
+
+## Styling Lookbook (`/styling`, admin at `/admin/styling`)
+
+A Pinterest-style masonry page of "look" photos, each tagged with 0+ real
+products (by id, resolved live against `getAllProducts()` — never a
+name/price snapshot, so a price change or a product going sold-out/hidden is
+reflected automatically without re-editing the look). Config lives in
+`site_settings` key `styling-lookbook` (`lib/styling-lookbook-config.ts`,
+`normalizeStylingLookbook()` sanitizes on read/write) — no migration, same
+pattern as `campaign-1111`.
+
+- A look needs its own `image` to show publicly (`app/styling/page.tsx`
+  filters out any look the admin hasn't uploaded a photo for yet, so a
+  half-finished look never renders as a broken image) — it can still show
+  with zero tagged products (pure inspiration, no caption list).
+- Filter chips are the distinct non-empty `theme` strings across looks, free
+  text the admin types per look, not a fixed enum — "ทั้งหมด" always first.
+- `app/1111/page.tsx` passes a banner link to `/styling` into
+  `Campaign1111Client.tsx`, rendered between the urgency note and the tier
+  tabs — only when the lookbook is enabled AND at least one look has a
+  photo; otherwise it'd be a dead-end banner. `stylingBanner` is `null`
+  (don't render) vs `""` (render with a gradient placeholder, no uploaded
+  banner photo yet) vs a URL — don't collapse that distinction.
+- The whole feature has its own enable/disable toggle
+  (`StylingLookbookAdmin.tsx`), independent of the 11.11 campaign's own
+  toggle, so the admin can stage look photos privately before switching it
+  on — same reasoning as the real-photos feature on custom rings.

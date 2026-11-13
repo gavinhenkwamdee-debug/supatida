@@ -10,6 +10,7 @@ import {
   CAMPAIGN_TIER_KEYS,
   type CampaignTierKey,
 } from "@/lib/campaign-1111-config";
+import { DEFAULT_STYLING_LOOKBOOK, normalizeStylingLookbook } from "@/lib/styling-lookbook-config";
 import Campaign1111Client, { type CampaignProduct } from "@/components/Campaign1111Client";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,10 @@ export default async function Campaign1111Page({
 }) {
   const { tab } = await searchParams;
   const config = normalizeCampaign1111(await getSetting("campaign-1111", DEFAULT_CAMPAIGN_1111));
+  const styling = normalizeStylingLookbook(await getSetting("styling-lookbook", DEFAULT_STYLING_LOOKBOOK));
+  // Nothing to link to if it's off, or on but still empty (admin hasn't
+  // uploaded any look photos yet) — the banner would just be a dead end.
+  const showStylingBanner = styling.enabled && styling.looks.some((l) => l.image);
 
   // Admin can preview the full page via their logged-in cookie even while
   // the campaign is off — customers without that cookie still see the
@@ -64,5 +69,13 @@ export default async function Campaign1111Page({
 
   const initialTab = CAMPAIGN_TIER_KEYS.find((k) => k === tab) ?? "wishlist";
 
-  return <Campaign1111Client config={config} productsByTier={byTier} initialTab={initialTab} isAdminPreview={isAdminPreview} />;
+  return (
+    <Campaign1111Client
+      config={config}
+      productsByTier={byTier}
+      initialTab={initialTab}
+      isAdminPreview={isAdminPreview}
+      stylingBanner={showStylingBanner ? styling.bannerImage : null}
+    />
+  );
 }

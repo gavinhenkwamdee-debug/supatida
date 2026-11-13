@@ -438,6 +438,11 @@ export default function AdminDashboardClient({ products: initial }: { products: 
             style={{ backgroundColor: "#0E7490", color: "white" }}>
             🛠 Custom Rings
           </Link>
+          <Link href="/admin/styling"
+            className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
+            style={{ backgroundColor: "#A6734E", color: "white" }}>
+            📷 Styling
+          </Link>
           <Link href="/admin/silver-jewelry"
             className="px-4 py-2.5 text-xs tracking-widest uppercase transition-opacity hover:opacity-80 font-sans"
             style={{ backgroundColor: "#1B2A4A", color: "white" }}>
