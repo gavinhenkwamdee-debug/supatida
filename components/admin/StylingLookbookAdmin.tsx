@@ -101,15 +101,23 @@ function LookEditor({
   onRemove: () => void;
 }) {
   const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [browsing, setBrowsing] = useState(false);
   const taggedProducts = look.productIds
     .map((id) => products.find((p) => p.id === id))
     .filter((p): p is Product => Boolean(p));
 
-  const matches = query.trim()
+  const categories = useMemo(() => Array.from(new Set(products.map((p) => p.category))).filter(Boolean), [products]);
+
+  // Picking a category alone (no typed query) is enough to browse — the
+  // text box only narrows it further, matching name or product code.
+  const q = query.trim().toLowerCase();
+  const matches = browsing || q
     ? products
         .filter((p) => !look.productIds.includes(p.id))
-        .filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()))
-        .slice(0, 6)
+        .filter((p) => categoryFilter === "All" || p.category === categoryFilter)
+        .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.specifications["Product Code"] || "").toLowerCase().includes(q))
+        .slice(0, 30)
     : [];
 
   function addProduct(id: number) {
@@ -155,39 +163,70 @@ function LookEditor({
                   <img src={p.images.find(Boolean)} alt="" className="w-full h-full object-cover" />
                 )}
               </div>
-              <span className="text-xs font-sans max-w-[160px] truncate" style={{ color: "var(--charcoal)" }}>{p.name}</span>
+              <span className="text-xs font-sans max-w-[160px] truncate" title={p.name} style={{ color: "var(--charcoal)" }}>{p.name}</span>
               <button type="button" onClick={() => removeProduct(p.id)} className="text-xs" style={{ color: "#C0392B" }}>✕</button>
             </div>
           ))}
         </div>
 
         <div className="relative">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="+ ค้นหาชื่อสินค้าเพื่อแท็ก…"
-            className="w-full px-2 py-1.5 text-xs font-sans outline-none"
-            style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
-          />
+          <div className="flex gap-2">
+            <select
+              value={categoryFilter}
+              onChange={(e) => { setCategoryFilter(e.target.value); setBrowsing(true); }}
+              className="px-2 py-1.5 text-xs font-sans outline-none bg-white flex-shrink-0"
+              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            >
+              <option value="All">ทุกหมวด</option>
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setBrowsing(true)}
+              placeholder="+ ค้นหาชื่อหรือรหัสสินค้าเพื่อแท็ก… (หรือเลือกหมวดด้านซ้ายเพื่อไล่ดู)"
+              className="flex-1 min-w-0 px-2 py-1.5 text-xs font-sans outline-none"
+              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            />
+            {browsing && (
+              <button
+                type="button"
+                onClick={() => { setBrowsing(false); setQuery(""); setCategoryFilter("All"); }}
+                className="text-xs font-sans flex-shrink-0 px-2"
+                style={{ color: "var(--muted)" }}
+              >
+                ปิด
+              </button>
+            )}
+          </div>
           {matches.length > 0 && (
-            <div className="absolute z-10 left-0 right-0 mt-1 bg-white" style={{ border: "1px solid var(--border)" }}>
+            <div className="absolute z-10 left-0 right-0 mt-1 bg-white max-h-72 overflow-y-auto" style={{ border: "1px solid var(--border)" }}>
               {matches.map((p) => (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => addProduct(p.id)}
                   className="w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-gray-50"
+                  style={{ borderBottom: "1px solid var(--border)" }}
                 >
-                  <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 22, height: 22, backgroundColor: "var(--img-bg)" }}>
+                  <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 28, height: 28, backgroundColor: "var(--img-bg)" }}>
                     {p.images.find(Boolean) && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.images.find(Boolean)} alt="" className="w-full h-full object-cover" />
                     )}
                   </div>
-                  <span className="text-xs font-sans truncate" style={{ color: "var(--charcoal)" }}>{p.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-sans truncate" style={{ color: "var(--charcoal)" }}>{p.name}</p>
+                    <p className="text-[10px] font-sans" style={{ color: "var(--muted)" }}>{p.category}</p>
+                  </div>
                   <span className="text-xs font-sans ml-auto flex-shrink-0" style={{ color: "var(--gold)" }}>{THB(p.price)}</span>
                 </button>
               ))}
+            </div>
+          )}
+          {browsing && matches.length === 0 && (
+            <div className="absolute z-10 left-0 right-0 mt-1 bg-white px-2 py-3 text-center" style={{ border: "1px solid var(--border)" }}>
+              <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>ไม่พบสินค้า</p>
             </div>
           )}
         </div>
