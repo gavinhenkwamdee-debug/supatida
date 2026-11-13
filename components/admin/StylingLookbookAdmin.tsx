@@ -112,13 +112,18 @@ function LookEditor({
   // Picking a category alone (no typed query) is enough to browse — the
   // text box only narrows it further, matching name or product code.
   const q = query.trim().toLowerCase();
+  // No cap — the list scrolls, and a hard slice was silently dropping real,
+  // in-stock products from a category with more than the cap's worth of
+  // items (reported: a product missing from "Earrings" that was just sorted
+  // past the cutoff, not actually hidden or sold out). Sorted by name so
+  // browsing a category is at least predictable instead of raw DB order.
   const matches = browsing || q
     ? products
         .filter((p) => !p.soldOut)
         .filter((p) => !look.productIds.includes(p.id))
         .filter((p) => categoryFilter === "All" || p.category === categoryFilter)
         .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.specifications["Product Code"] || "").toLowerCase().includes(q))
-        .slice(0, 30)
+        .sort((a, b) => a.name.localeCompare(b.name))
     : [];
 
   function addProduct(id: number) {
