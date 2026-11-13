@@ -114,6 +114,7 @@ function LookEditor({
   const q = query.trim().toLowerCase();
   const matches = browsing || q
     ? products
+        .filter((p) => !p.soldOut)
         .filter((p) => !look.productIds.includes(p.id))
         .filter((p) => categoryFilter === "All" || p.category === categoryFilter)
         .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.specifications["Product Code"] || "").toLowerCase().includes(q))
