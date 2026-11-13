@@ -124,15 +124,29 @@ export default function StylingLookbookClient({
                     ))}
                   </div>
 
-                  <div
-                    className="flex items-center justify-between mt-2 pt-2"
-                    style={{ borderTop: "1px solid var(--charcoal)" }}
-                  >
-                    <span className="text-xs font-sans" style={{ color: "var(--charcoal)" }}>งบรวมลุคนี้ (ราคา 11.11)</span>
-                    <span className="text-sm font-sans font-bold" style={{ color: "#C0392B" }}>
-                      {THB(look.items.reduce((sum, item) => sum + (item.campaignPrice ?? item.price), 0))}
-                    </span>
-                  </div>
+                  {(() => {
+                    // "(ราคา 11.11)" only when at least one tagged item
+                    // actually has a campaign discount — otherwise this is
+                    // just the regular total, and labeling it an 11.11
+                    // price would be a lie (the two look the same number
+                    // either way, so the label is the only thing telling
+                    // the customer which one they're seeing).
+                    const hasDiscount = look.items.some((item) => item.campaignPrice !== null);
+                    const total = look.items.reduce((sum, item) => sum + (item.campaignPrice ?? item.price), 0);
+                    return (
+                      <div
+                        className="flex items-center justify-between mt-2 pt-2"
+                        style={{ borderTop: "1px solid var(--charcoal)" }}
+                      >
+                        <span className="text-xs font-sans" style={{ color: "var(--charcoal)" }}>
+                          งบรวมลุคนี้{hasDiscount ? " (ราคา 11.11)" : ""}
+                        </span>
+                        <span className="text-sm font-sans font-bold" style={{ color: hasDiscount ? "#C0392B" : "var(--gold)" }}>
+                          {THB(total)}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
