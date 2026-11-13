@@ -1,7 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+
+function trackStylingLookbook(productId: number | null, type: "page_view" | "product_click") {
+  fetch("/api/styling-lookbook/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(productId === null ? { type } : { type, productId }),
+    keepalive: true,
+  }).catch(() => {});
+}
 
 export interface ResolvedLookItem {
   id: number;
@@ -41,6 +50,13 @@ export default function StylingLookbookClient({
   );
   const [active, setActive] = useState(ALL);
   const filtered = active === ALL ? looks : looks.filter((l) => l.theme === active);
+
+  // Once per page load, real visitors only — an admin checking their own
+  // preview shouldn't inflate the traffic number they're about to read.
+  useEffect(() => {
+    if (!isAdminPreview) trackStylingLookbook(null, "page_view");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div>
@@ -102,6 +118,7 @@ export default function StylingLookbookClient({
                       <Link
                         key={item.id}
                         href={`/products/${item.id}`}
+                        onClick={() => trackStylingLookbook(item.id, "product_click")}
                         className="flex items-center gap-2.5 py-1.5 transition-colors hover:bg-gray-50"
                         style={{ borderTop: "1px solid var(--border)" }}
                       >

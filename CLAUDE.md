@@ -215,3 +215,15 @@ pattern as `campaign-1111`.
   (`StylingLookbookAdmin.tsx`), independent of the 11.11 campaign's own
   toggle, so the admin can stage look photos privately before switching it
   on — same reasoning as the real-photos feature on custom rings.
+- **Its own traffic stats** (`lib/styling-lookbook-tracking.ts`, table
+  `styling_lookbook_events`) — same pattern as the 11.11 campaign's
+  (`lib/campaign-1111-tracking.ts`), kept as a separate table/events stream
+  rather than reusing that one, since this page's traffic is a different
+  question (interest in a *look*, not a discount tier) even though both
+  pages can link a customer to the same product. Public write via
+  `POST /api/styling-lookbook/track` (`{type:"page_view"}` or
+  `{type:"product_click",productId}`), admin-only read via
+  `GET /api/admin/styling-lookbook/stats`, shown on `/admin/styling` as
+  total page views + a top-10 most-clicked-product ranking.
+  `StylingLookbookClient.tsx` fires `page_view` once per mount (skipped for
+  admin preview) and `product_click` when a tagged item's link is clicked.
