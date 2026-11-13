@@ -249,7 +249,10 @@ export default function StylingLookbookAdmin() {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("โหลดไม่สำเร็จ (ต้องล็อกอินแอดมินก่อน)"))))
       .then((c: StylingLookbookConfig) => { setSaved(c); setDraft(c); })
       .catch((e: Error) => setError(e.message));
-    fetch("/api/products?category=All")
+    // x-admin includes hidden products too — an item hidden from the main
+    // catalog can still be tagged in a look, and the admin needs to see it
+    // to notice a product they expected is just hidden, not missing.
+    fetch("/api/products?category=All", { headers: { "x-admin": "1" } })
       .then((r) => r.json())
       .then((d: Product[]) => setProducts(Array.isArray(d) ? d : []))
       .catch(() => {});
