@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Product } from "@/lib/db";
 import type { StylingLook, StylingLookbookConfig } from "@/lib/styling-lookbook-config";
+import type { StylingLookbookStats } from "@/lib/styling-lookbook-tracking";
 
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
@@ -245,6 +246,7 @@ export default function StylingLookbookAdmin() {
   const [saved, setSaved] = useState<StylingLookbookConfig | null>(null);
   const [draft, setDraft] = useState<StylingLookbookConfig | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [stats, setStats] = useState<StylingLookbookStats | null>(null);
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [error, setError] = useState("");
@@ -261,8 +263,13 @@ export default function StylingLookbookAdmin() {
       .then((r) => r.json())
       .then((d: Product[]) => setProducts(Array.isArray(d) ? d : []))
       .catch(() => {});
+    fetch("/api/admin/styling-lookbook/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: StylingLookbookStats | null) => setStats(d))
+      .catch(() => {});
   }, []);
 
+  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const dirty = useMemo(() => JSON.stringify(saved) !== JSON.stringify(draft), [saved, draft]);
 
   if (error && !draft) return <div className="p-8 text-sm font-sans" style={{ color: "#C0392B" }}>{error}</div>;
@@ -334,6 +341,50 @@ export default function StylingLookbookAdmin() {
         >
           {saving ? "กำลังบันทึก…" : "บันทึก"}
         </button>
+      </div>
+
+      {/* Traffic stats — scoped to just /styling, separate from the
+          site-wide view/click counters and from the 11.11 campaign stats. */}
+      <div className={cardClass} style={cardStyle}>
+        <h2 className="text-sm tracking-wide mb-3" style={{ color: "var(--charcoal)" }}>สถิติการเข้าชมหน้า Styling Lookbook</h2>
+        {!stats ? (
+          <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>กำลังโหลด…</p>
+        ) : (
+          <>
+            <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
+              คนเข้ามาดูหน้านี้ทั้งหมด{" "}
+              <span className="text-base font-bold" style={{ color: "var(--charcoal)" }}>{stats.pageViews.toLocaleString()}</span>{" "}
+              ครั้ง
+            </p>
+            <p className="text-xs tracking-widest uppercase font-sans mb-2" style={{ color: "var(--muted)" }}>
+              สินค้าที่มีคนกดดูเยอะที่สุด
+            </p>
+            {stats.productClicks.length === 0 ? (
+              <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>ยังไม่มีคนกดดูสินค้าในหน้านี้</p>
+            ) : (
+              <div className="space-y-1.5">
+                {stats.productClicks.slice(0, 10).map((s, i) => {
+                  const p = productById.get(s.productId);
+                  return (
+                    <div key={s.productId} className="flex items-center gap-3 p-1.5" style={{ border: "1px solid var(--border)" }}>
+                      <span className="text-xs font-sans w-4 text-center flex-shrink-0" style={{ color: "var(--muted)" }}>{i + 1}</span>
+                      <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 36, height: 36, backgroundColor: "var(--img-bg)" }}>
+                        {p?.images.find(Boolean) && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.images.find(Boolean)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        )}
+                      </div>
+                      <p className="text-xs flex-1 min-w-0 truncate" style={{ color: "var(--charcoal)" }}>
+                        {p?.name ?? `สินค้า #${s.productId} (ถูกลบแล้ว)`}
+                      </p>
+                      <span className="text-xs font-sans flex-shrink-0" style={{ color: "var(--charcoal)" }}>{s.clicks.toLocaleString()} ครั้ง</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Enabled toggle */}
