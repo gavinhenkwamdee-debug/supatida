@@ -195,9 +195,14 @@ pattern as `campaign-1111`.
   with zero tagged products (pure inspiration, no caption list).
 - Filter chips are the distinct non-empty `theme` strings across looks, free
   text the admin types per look, not a fixed enum — "ทั้งหมด" always first.
-- No entry-point banner on `/1111` linking here — tried it, decided against
-  it (too many photos competing with the campaign page itself). `/styling`
-  is reachable directly; don't re-add that banner without being asked.
+- `/1111` links here via a text-led CTA strip (`showStylingLink` on
+  `Campaign1111Client.tsx`, between the urgency note and the tier tabs) —
+  NOT a photo banner. A full-photo banner was tried and removed (too many
+  photos competing with the campaign page itself); the solid-charcoal strip
+  is deliberately photo-free so it stays prominent without that problem.
+  Shown only when the lookbook is enabled AND has at least one photo-ready
+  look (`app/1111/page.tsx`'s `showStylingLink`), same dead-end guard as
+  before.
 - Each item's own row shows its 11.11 price (struck-through original +
   campaign price) when it's in a real discount tier, same `productCampaign()`
   call as everywhere else — never a hand-rolled discount. The total label

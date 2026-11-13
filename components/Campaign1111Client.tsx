@@ -598,11 +598,13 @@ export default function Campaign1111Client({
   productsByTier,
   initialTab,
   isAdminPreview = false,
+  showStylingLink = false,
 }: {
   config: Campaign1111Config;
   productsByTier: Record<CampaignTierKey, CampaignProduct[]>;
   initialTab: CampaignTierKey;
   isAdminPreview?: boolean;
+  showStylingLink?: boolean;
 }) {
   const [tab, setTab] = useState<CampaignTierKey>(initialTab);
 
@@ -662,6 +664,28 @@ export default function Campaign1111Client({
             </p>
           )}
 
+          {showStylingLink && (
+            <Link
+              href="/styling"
+              className="group flex items-center justify-center gap-3 w-full mb-8 py-4 px-4 transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "var(--charcoal)" }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-light)" strokeWidth="1.5" aria-hidden="true" className="flex-shrink-0">
+                <path d="M12 2 2 9l10 13L22 9Z" />
+                <path d="M2 9h20M8.5 2 7 9l5 13 5-13-1.5-7" />
+              </svg>
+              <span className="text-sm sm:text-base" style={{ color: "white" }}>แต่งแบบไหนดี</span>
+              <span className="hidden sm:inline text-xs font-sans" style={{ color: "rgba(255,255,255,0.7)" }}>
+                ดูไอเดียการจัดสไตล์กับ SUPATIDA
+              </span>
+              <span
+                className="text-xs font-sans tracking-wider uppercase transition-transform duration-200 group-hover:translate-x-0.5"
+                style={{ color: "var(--gold-light)" }}
+              >
+                ดูเลย →
+              </span>
+            </Link>
+          )}
 
           <div role="tablist" className="grid grid-cols-3 gap-2 sm:gap-3 mb-8 max-w-3xl mx-auto">
             {CAMPAIGN_TIER_KEYS.map((key) => {
