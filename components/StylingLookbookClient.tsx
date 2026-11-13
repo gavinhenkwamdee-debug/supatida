@@ -51,7 +51,7 @@ export default function StylingLookbookClient({
         <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#C0392B" }}>11.11 · Styling Guide</p>
         <h2 className="text-3xl tracking-[0.05em]" style={{ color: "var(--charcoal)" }}>แต่งแบบไหนดี</h2>
         <p className="text-sm font-sans mt-3 leading-relaxed" style={{ color: "var(--muted)" }}>
-          ไอเดียการจัดวางเครื่องประดับ แตะดูแต่ละลุคเพื่อดูว่ามีชิ้นไหนบ้าง แล้วกดไปเลือกซื้อได้ทันที
+          ไอเดียการจัดวางเครื่องประดับ แต่ละลุคมีรายการสินค้าติดแท็กไว้ด้านล่างภาพ กดเพื่อเลือกซื้อได้ทันที
         </p>
         <p className="text-xs font-sans mt-2 italic" style={{ color: "var(--muted)", opacity: 0.85 }}>
           ภาพประกอบตกแต่งด้วยคอมพิวเตอร์กราฟิก เพื่อถ่ายทอดโทนและมู้ดของการจัดสไตล์ สัดส่วนเครื่องประดับในภาพอาจแตกต่างจากชิ้นงานจริงเล็กน้อย
