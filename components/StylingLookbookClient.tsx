@@ -7,6 +7,9 @@ export interface ResolvedLookItem {
   id: number;
   name: string;
   price: number;
+  // The product's 11.11 price when it's in a real discount tier, else null
+  // (Mix & Match included — there's no single-item price for a pair deal).
+  campaignPrice: number | null;
   image: string;
 }
 
@@ -109,9 +112,26 @@ export default function StylingLookbookClient({
                           )}
                         </span>
                         <span className="flex-1 min-w-0 text-xs font-sans truncate" style={{ color: "var(--charcoal)" }}>{item.name}</span>
-                        <span className="flex-shrink-0 text-xs font-sans" style={{ color: "var(--gold)" }}>{THB(item.price)}</span>
+                        {item.campaignPrice !== null ? (
+                          <span className="flex-shrink-0 text-right">
+                            <span className="block text-[10px] font-sans line-through" style={{ color: "var(--muted)" }}>{THB(item.price)}</span>
+                            <span className="block text-xs font-sans font-bold" style={{ color: "#C0392B" }}>{THB(item.campaignPrice)}</span>
+                          </span>
+                        ) : (
+                          <span className="flex-shrink-0 text-xs font-sans" style={{ color: "var(--gold)" }}>{THB(item.price)}</span>
+                        )}
                       </Link>
                     ))}
+                  </div>
+
+                  <div
+                    className="flex items-center justify-between mt-2 pt-2"
+                    style={{ borderTop: "1px solid var(--charcoal)" }}
+                  >
+                    <span className="text-xs font-sans" style={{ color: "var(--charcoal)" }}>งบรวมลุคนี้ (ราคา 11.11)</span>
+                    <span className="text-sm font-sans font-bold" style={{ color: "#C0392B" }}>
+                      {THB(look.items.reduce((sum, item) => sum + (item.campaignPrice ?? item.price), 0))}
+                    </span>
                   </div>
                 </div>
               )}
