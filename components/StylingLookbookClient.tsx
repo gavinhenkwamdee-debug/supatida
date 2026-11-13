@@ -73,10 +73,10 @@ export default function StylingLookbookClient({
         <p className="text-xs tracking-[0.4em] uppercase mb-3 font-sans" style={{ color: "#C0392B" }}>11.11 · Styling Guide</p>
         <h2 className="text-3xl tracking-[0.05em]" style={{ color: "var(--charcoal)" }}>แต่งแบบไหนดี</h2>
         <p className="text-sm font-sans mt-3 leading-relaxed" style={{ color: "var(--muted)" }}>
-          ไอเดียการจัดวางเครื่องประดับ แต่ละลุคมีรายการสินค้าติดแท็กไว้ด้านล่างภาพ กดเพื่อเลือกซื้อได้ทันที
+          ลองนึกภาพลุคของคุณกับเครื่องประดับ SUPATIDA พร้อมเลือกชมสินค้าที่แท็กไว้ใต้แต่ละภาพ
         </p>
         <p className="text-xs font-sans mt-2 italic" style={{ color: "var(--muted)", opacity: 0.85 }}>
-          ภาพประกอบเพื่อการนำเสนอสไตล์เท่านั้น สินค้าที่แท็กไว้ด้านล่างคือของจริง กดดูรูปและรายละเอียดได้เลย
+          ภาพนางแบบสวมเครื่องประดับสร้างด้วย AI เพื่อเป็นไอเดียในการแต่งตัว ไม่ใช่ภาพถ่ายการสวมใส่จริง ขนาดและรายละเอียดอาจคลาดเคลื่อน กรุณาดูภาพสินค้าจริงประกอบก่อนเลือกซื้อ
         </p>
       </div>
 
