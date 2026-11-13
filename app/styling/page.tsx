@@ -4,6 +4,8 @@ import { getAllProducts, type Product } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { ADMIN_TOKEN_COOKIE, isAdminToken } from "@/lib/admin-auth";
 import { DEFAULT_STYLING_LOOKBOOK, normalizeStylingLookbook } from "@/lib/styling-lookbook-config";
+import { getActiveCampaign1111 } from "@/lib/campaign-1111";
+import { productCampaign } from "@/lib/campaign-1111-config";
 import StylingLookbookClient, { type ResolvedLook } from "@/components/StylingLookbookClient";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +23,7 @@ export default async function StylingLookbookPage() {
 
   const products = config.enabled || isAdminPreview ? await getAllProducts() : [];
   const productById = new Map(products.map((p) => [p.id, p]));
+  const campaign1111 = await getActiveCampaign1111();
 
   // Only a look with its own photo is "ready" to show — a look an admin is
   // still mid-tagging (no photo yet) would just render as a broken image.
@@ -34,12 +37,20 @@ export default async function StylingLookbookPage() {
         .map((id) => productById.get(id))
         .filter((p): p is Product => p !== undefined)
         .filter((p) => !p.hidden)
-        .map((p) => ({
-          id: p.id,
-          name: p.name,
-          price: p.price,
-          image: p.images.find(Boolean) ?? "",
-        })),
+        .map((p) => {
+          // Mix & Match has no single-item campaign price (the 11% is for a
+          // pair), so a mixmatch-tier piece just uses its own regular price
+          // here — that's genuinely what buying it alone costs.
+          const pc = productCampaign(campaign1111, p);
+          const campaignPrice = pc?.kind === "discount" ? pc.price : null;
+          return {
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            campaignPrice,
+            image: p.images.find(Boolean) ?? "",
+          };
+        }),
     }));
 
   return (
