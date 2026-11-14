@@ -105,6 +105,24 @@ groups — YOUR WISH / STRENGTH / BALANCE).
   (no upload needed) — used for the gradient-sphere color swatches and the
   dashed-circle "None" placeholder.
 
+## Custom Rings landing page (`/custom-rings`, admin at `/admin/custom-rings`)
+
+Hero banner config lives in `site_settings` key `custom-rings-banner`
+(`lib/custom-rings-banner-config.ts`) — same no-migration pattern as
+`campaign-1111`.
+
+- The page always draws its own eyebrow/headline/description text plus a
+  dark left-side scrim over the uploaded banner photo
+  (`app/custom-rings/page.tsx`), so the uploaded image is assumed to be a
+  plain lifestyle/product photo with nothing baked into it. If the admin
+  instead uploads a finished graphic that already has its own text/logo in
+  it, that text collides with the code-rendered overlay. The
+  `hideOverlayText` toggle on the banner config (checkbox in
+  `CustomRingsBannerAdmin` inside `components/admin/CustomRingsAdmin.tsx`)
+  lets the admin declare "this image is a complete graphic" — when true,
+  the page skips the decorative SVG, the scrim, and the whole text block,
+  showing only the raw image.
+
 ## 11.11 campaign (`/1111`, admin at `/admin/campaign-1111`)
 
 Config lives in `site_settings` key `campaign-1111` (no table/column, so no

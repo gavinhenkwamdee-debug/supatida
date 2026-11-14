@@ -13,7 +13,10 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = await request.json();
-  const config: CustomRingsBannerConfig = { imageUrl: String(body.imageUrl ?? "") };
+  const config: CustomRingsBannerConfig = {
+    imageUrl: String(body.imageUrl ?? ""),
+    hideOverlayText: Boolean(body.hideOverlayText),
+  };
   await setSetting("custom-rings-banner", config);
   return NextResponse.json(config);
 }

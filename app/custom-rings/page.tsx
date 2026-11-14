@@ -75,33 +75,37 @@ export default async function CustomRingsGalleryPage() {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={banner.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
         )}
-        <svg
-          className="absolute"
-          style={{ right: "-4%", top: "50%", transform: "translateY(-50%)", opacity: 0.35 }}
-          width="46%"
-          viewBox="0 0 100 100"
-          fill="none"
-          stroke="#FFFFFF"
-          strokeWidth="1.1"
-        >
-          <ellipse cx="50" cy="58" rx="26" ry="22" />
-          <path d="M38 40 44 18 56 18 62 40" />
-          <circle cx="50" cy="20" r="4.5" fill="#FFFFFF" stroke="none" />
-        </svg>
-        <div
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(90deg, rgba(20,18,12,0.55) 0%, rgba(20,18,12,0.28) 45%, rgba(20,18,12,0.05) 75%)" }}
-        />
-        <div className="relative h-full max-w-5xl mx-auto px-6 flex flex-col justify-center gap-3">
-          <p className="text-xs tracking-[0.4em] uppercase font-sans" style={{ color: "var(--gold-light)" }}>Design Your Own</p>
-          <h2 className="text-3xl sm:text-4xl leading-tight max-w-md" style={{ color: "white" }}>
-            ออกแบบแหวนของคุณเอง<br />ให้เป็นเรื่องราวของคุณ
-          </h2>
-          <p className="text-sm font-sans leading-relaxed max-w-sm" style={{ color: "rgba(255,255,255,0.88)" }}>
-            เลือกทรงแหวนที่ใช่ ฝังพลอยที่มีความหมายสำหรับคุณโดยเฉพาะ ปรับวัสดุและไซส์ได้อิสระ
-            พร้อมดูตัวอย่างแบบเรียลไทม์ก่อนสั่งทำจริง
-          </p>
-        </div>
+        {!banner.hideOverlayText && (
+          <>
+            <svg
+              className="absolute"
+              style={{ right: "-4%", top: "50%", transform: "translateY(-50%)", opacity: 0.35 }}
+              width="46%"
+              viewBox="0 0 100 100"
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="1.1"
+            >
+              <ellipse cx="50" cy="58" rx="26" ry="22" />
+              <path d="M38 40 44 18 56 18 62 40" />
+              <circle cx="50" cy="20" r="4.5" fill="#FFFFFF" stroke="none" />
+            </svg>
+            <div
+              className="absolute inset-0"
+              style={{ background: "linear-gradient(90deg, rgba(20,18,12,0.55) 0%, rgba(20,18,12,0.28) 45%, rgba(20,18,12,0.05) 75%)" }}
+            />
+            <div className="relative h-full max-w-5xl mx-auto px-6 flex flex-col justify-center gap-3">
+              <p className="text-xs tracking-[0.4em] uppercase font-sans" style={{ color: "var(--gold-light)" }}>Design Your Own</p>
+              <h2 className="text-3xl sm:text-4xl leading-tight max-w-md" style={{ color: "white" }}>
+                ออกแบบแหวนของคุณเอง<br />ให้เป็นเรื่องราวของคุณ
+              </h2>
+              <p className="text-sm font-sans leading-relaxed max-w-sm" style={{ color: "rgba(255,255,255,0.88)" }}>
+                เลือกทรงแหวนที่ใช่ ฝังพลอยที่มีความหมายสำหรับคุณโดยเฉพาะ ปรับวัสดุและไซส์ได้อิสระ
+                พร้อมดูตัวอย่างแบบเรียลไทม์ก่อนสั่งทำจริง
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Feature strip */}
