@@ -40,21 +40,27 @@ async function compressBannerImage(file: File): Promise<File> {
 // section here instead of a separate admin page.
 function CustomRingsBannerAdmin() {
   const [imageUrl, setImageUrl] = useState("");
+  const [hideOverlayText, setHideOverlayText] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/custom-rings-banner")
       .then((r) => r.json())
-      .then((d: CustomRingsBannerConfig) => { setImageUrl(d.imageUrl || ""); setLoading(false); });
+      .then((d: CustomRingsBannerConfig) => {
+        setImageUrl(d.imageUrl || "");
+        setHideOverlayText(Boolean(d.hideOverlayText));
+        setLoading(false);
+      });
   }, []);
 
-  async function save(url: string) {
-    setImageUrl(url);
+  async function save(next: { imageUrl: string; hideOverlayText: boolean }) {
+    setImageUrl(next.imageUrl);
+    setHideOverlayText(next.hideOverlayText);
     await fetch("/api/settings/custom-rings-banner", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageUrl: url }),
+      body: JSON.stringify(next),
     });
   }
 
@@ -68,7 +74,7 @@ function CustomRingsBannerAdmin() {
       formData.append("file", compressed);
       const res = await fetch("/api/upload-custom-ring", { method: "POST", body: formData });
       const data = await res.json();
-      if (res.ok) await save(data.url);
+      if (res.ok) await save({ imageUrl: data.url, hideOverlayText });
       else alert(data.error || "อัพโหลดไม่สำเร็จ");
     } finally {
       setUploading(false);
@@ -92,7 +98,7 @@ function CustomRingsBannerAdmin() {
         </div>
       ) : null}
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 mb-3">
         <label
           className="px-4 py-2.5 text-xs tracking-widest uppercase font-sans cursor-pointer transition-opacity hover:opacity-80"
           style={{ border: "1px solid var(--charcoal)", color: "var(--charcoal)" }}
@@ -103,7 +109,7 @@ function CustomRingsBannerAdmin() {
         {imageUrl && (
           <button
             type="button"
-            onClick={() => save("")}
+            onClick={() => save({ imageUrl: "", hideOverlayText })}
             className="px-4 py-2.5 text-xs tracking-widest uppercase font-sans"
             style={{ border: "1px solid #C0392B", color: "#C0392B" }}
           >
@@ -111,6 +117,20 @@ function CustomRingsBannerAdmin() {
           </button>
         )}
       </div>
+
+      <label className="flex items-start gap-2 text-xs font-sans cursor-pointer" style={{ color: "var(--charcoal)" }}>
+        <input
+          type="checkbox"
+          checked={hideOverlayText}
+          onChange={(e) => save({ imageUrl, hideOverlayText: e.target.checked })}
+          className="mt-0.5"
+        />
+        <span>
+          รูปนี้มีข้อความอยู่ในรูปแล้ว (ซ่อนหัวข้อ/คำโปรยที่เว็บเขียนทับให้อัตโนมัติ)
+          <br />
+          <span style={{ color: "var(--muted)" }}>ติ๊กถ้ารูป banner เป็นกราฟิกสำเร็จที่มีตัวหนังสือในภาพอยู่แล้ว ไม่งั้นข้อความจะทับกัน</span>
+        </span>
+      </label>
     </div>
   );
 }
