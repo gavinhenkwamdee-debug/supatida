@@ -46,6 +46,129 @@ const inputStyle = { border: "1px solid var(--border)", color: "var(--charcoal)"
 const cardClass = "bg-white p-6 mb-4";
 const cardStyle = { border: "1px solid var(--border)" };
 
+// Loads an R2 product photo through the admin image-proxy (same-origin, so
+// it can be drawn onto a <canvas> without tainting it) and returns it as a
+// decoded <img>, or null if anything fails — a missing/broken photo just
+// leaves that collage tile blank instead of failing the whole image.
+async function loadProxiedImage(src: string, objectUrls: string[]): Promise<HTMLImageElement | null> {
+  try {
+    const res = await fetch(`/api/admin/image-proxy?url=${encodeURIComponent(src)}`);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    objectUrls.push(objectUrl);
+    const img = new window.Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("image load failed"));
+      img.src = objectUrl;
+    });
+    return img;
+  } catch {
+    return null;
+  }
+}
+
+// Renders every still-sold-out-but-assigned product into one vertical
+// (1080×1920, Instagram/FB Story size) collage PNG — "N ชิ้นขายหมดแล้ว" —
+// so the admin can post it straight to a story without manually screenshot-
+// ing and arranging each product photo by hand.
+async function renderSoldOutCollage(items: Product[]): Promise<Blob | null> {
+  const objectUrls: string[] = [];
+  try {
+    const images = await Promise.all(
+      items.map((p) => {
+        const src = p.images.find(Boolean);
+        return src ? loadProxiedImage(src, objectUrls) : Promise.resolve(null);
+      })
+    );
+
+    const W = 1080;
+    const H = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.fillStyle = "#1C1C1C";
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#D4AF6A";
+    ctx.font = "600 34px sans-serif";
+    ctx.fillText("SUPATIDA · 11.11", W / 2, 110);
+
+    ctx.fillStyle = "#FDFCF8";
+    ctx.font = "700 68px sans-serif";
+    ctx.fillText(`ขายหมดแล้ว ${items.length} ชิ้น`, W / 2, 195);
+
+    ctx.fillStyle = "#B8922A";
+    ctx.font = "400 28px sans-serif";
+    ctx.fillText("ในแคมเปญ 11.11 — รีบจัดก่อนของจะหมด", W / 2, 240);
+
+    const gridTop = 300;
+    const gridBottom = 1850;
+    const gridPadX = 50;
+    const gridWidth = W - gridPadX * 2;
+    const gap = 14;
+    const cols = Math.min(4, Math.ceil(Math.sqrt(items.length)));
+    const rows = Math.ceil(items.length / cols);
+    const cellW = (gridWidth - gap * (cols - 1)) / cols;
+    const cellH = Math.min((gridBottom - gridTop - gap * (rows - 1)) / rows, cellW);
+    const gridHeight = rows * cellH + (rows - 1) * gap;
+    const topOffset = gridTop + (gridBottom - gridTop - gridHeight) / 2;
+
+    items.forEach((p, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = gridPadX + col * (cellW + gap);
+      const y = topOffset + row * (cellH + gap);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, cellW, cellH);
+      ctx.clip();
+      ctx.fillStyle = "#F5F1E8";
+      ctx.fillRect(x, y, cellW, cellH);
+      const img = images[i];
+      if (img) {
+        const scale = Math.max(cellW / img.width, cellH / img.height);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        ctx.drawImage(img, x + (cellW - dw) / 2, y + (cellH - dh) / 2, dw, dh);
+      }
+      ctx.fillStyle = "rgba(0,0,0,0.38)";
+      ctx.fillRect(x, y, cellW, cellH);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(x + cellW / 2, y + cellH / 2);
+      ctx.rotate((-14 * Math.PI) / 180);
+      ctx.fillStyle = "#C0392B";
+      const badgeW = cellW * 0.82;
+      const badgeH = Math.max(26, cellH * 0.16);
+      ctx.fillRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = `700 ${Math.max(14, badgeH * 0.56)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("SOLD OUT", 0, 1);
+      ctx.restore();
+    });
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#6B6055";
+    ctx.font = "400 24px sans-serif";
+    ctx.fillText("supatidajewelry.com", W / 2, 1900);
+
+    return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+  } finally {
+    objectUrls.forEach((u) => URL.revokeObjectURL(u));
+  }
+}
+
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
     const img = new window.Image();
@@ -77,6 +200,7 @@ export default function Campaign1111Admin() {
   const [justSaved, setJustSaved] = useState(false);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [generatingCollage, setGeneratingCollage] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [search, setSearch] = useState("");
@@ -188,6 +312,24 @@ export default function Campaign1111Admin() {
       setError(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function downloadSoldOutCollage() {
+    if (soldOutStillAssigned.length === 0) return;
+    setGeneratingCollage(true);
+    try {
+      const blob = await renderSoldOutCollage(soldOutStillAssigned);
+      if (!blob) throw new Error("render failed");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `supatida-1111-soldout-${new Date().toISOString().slice(0, 10)}.png`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      alert("สร้างภาพไม่สำเร็จ ลองใหม่อีกครั้ง");
+    } finally {
+      setGeneratingCollage(false);
     }
   }
 
@@ -387,11 +529,23 @@ export default function Campaign1111Admin() {
           from the main browse/search list below once sold out. */}
       {soldOutStillAssigned.length > 0 && (
         <div className={cardClass} style={{ ...cardStyle, borderColor: "#C0392B" }}>
-          <h2 className="text-sm tracking-wide mb-1" style={{ color: "#C0392B" }}>
-            สินค้าหมดสต็อกที่ยังอยู่ในแคมเปญ ({soldOutStillAssigned.length})
-          </h2>
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <h2 className="text-sm tracking-wide" style={{ color: "#C0392B" }}>
+              สินค้าหมดสต็อกที่ยังอยู่ในแคมเปญ ({soldOutStillAssigned.length})
+            </h2>
+            <button
+              type="button"
+              onClick={downloadSoldOutCollage}
+              disabled={generatingCollage}
+              className="flex-shrink-0 px-3 py-1.5 text-xs tracking-wider uppercase font-sans transition-opacity hover:opacity-80 disabled:opacity-40"
+              style={{ border: "1px solid var(--charcoal)", color: "var(--charcoal)" }}
+            >
+              {generatingCollage ? "กำลังสร้างภาพ…" : "ดาวน์โหลดภาพสรุป (สตอรี่)"}
+            </button>
+          </div>
           <p className="text-xs font-sans mb-3" style={{ color: "var(--muted)" }}>
-            ยังขึ้น SOLD OUT อยู่ในหน้าแคมเปญจริง — กด &ldquo;เอาออก&rdquo; แล้วกดบันทึก ถ้าไม่อยากให้ขึ้นอีก
+            ยังขึ้น SOLD OUT อยู่ในหน้าแคมเปญจริง — กด &ldquo;เอาออก&rdquo; แล้วกดบันทึก ถ้าไม่อยากให้ขึ้นอีก ·
+            กด &ldquo;ดาวน์โหลดภาพสรุป&rdquo; เพื่อได้ภาพ collage รวมสินค้าที่ขายหมดแล้ว สำหรับโพสต์สตอรี่
           </p>
           <div className="space-y-2">
             {soldOutStillAssigned.map((p) => {
