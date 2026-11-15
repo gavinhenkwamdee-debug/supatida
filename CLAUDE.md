@@ -155,7 +155,18 @@ prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5
   that sold out *after* being assigned still shows "SOLD OUT" live but can no
   longer be found in that list to un-assign — `soldOutStillAssigned` is a
   separate small cleanup panel (only rendered when non-empty) that surfaces
-  exactly those pieces with a one-click "เอาออก" (assign to `none`).
+  exactly those pieces with a one-click "เอาออก" (assign to `none`). That
+  same panel has a "ดาวน์โหลดภาพสรุป (สตอรี่)" button —
+  `renderSoldOutCollage()` in `Campaign1111Admin.tsx` draws every item in
+  `soldOutStillAssigned` (i.e. sold-out AND still assigned to a real
+  tier — exactly "sold out within the 11.11 promo") onto one 1080×1920
+  canvas collage with a "ขายหมดแล้ว N ชิ้น" headline, for posting straight
+  to an IG/FB story. Each product photo is fetched through the
+  admin-only `/api/admin/image-proxy` route (restricted to
+  `R2_PUBLIC_URL`) instead of loaded directly, since a cross-origin
+  `<img>` would taint the canvas and block `toBlob()` — the proxy fetches
+  server-side and streams the bytes back same-origin so the browser never
+  treats it as cross-origin.
 - **Campaign price shows on `/1111` and on a product's own detail page —
   not on the catalog grid or PayLater cards.** `app/page.tsx` (catalog grid)
   and `app/campaign/[slug]/page.tsx` (PayLater cards) always show the plain
