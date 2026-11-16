@@ -39,12 +39,13 @@ const STEPS = [
   { n: "03", title: "แคปหน้าจอ ส่งแอดมินทางไลน์", body: "ส่งสรุปแบบที่ออกแบบไว้ให้แอดมิน แล้วรอรับแหวนที่ออกแบบเองได้เลย" },
 ];
 
-// Shared by both app/custom-rings/page.tsx and app/thewishnote/page.tsx (the
-// branded URL for this same collection — "The Wish Note" is its own name).
-// basePath is passed in explicitly, rather than inferred from the request,
-// so ring links always stay on whichever of the two URLs the visitor is
-// actually on instead of silently jumping them over to the other one.
-export default async function CustomRingsLandingPage({ basePath }: { basePath: string }) {
+// The public custom-ring collection page, "The Wish Note" — lives at
+// /thewishnote (app/thewishnote/page.tsx). /custom-rings used to be the
+// canonical URL; it now permanently redirects here (see next.config.ts)
+// rather than being a second live route, so old links still land on the
+// right page without this component needing a basePath to juggle.
+export default async function CustomRingsLandingPage() {
+  const basePath = "/thewishnote";
   const [rings, banner] = await Promise.all([
     getEnabledCustomRings(),
     getSetting<CustomRingsBannerConfig>("custom-rings-banner", DEFAULT_CUSTOM_RINGS_BANNER),

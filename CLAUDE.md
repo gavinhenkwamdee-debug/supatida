@@ -122,23 +122,25 @@ Hero banner config lives in `site_settings` key `custom-rings-banner`
   lets the admin declare "this image is a complete graphic" — when true,
   the page skips the decorative SVG, the scrim, and the whole text block,
   showing only the raw image.
-- **`/thewishnote`** — "The Wish Note" is this collection's own brand name,
-  so it also has its own real route for sharing/marketing, not just
-  `/custom-rings`. The actual page markup lives in one shared component,
-  `components/CustomRingsLandingPage.tsx`, taking a `basePath` prop —
-  `app/custom-rings/page.tsx` renders it with `basePath="/custom-rings"`,
-  `app/thewishnote/page.tsx` with `basePath="/thewishnote"`, and each ring
-  card links to `${basePath}/${ring.id}`. This was tried first as a
-  `next.config.ts` `rewrites()` entry (so the URL bar shows `/thewishnote`
-  while only `/custom-rings` actually exists as a route) — that half-works:
-  the listing page shows the right URL, but every ring card is a hardcoded
-  `Link href="/custom-rings/{id}"`, so clicking into a ring from
-  `/thewishnote` silently drops the visitor back onto `/custom-rings/{id}`.
-  A real second route (`app/thewishnote/[id]/page.tsx`, identical to
-  `app/custom-rings/[id]/page.tsx`) avoids that — whichever URL the visitor
-  is on, they stay on it all the way through. Add any further "nice URL
-  for a real route" request the same way (shared component + a `basePath`
-  prop), not as a `rewrites()` entry.
+- **The public URL is `/thewishnote`** (`app/thewishnote/page.tsx` +
+  `app/thewishnote/[id]/page.tsx`), not `/custom-rings` — "The Wish Note"
+  is this collection's own brand name. `/custom-rings` was the original
+  URL; it now **permanently redirects** to `/thewishnote` via
+  `redirects()` in `next.config.ts` (both the listing path and
+  `/custom-rings/:path*` → `/thewishnote/:path*`), so old
+  links/bookmarks/ads still land on the right page — and, just as
+  importantly, so typing/opening the old URL always shows the new one in
+  the address bar instead of looking unchanged. Two earlier approaches
+  were tried and replaced: a `rewrites()` alias (URL bar never updated —
+  the whole point of renaming it) and a shared-component-with-`basePath`
+  setup keeping both URLs simultaneously "real" (every ring card's link
+  has to agree on which base to use, easy to get wrong, and `/custom-rings`
+  didn't need to keep existing as a live page once nothing links to it
+  except old external links, which the redirect already covers). The
+  admin's own "View ↗" link (`CustomRingsAdmin.tsx`) points straight at
+  `/thewishnote/{id}` to skip the redirect hop. Admin-side routes
+  (`/admin/custom-rings`, `/api/admin/custom-rings`) keep their original
+  name — only the public URL was renamed.
 
 ## 11.11 campaign (`/1111`, admin at `/admin/campaign-1111`)
 
