@@ -122,6 +122,14 @@ Hero banner config lives in `site_settings` key `custom-rings-banner`
   lets the admin declare "this image is a complete graphic" — when true,
   the page skips the decorative SVG, the scrim, and the whole text block,
   showing only the raw image.
+- **`/thewishnote`** — "The Wish Note" is this collection's own brand name,
+  so it gets a nicer share/marketing URL via a `rewrites()` entry in
+  `next.config.ts` (`/thewishnote` → `/custom-rings`,
+  `/thewishnote/:path*` → `/custom-rings/:path*`). It's a rewrite, not a
+  redirect, so the URL bar keeps showing `/thewishnote` while
+  `/custom-rings` keeps working unchanged for every existing internal
+  link (nav, homepage, admin "View ↗"). Add any further "nice URL for a
+  real route" requests the same way rather than duplicating the page.
 
 ## 11.11 campaign (`/1111`, admin at `/admin/campaign-1111`)
 
