@@ -35,7 +35,7 @@ async function compressBannerImage(file: File): Promise<File> {
   });
 }
 
-// The banner photo behind "ออกแบบแหวนของคุณเอง" on /custom-rings — a single
+// The banner photo behind "ออกแบบแหวนของคุณเอง" on /thewishnote — a single
 // image, not a slideshow like the homepage Hero Banner, so its own small
 // section here instead of a separate admin page.
 function CustomRingsBannerAdmin() {
@@ -238,7 +238,7 @@ export default function CustomRingsAdmin() {
                 </p>
               </div>
               <div className="flex gap-3 flex-shrink-0">
-                <Link href={`/custom-rings/${ring.id}`} target="_blank" className="text-xs tracking-wider uppercase underline" style={{ color: "var(--muted)" }}>View ↗</Link>
+                <Link href={`/thewishnote/${ring.id}`} target="_blank" className="text-xs tracking-wider uppercase underline" style={{ color: "var(--muted)" }}>View ↗</Link>
                 <Link href={`/admin/custom-rings/${ring.id}/edit`} className="text-xs tracking-wider uppercase underline" style={{ color: "var(--gold-dark)" }}>Edit</Link>
                 <button onClick={() => handleDuplicate(ring)} disabled={duplicatingId === ring.id} className="text-xs tracking-wider uppercase underline disabled:opacity-50" style={{ color: "var(--muted)" }}>
                   {duplicatingId === ring.id ? "Duplicating…" : "Duplicate"}
