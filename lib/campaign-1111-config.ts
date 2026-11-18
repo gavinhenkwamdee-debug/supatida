@@ -76,6 +76,20 @@ export function tierOf(config: Campaign1111Config, productId: number): AssignedT
   return config.assignments[String(productId)] ?? DEFAULT_TIER;
 }
 
+// "Live" = the admin's own switch is on AND (no end time set, or it hasn't
+// passed yet) — so a campaign with a past endsAt stops counting as live the
+// moment the clock crosses it, on the very next request, with no cron job
+// or write to the stored config needed. Before this, endsAt only drove the
+// /1111 countdown display ("แคมเปญสิ้นสุดแล้ว") while pricing/the tab/the
+// page itself stayed fully live past the deadline — callers that gate on
+// this instead of the raw `enabled` flag get the real auto-close.
+export function isCampaignLive(config: Campaign1111Config): boolean {
+  if (!config.enabled) return false;
+  if (!config.endsAt) return true;
+  const end = new Date(config.endsAt).getTime();
+  return Number.isNaN(end) || end > Date.now();
+}
+
 // Discounted price, always rounded UP to the next 100 baht (never down).
 // Done in integer arithmetic: price * 0.85 in floating point can land a hair
 // above a whole hundred (20000 * 0.85 = 17000.000000000002) and ceil() would

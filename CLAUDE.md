@@ -147,6 +147,24 @@ Hero banner config lives in `site_settings` key `custom-rings-banner`
 Config lives in `site_settings` key `campaign-1111` (no table/column, so no
 prod migration to forget). Three tiers — wishlist 15% / mixmatch 11% / extra 5%.
 
+- **Auto-closes at `endsAt`, not just a countdown label.** `isCampaignLive()`
+  (`lib/campaign-1111-config.ts`) is `enabled && (no endsAt, or endsAt hasn't
+  passed)` — every public surface gates on this, not the raw `enabled` flag:
+  `getActiveCampaign1111()` (pricing on product/styling pages),
+  `/api/settings/campaign-1111-enabled` (the Header tab), and
+  `app/1111/page.tsx` (overrides `config.enabled` to the live value before
+  passing it to `Campaign1111Client`, which already had an
+  enabled/disabled placeholder branch — reusing it needed no client-side
+  change). This computes fresh on every request, so the campaign goes
+  back to normal the moment the clock crosses `endsAt` with no cron job
+  and no write to the stored config (same self-correcting, no-write
+  pattern as the `revalidateTag` ~60s TTL note above). Before this,
+  `endsAt` only drove the `/1111` countdown text ("แคมเปญสิ้นสุดแล้ว")
+  while the page, pricing and nav tab all stayed fully live past the
+  deadline. The admin's own "เปิดแคมเปญ 11.11" toggle and stored `endsAt`
+  are untouched by this — `/api/admin/campaign-1111` still reads/writes
+  the raw config, so admin preview (logged-in cookie) keeps showing the
+  real page past `endsAt` exactly like it does when manually disabled.
 - **MECE by construction:** `assignments` maps productId → tier, one value per
   product, and only `wishlist`/`mixmatch` are stored. Absent = `extra`, so every
   product lands in exactly one tier. Always read it through `tierOf()`.

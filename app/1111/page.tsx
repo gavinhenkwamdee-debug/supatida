@@ -6,6 +6,7 @@ import { ADMIN_TOKEN_COOKIE, isAdminToken } from "@/lib/admin-auth";
 import {
   DEFAULT_CAMPAIGN_1111,
   normalizeCampaign1111,
+  isCampaignLive,
   tierOf,
   CAMPAIGN_TIER_KEYS,
   type CampaignTierKey,
@@ -26,18 +27,25 @@ export default async function Campaign1111Page({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { tab } = await searchParams;
-  const config = normalizeCampaign1111(await getSetting("campaign-1111", DEFAULT_CAMPAIGN_1111));
+  const configStored = normalizeCampaign1111(await getSetting("campaign-1111", DEFAULT_CAMPAIGN_1111));
   const styling = normalizeStylingLookbook(await getSetting("styling-lookbook", DEFAULT_STYLING_LOOKBOOK));
   // Nothing to link to if it's off, or on but still empty.
   const showStylingLink = styling.enabled && styling.looks.some((l) => l.image);
 
   // Admin can preview the full page via their logged-in cookie even while
-  // the campaign is off — customers without that cookie still see the
-  // "disabled" placeholder, so the page stays invisible to real shoppers
-  // right up until the admin flips it on.
+  // the campaign is off (manually, or because endsAt already passed) —
+  // customers without that cookie still see the "disabled" placeholder, so
+  // the page stays invisible to real shoppers right up until the admin
+  // flips it back on (or pushes a later endsAt).
   const cookieStore = await cookies();
   const isAdmin = isAdminToken(cookieStore.get(ADMIN_TOKEN_COOKIE)?.value);
-  const isAdminPreview = !config.enabled && isAdmin;
+  const live = isCampaignLive(configStored);
+  const isAdminPreview = !live && isAdmin;
+  // Campaign1111Client's own enabled/disabled gate reads config.enabled
+  // directly, so this override is what actually makes the page auto-close
+  // past endsAt instead of only showing the countdown as "ended" while
+  // staying fully live.
+  const config = { ...configStored, enabled: live };
 
   // Hidden pieces never enter any tier, but sold-out ones stay — shown with
   // a "SOLD OUT" overlay in their normal (price-sorted) spot instead of
