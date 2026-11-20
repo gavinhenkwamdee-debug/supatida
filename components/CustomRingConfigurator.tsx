@@ -28,6 +28,15 @@ const POWER_KIND_TO_MEANING_CATEGORY: Partial<Record<GroupKind, MeaningCategory>
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
 
+// Engraving ("text_input" groups) isn't admin-priced per choice — a
+// text_input group always has an empty choices array, so there's nowhere in
+// the admin UI to set a priceDelta for it. The fee is a flat, global add-on
+// instead, charged once per text_input group the customer actually typed
+// something into (trimmed non-empty), on top of ring.basePrice + choice
+// priceDeltas in totalPrice below.
+const ENGRAVING_MAX_LENGTH = 10;
+const ENGRAVING_FEE = 500;
+
 const STONE_KIND_LABEL: Record<StoneKind, string> = { diamond: "เพชร", gem: "พลอย" };
 
 function isMeaningGroup(group: CustomRingGroup) {
@@ -151,11 +160,16 @@ function GroupSection({
           value={textValue ?? ""}
           onChange={(e) => onTextChange?.(e.target.value)}
           placeholder={group.placeholder || "พิมพ์ข้อความที่ต้องการ"}
-          maxLength={7}
+          maxLength={ENGRAVING_MAX_LENGTH}
           className="w-full px-3 py-2.5 text-sm font-sans outline-none"
           style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
         />
-        <p className="text-xs font-sans mt-1 text-right" style={{ color: "var(--muted)" }}>{(textValue ?? "").length}/7</p>
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-xs font-sans" style={{ color: "var(--muted)" }}>{(textValue ?? "").length}/{ENGRAVING_MAX_LENGTH}</p>
+          {textValue?.trim() && (
+            <p className="text-xs font-sans" style={{ color: "var(--gold)" }}>+{THB(ENGRAVING_FEE)} ค่าแกะอักษร</p>
+          )}
+        </div>
       </div>
     );
   }
@@ -391,7 +405,7 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     for (const g of groups) {
       if (g.kind === "text_input") {
         const v = textValues[g.id]?.trim();
-        if (v) rows.push({ label: g.label, value: v });
+        if (v) rows.push({ label: g.label, value: `${v} (+${THB(ENGRAVING_FEE)})` });
         continue;
       }
       const choice = g.choices.find((c) => c.id === selections[g.id]);
@@ -461,8 +475,16 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     return surcharge;
   }, [groups, selections, metalChoice]);
 
+  const engravingFee = useMemo(() => {
+    let fee = 0;
+    for (const g of groups) {
+      if (g.kind === "text_input" && textValues[g.id]?.trim()) fee += ENGRAVING_FEE;
+    }
+    return fee;
+  }, [groups, textValues]);
+
   const totalPrice =
-    ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0) + sizeSurcharge;
+    ring.basePrice + selectedChoices.reduce((sum, c) => sum + c.priceDelta, 0) + sizeSurcharge + engravingFee;
 
   // A choice can replace the whole ring photo (e.g. a different base ring
   // design) instead of just layering a gem on top — last selected group

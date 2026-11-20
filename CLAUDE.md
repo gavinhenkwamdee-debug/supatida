@@ -104,8 +104,21 @@ groups — YOUR WISH / STRENGTH / BALANCE).
   photo/gradient PNG, or a `data:image/svg+xml,...` URI generated inline
   (no upload needed) — used for the gradient-sphere color swatches and the
   dashed-circle "None" placeholder.
-
-## Custom Rings landing page (`/custom-rings`, admin at `/admin/custom-rings`)
+- **Engraving (`text_input` groups) has a flat, global fee — not an
+  admin-set `priceDelta`.** A `text_input` group's `choices` array is
+  always empty (nothing to pick, so nowhere in the admin UI to set a
+  per-choice price), so `ENGRAVING_FEE` (500 baht) and
+  `ENGRAVING_MAX_LENGTH` (10 characters) are hardcoded constants in
+  `CustomRingConfigurator.tsx`, applied uniformly across every ring's
+  engraving field. The fee is added to `totalPrice` once per `text_input`
+  group the customer actually typed a non-empty (trimmed) value into —
+  typing nothing costs nothing. Shown to the customer as a small
+  "+500 บาท ค่าแกะอักษร" note under the character counter the moment they
+  type something, and folded into the order-summary popup's row for that
+  field (`"<text> (+500 บาท)"`) so the admin sees why the total went up
+  without a separate line item. This was previously free with a 7-character
+  cap; the two constants are independent, so a future change to the fee
+  doesn't imply changing the length limit or vice versa. (`/custom-rings`, admin at `/admin/custom-rings`)
 
 Hero banner config lives in `site_settings` key `custom-rings-banner`
 (`lib/custom-rings-banner-config.ts`) — same no-migration pattern as
