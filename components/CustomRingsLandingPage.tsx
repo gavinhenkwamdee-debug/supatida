@@ -115,10 +115,15 @@ export default async function CustomRingsLandingPage() {
         )}
       </div>
 
-      {/* Feature strip */}
-      <div className="max-w-4xl mx-auto px-6 py-9 flex justify-center flex-wrap gap-x-7 gap-y-4">
+      {/* Feature strip — 4 items, so centering each wrapped line (the old
+          flex justify-center flex-wrap) staggered them 2-1-1 on narrow
+          screens instead of lining up into columns. A 2-column grid below
+          sm keeps every item flush left in its own column; sm and up goes
+          back to one centered row like before, since all 4 fit on a line
+          there. */}
+      <div className="max-w-4xl mx-auto px-6 py-9 grid grid-cols-2 gap-x-4 gap-y-4 sm:flex sm:justify-center sm:flex-wrap sm:gap-x-7">
         {FEATURES.map((f) => (
-          <div key={f.label} className="flex items-center gap-2.5 whitespace-nowrap">
+          <div key={f.label} className="flex items-center gap-2.5 sm:whitespace-nowrap">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.4" className="flex-shrink-0">
               {f.icon}
             </svg>
