@@ -64,12 +64,15 @@ export default async function CustomRingsLandingPage() {
 
       {/* Hero banner — admin-uploadable photo behind the headline (see
           /admin/custom-rings), dark scrim keeps the text legible regardless
-          of the photo; falls back to this gradient when none is set. */}
+          of the photo; falls back to this gradient when none is set. The
+          280px floor only kicks in from sm up — below that, a 21:9 box at
+          phone width is naturally under 280px tall, so the floor used to
+          force a squished, much-less-wide box there and object-cover
+          cropped a big chunk off both sides of the banner photo/graphic. */}
       <div
-        className="relative w-full overflow-hidden"
+        className="relative w-full overflow-hidden min-h-0 sm:min-h-[280px]"
         style={{
           aspectRatio: "21/9",
-          minHeight: 280,
           background: banner.imageUrl
             ? undefined
             : "linear-gradient(135deg, #E9E0CC 0%, #D9CBA8 55%, #C9B27E 100%)",
