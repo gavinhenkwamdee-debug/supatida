@@ -217,7 +217,7 @@ function GroupSection({
           ))}
         </select>
       ) : allHaveImages ? (
-        <div className="flex flex-wrap gap-x-5 gap-y-3">
+        <div className="flex flex-wrap gap-x-4 gap-y-3">
           {visibleChoices.map((c) => (
             <button
               key={c.id}
@@ -225,7 +225,7 @@ function GroupSection({
               onClick={() => onToggle(c.id)}
               title={choiceLabel(group, c)}
               className="flex flex-col items-center gap-1.5"
-              style={{ width: 56 }}
+              style={{ width: 72 }}
             >
               <span
                 className="rounded-full overflow-hidden flex-shrink-0 transition-shadow"
