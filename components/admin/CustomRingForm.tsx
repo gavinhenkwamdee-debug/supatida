@@ -1030,7 +1030,7 @@ function GroupEditor({
       {group.kind === "text_input" ? (
         <div className="p-3" style={{ border: "1px solid var(--border)", backgroundColor: "white" }}>
           <p className="text-xs font-sans mb-2" style={{ color: "var(--muted)" }}>
-            ลูกค้าจะพิมพ์ข้อความเองในช่องนี้ (เช่น สลักข้อความ) ไม่ต้องเพิ่มตัวเลือก — สูงสุด 7 ตัวอักษร ไม่มีค่าใช้จ่ายเพิ่ม
+            ลูกค้าจะพิมพ์ข้อความเองในช่องนี้ (เช่น สลักข้อความ) ไม่ต้องเพิ่มตัวเลือก — สูงสุด 10 ตัวอักษร มีค่าแกะอักษร 500 บาท เพิ่มเข้าราคาอัตโนมัติถ้าพิมพ์
           </p>
           <input
             value={group.placeholder}
