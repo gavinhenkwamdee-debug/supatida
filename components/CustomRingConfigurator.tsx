@@ -12,6 +12,7 @@ import {
   type MeaningSelection,
 } from "@/lib/gemstoneMeanings";
 import type { GroupKind } from "@/lib/customRings";
+import type { BlessingCeremonyConfig } from "@/lib/blessing-ceremony-config";
 
 // Only shapes with real photography uploaded (DIAMOND_SHAPE_IMAGES) can be offered.
 const DIAMOND_SHAPE_OPTIONS = Object.keys(DIAMOND_SHAPE_IMAGES);
@@ -36,6 +37,15 @@ const THB = (n: number) =>
 // priceDeltas in totalPrice below.
 const ENGRAVING_MAX_LENGTH = 10;
 const ENGRAVING_FEE = 500;
+
+// blessingDob comes straight out of <input type="date"> as "YYYY-MM-DD" —
+// shown to the admin in a readable Thai date instead of that raw ISO string.
+function formatBlessingDob(dob: string): string {
+  if (!dob) return "-";
+  const d = new Date(`${dob}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return dob;
+  return new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "long", year: "numeric" }).format(d);
+}
 
 const STONE_KIND_LABEL: Record<StoneKind, string> = { diamond: "เพชร", gem: "พลอย" };
 
@@ -277,7 +287,13 @@ function GroupSection({
   );
 }
 
-export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetail }) {
+export default function CustomRingConfigurator({
+  ring,
+  blessingConfig,
+}: {
+  ring: CustomRingDetail;
+  blessingConfig?: BlessingCeremonyConfig;
+}) {
   const [selections, setSelections] = useState<Record<number, number | undefined>>(() => {
     const initial: Record<number, number | undefined> = {};
     for (const g of ring.groups) {
@@ -325,6 +341,15 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
   });
   const [textValues, setTextValues] = useState<Record<number, string>>({});
   const [diamondShapes, setDiamondShapes] = useState<Record<number, string>>({});
+  // Site-wide "พิธีเสริมสิริมงคล" add-on (see lib/blessing-ceremony-config.ts)
+  // — independent of the ring's own groups, so its own state instead of
+  // living in textValues/selections.
+  const [wantsBlessing, setWantsBlessing] = useState(false);
+  const [blessingName, setBlessingName] = useState("");
+  const [blessingSurname, setBlessingSurname] = useState("");
+  const [blessingDob, setBlessingDob] = useState("");
+  const [blessingBirthTime, setBlessingBirthTime] = useState("");
+  const [blessingError, setBlessingError] = useState("");
   const [realPhotosOpen, setRealPhotosOpen] = useState(false);
   const [realPhotosTabHovered, setRealPhotosTabHovered] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -423,9 +448,15 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
         rows.push({ label: g.label, value: choiceLabel(g, choice) });
       }
     }
+    if (wantsBlessing) {
+      rows.push({ label: "พิธีเสริมสิริมงคล", value: "ต้องการ" });
+      rows.push({ label: "ชื่อ-นามสกุล (ปลุกเสก)", value: `${blessingName.trim()} ${blessingSurname.trim()}`.trim() || "-" });
+      rows.push({ label: "วันเกิด", value: formatBlessingDob(blessingDob) });
+      rows.push({ label: "เวลาเกิด", value: blessingBirthTime.trim() || "-" });
+    }
     return rows;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups, selections, textValues, diamondShapes]);
+  }, [groups, selections, textValues, diamondShapes, wantsBlessing, blessingName, blessingSurname, blessingDob, blessingBirthTime]);
 
   // Switching diamond shape swaps the SAME overlay <img> element's `src`
   // (same choice id, so React keeps the element) — the new position/size
@@ -549,6 +580,21 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
     setSelections((prev) => ({ ...prev, [groupId]: first?.id }));
   }
 
+  // The LINE summary is the only place this data goes (no real order
+  // system), so it has to be complete before the customer gets there —
+  // block opening the popup rather than send the admin a half-filled
+  // blessing request.
+  function handleOpenSummary() {
+    if (wantsBlessing) {
+      if (!blessingName.trim() || !blessingSurname.trim() || !blessingDob || !blessingBirthTime.trim()) {
+        setBlessingError("กรุณากรอกชื่อ นามสกุล วันเกิด และเวลาเกิดให้ครบ สำหรับพิธีเสริมสิริมงคล");
+        return;
+      }
+    }
+    setBlessingError("");
+    setSummaryOpen(true);
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--ivory)" }}>
       {diamondShapePreloadUrls.length > 0 && (
@@ -647,6 +693,77 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
               </div>
             ))}
           </div>
+
+          {blessingConfig?.enabled && (
+            <div className="py-5" style={{ borderBottom: "1px solid var(--border)" }}>
+              <label className="flex items-start gap-2 text-sm font-sans cursor-pointer" style={{ color: "var(--charcoal)" }}>
+                <input
+                  type="checkbox"
+                  checked={wantsBlessing}
+                  onChange={(e) => {
+                    setWantsBlessing(e.target.checked);
+                    if (e.target.checked === false) setBlessingError("");
+                  }}
+                  className="mt-0.5"
+                />
+                <span>ต้องการทำพิธีเสริมสิริมงคล (ไม่มีค่าใช้จ่ายเพิ่ม)</span>
+              </label>
+              {blessingConfig.note && (
+                <p className="text-xs font-sans mt-1.5 ml-6" style={{ color: "var(--muted)" }}>{blessingConfig.note}</p>
+              )}
+
+              {wantsBlessing && (
+                <div className="mt-4 ml-6 flex flex-col gap-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>ชื่อ</label>
+                      <input
+                        type="text"
+                        value={blessingName}
+                        onChange={(e) => setBlessingName(e.target.value)}
+                        className="w-full px-3 py-2 text-sm font-sans outline-none"
+                        style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>นามสกุล</label>
+                      <input
+                        type="text"
+                        value={blessingSurname}
+                        onChange={(e) => setBlessingSurname(e.target.value)}
+                        className="w-full px-3 py-2 text-sm font-sans outline-none"
+                        style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>วันเดือนปีเกิด</label>
+                    <input
+                      type="date"
+                      value={blessingDob}
+                      onChange={(e) => setBlessingDob(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-sans outline-none"
+                      style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>เวลาเกิด</label>
+                    <input
+                      type="text"
+                      value={blessingBirthTime}
+                      onChange={(e) => setBlessingBirthTime(e.target.value)}
+                      placeholder="เช่น 14:30 น. หรือ ไม่ทราบเวลาแน่ชัด"
+                      className="w-full px-3 py-2 text-sm font-sans outline-none"
+                      style={{ border: "1px solid var(--border)", color: "var(--charcoal)", backgroundColor: "white" }}
+                    />
+                  </div>
+                  {blessingError && (
+                    <p className="text-xs font-sans" style={{ color: "#C0392B" }}>{blessingError}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </aside>
 
         {/* Image + purchase action */}
@@ -697,7 +814,7 @@ export default function CustomRingConfigurator({ ring }: { ring: CustomRingDetai
 
           <button
             type="button"
-            onClick={() => setSummaryOpen(true)}
+            onClick={handleOpenSummary}
             className="w-full max-w-xs text-center py-3.5 text-xs tracking-widest uppercase font-sans transition-opacity hover:opacity-80"
             style={{ border: "1px solid var(--charcoal)", color: "var(--charcoal)", backgroundColor: "white" }}
           >

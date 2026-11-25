@@ -118,7 +118,9 @@ groups — YOUR WISH / STRENGTH / BALANCE).
   field (`"<text> (+500 บาท)"`) so the admin sees why the total went up
   without a separate line item. This was previously free with a 7-character
   cap; the two constants are independent, so a future change to the fee
-  doesn't imply changing the length limit or vice versa. (`/custom-rings`, admin at `/admin/custom-rings`)
+  doesn't imply changing the length limit or vice versa.
+
+## Custom Rings landing page (`/thewishnote`, admin at `/admin/custom-rings`)
 
 Hero banner config lives in `site_settings` key `custom-rings-banner`
 (`lib/custom-rings-banner-config.ts`) — same no-migration pattern as
@@ -126,7 +128,7 @@ Hero banner config lives in `site_settings` key `custom-rings-banner`
 
 - The page always draws its own eyebrow/headline/description text plus a
   dark left-side scrim over the uploaded banner photo
-  (`app/custom-rings/page.tsx`), so the uploaded image is assumed to be a
+  (`components/CustomRingsLandingPage.tsx`), so the uploaded image is assumed to be a
   plain lifestyle/product photo with nothing baked into it. If the admin
   instead uploads a finished graphic that already has its own text/logo in
   it, that text collides with the code-rendered overlay. The
@@ -154,6 +156,26 @@ Hero banner config lives in `site_settings` key `custom-rings-banner`
   `/thewishnote/{id}` to skip the redirect hop. Admin-side routes
   (`/admin/custom-rings`, `/api/admin/custom-rings`) keep their original
   name — only the public URL was renamed.
+- **"พิธีเสริมสิริมงคล" (blessing ceremony) is a free, site-wide add-on —
+  one toggle for every ring, not a per-ring `group` like `lib/customRings.ts`
+  manages.** Config lives in `site_settings` key `blessing-ceremony`
+  (`lib/blessing-ceremony-config.ts`, `{enabled, note}` — same
+  no-migration pattern as `custom-rings-banner`), admin panel is
+  `BlessingCeremonyAdmin` in `CustomRingsAdmin.tsx`. When enabled, every
+  ring's configurator (`CustomRingConfigurator.tsx`) shows a checkbox
+  below its groups; checking it reveals required ชื่อ/นามสกุล/วันเกิด/เวลาเกิด
+  fields (เวลาเกิด is free text, not a time picker, since many customers
+  don't know their exact birth time). No price change — it exists only to
+  get this information to the admin. Since there's no real order system,
+  `handleOpenSummary()` blocks opening the LINE summary popup until all
+  four fields are filled (rather than send the admin a half-filled
+  request), and the filled values are folded into `summaryRows` like the
+  engraving field already does. `note` (shown under the checkbox) is the
+  one place the officiant's name and the "once a month" cadence live —
+  admin-editable so either can change without a code change; the
+  officiant's name was only added here after the admin confirmed they'd
+  cleared that with them, since naming them is a lineage/reputation
+  matter, not just copy.
 
 ## 11.11 campaign (`/1111`, admin at `/admin/campaign-1111`)
 

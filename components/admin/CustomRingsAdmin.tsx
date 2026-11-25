@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { CustomRing, CustomRingDetail } from "@/lib/customRings";
 import type { CustomRingsBannerConfig } from "@/lib/custom-rings-banner-config";
+import type { BlessingCeremonyConfig } from "@/lib/blessing-ceremony-config";
 
 const THB = (n: number) =>
   new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n);
@@ -135,6 +136,80 @@ function CustomRingsBannerAdmin() {
   );
 }
 
+// A free, site-wide add-on for every ring (one toggle, not per-ring like
+// lib/customRings.ts groups) — a customer can ask to have their finished
+// ring blessed, which collects name/surname/birth date/birth time. The
+// note is admin-editable since the officiant or schedule can change.
+function BlessingCeremonyAdmin() {
+  const [enabled, setEnabled] = useState(false);
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings/blessing-ceremony")
+      .then((r) => r.json())
+      .then((d: BlessingCeremonyConfig) => {
+        setEnabled(Boolean(d.enabled));
+        setNote(d.note || "");
+        setLoading(false);
+      });
+  }, []);
+
+  async function save(next: { enabled: boolean; note: string }) {
+    setEnabled(next.enabled);
+    setNote(next.note);
+    setSaving(true);
+    try {
+      await fetch("/api/settings/blessing-ceremony", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="bg-white p-6 mb-6" style={{ border: "1px solid var(--border)" }}>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-sm tracking-wide" style={{ color: "var(--charcoal)" }}>พิธีเสริมสิริมงคล</h2>
+        <button
+          type="button"
+          onClick={() => save({ enabled: !enabled, note })}
+          className="relative w-14 h-7 rounded-full transition-colors duration-200 flex-shrink-0"
+          style={{ backgroundColor: enabled ? "var(--charcoal)" : "#D1D5DB" }}
+          aria-pressed={enabled}
+        >
+          <span
+            className="absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+            style={{ left: enabled ? "30px" : "4px" }}
+          />
+        </button>
+      </div>
+      <p className="text-xs font-sans mb-4" style={{ color: "var(--muted)" }}>
+        เปิดแล้วลูกค้าจะติ๊ก &ldquo;ต้องการทำพิธีเสริมสิริมงคล&rdquo; ในหน้าออกแบบแหวนได้ (กรอกชื่อ นามสกุล
+        วันเกิด เวลาเกิด) ไม่มีค่าใช้จ่ายเพิ่ม ใช้ได้กับแหวนทุกแบบ
+      </p>
+      <label className="text-xs font-sans block mb-1" style={{ color: "var(--muted)" }}>
+        ข้อความอธิบาย (โชว์ใต้ checkbox ในหน้าออกแบบแหวน)
+      </label>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        onBlur={() => save({ enabled, note })}
+        rows={2}
+        className="w-full px-3 py-2 text-sm font-sans outline-none resize-none"
+        style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+      />
+      {saving && <p className="text-xs font-sans mt-1" style={{ color: "var(--muted)" }}>กำลังบันทึก…</p>}
+    </div>
+  );
+}
+
 export default function CustomRingsAdmin() {
   const router = useRouter();
   const [rings, setRings] = useState<CustomRing[]>([]);
@@ -216,6 +291,7 @@ export default function CustomRingsAdmin() {
       </div>
 
       <CustomRingsBannerAdmin />
+      <BlessingCeremonyAdmin />
 
       {rings.length === 0 ? (
         <div className="bg-white p-12 text-center" style={{ border: "1px solid var(--border)" }}>
