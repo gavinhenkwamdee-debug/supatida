@@ -65,7 +65,7 @@ export const DEFAULT_CAMPAIGN_1111: Campaign1111Config = {
   },
   assignments: {},
   endsAt: "2026-11-18T23:59:59+07:00",
-  urgencyNote: "สินค้าแต่ละชิ้นมีจำนวนจำกัดเพียงชิ้นเดียว หมดแล้วหมดเลย ไม่มีสั่งเพิ่ม",
+  urgencyNote: "ราคานี้ขายเท่าทุน–ต่ำกว่าทุน เฉพาะแคมเปญ 11.11 เท่านั้น สินค้าแต่ละชิ้นมีเพียงชิ้นเดียว หมดแล้วหมดเลย ไม่มีราคานี้อีก",
 };
 
 export function fillPercent(text: string, percent: number): string {
